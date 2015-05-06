@@ -6,8 +6,43 @@ import scalaz.Bind
 import scalaz.Applicative
 import scalaz.effect.MonadCatchIO
 import scalaz.effect.IO
+import org.junit.Assert
 
 class TransformerTest {
+
+  @Test
+  def testSomeNilLength(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+    val s = Some(Nil)
+
+    val lengthOption = async {
+      s.length
+    }
+
+    Assert.assertEquals(Some(0), lengthOption)
+
+  }
+
+  @Test
+  def testNoneLength(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+    val s:Option[Seq[_]] = None
+
+    val lengthOption = async {
+      s.length
+    }
+
+    Assert.assertEquals(None, lengthOption)
+
+  }
+
+  /* Legacy tests for debugging
 
   @Test
   def test(): Unit = {
@@ -96,6 +131,8 @@ class TransformerTest {
     }
 
   }
+
+  */
 
   /* Disable since it is not implemented yet
   def testWhile(): Unit = {

@@ -1,11 +1,13 @@
+package com.thoughtworks.scalazMonadFactory
+
 import org.junit.Test
-import la.hen.scalaz.async.Transformer
 import scalaz.Monad
 import scalaz.Bind
 import scalaz.Applicative
 import scalaz.effect.MonadCatchIO
 import scalaz.effect.IO
-class AsyncTest {
+
+class TransformerTest {
 
   @Test
   def test(): Unit = {
@@ -14,8 +16,8 @@ class AsyncTest {
 
     val transformer = Transformer[Option]
     import transformer._
-
     val s = Some(Nil)
+
     async {
       {
         val a = s.length
@@ -49,7 +51,6 @@ class AsyncTest {
     implicit def aaaa: MonadCatchIO[Option] = ???
 
     val transformer = Transformer[Option]
-    import transformer._
     val s = Some(Nil)
 
     Bind[Option].bind(
@@ -69,7 +70,6 @@ class AsyncTest {
   }
 
   def testCatch(): Unit = {
-    import scalaz.effect.IO._
     val s: IO[String] = ???
 
     val transformer = Transformer[IO]
@@ -97,10 +97,8 @@ class AsyncTest {
 
   }
 
-  
+  /* Disable since it is not implemented yet
   def testWhile(): Unit = {
-    
-    import scalaz.std.option._
 
     val transformer = Transformer[Option]
     import transformer._
@@ -111,7 +109,7 @@ class AsyncTest {
       }
     }
   }
-
+  */
   
 }
 

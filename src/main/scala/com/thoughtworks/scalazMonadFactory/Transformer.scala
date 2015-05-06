@@ -1,4 +1,4 @@
-package la.hen.scalaz.async
+package com.thoughtworks.scalazMonadFactory
 
 import scala.language.experimental.macros
 import scala.annotation.compileTimeOnly
@@ -268,35 +268,6 @@ object Transformer {
     val result = transform(inputTree)
     c.info(c.enclosingPosition, show(result.monad), true)
     c.untypecheck(result.monad)
-    /*
-    Apply(
-      TypeApply(
-        Select(Select(Select(Select(Select(Ident(la), la.hen), la.hen.scalaz), la.hen.scalaz.async), la.hen.scalaz.async.Transformer),
-          TermName("await")),
-        List(TypeTree(), TypeTree())),
-      List(Ident(TermName("s"))))
-*/
-    /*
-    Apply(
-      Select(
-        Apply(
-          TypeApply(
-            Select(
-              Select(Select(Select(Select(Ident(la), la.hen), la.hen.scalaz), la.hen.scalaz.async), la.hen.scalaz.async.Transformer),
-              TermName("await")),
-            List(TypeTree(), TypeTree())),
-          List(
-            Apply(
-              TypeApply(
-                Select(
-                  Select(Ident(scala), scala.Some),
-                  TermName("apply")),
-                List(TypeTree())),
-              List(Literal(Constant(1)))))),
-        TermName("$plus")),
-      List(Literal(Constant(1))))
-    */
-    //???
   }
 
 }

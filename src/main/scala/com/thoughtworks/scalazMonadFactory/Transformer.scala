@@ -22,11 +22,11 @@ object Transformer {
   def async_impl(c: scala.reflect.macros.blackbox.Context)(inputTree: c.Tree): c.Tree = {
     import c.universe._
     import c.universe.Flag._
-    c.info(c.enclosingPosition, showRaw(inputTree), true)
+//    c.info(c.enclosingPosition, showRaw(inputTree), true)
     val Apply(TypeApply(Select(thisTree, _), List(asyncValueTypeTree)), _) = c.macroApplication
     val thisType = thisTree.tpe
     val List(monadType) = thisType.widen.typeArgs
-    c.info(c.enclosingPosition, show(monadType), true)
+//    c.info(c.enclosingPosition, show(monadType), true)
 
     abstract class TransformedTree {
       def monad: c.Tree
@@ -266,7 +266,7 @@ object Transformer {
       }
     }
     val result = transform(inputTree)
-    c.info(c.enclosingPosition, show(result.monad), true)
+//    c.info(c.enclosingPosition, show(result.monad), true)
     c.untypecheck(result.monad)
   }
 

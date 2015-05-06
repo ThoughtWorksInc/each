@@ -28,7 +28,7 @@ object Transformer {
     val List(monadType) = thisType.widen.typeArgs
 //    c.info(c.enclosingPosition, show(monadType), true)
 
-    abstract class TransformedTree {
+    sealed abstract class TransformedTree {
       def monad: c.Tree
       def tpe: Type
       def flatMap(f: c.Tree => TransformedTree): TransformedTree

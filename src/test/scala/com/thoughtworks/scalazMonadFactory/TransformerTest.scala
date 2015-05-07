@@ -14,7 +14,7 @@ class TransformerTest {
   def testSomeNilLength(): Unit = {
     import scalaz.std.option._
 
-    val transformer = Transformer[Option]
+    val transformer = Transformer[Option]()
     import transformer._
     val s = Some(Nil)
 
@@ -22,7 +22,7 @@ class TransformerTest {
       s.length
     }
 
-    Assert.assertEquals(Some(0), lengthOption)
+    Assert.assertEquals(Monad[Option].map(s)(_.length), lengthOption)
 
   }
 
@@ -30,7 +30,7 @@ class TransformerTest {
   def testNoneLength(): Unit = {
     import scalaz.std.option._
 
-    val transformer = Transformer[Option]
+    val transformer = Transformer[Option]()
     import transformer._
     val s:Option[Seq[_]] = None
 
@@ -38,7 +38,7 @@ class TransformerTest {
       s.length
     }
 
-    Assert.assertEquals(None, lengthOption)
+    Assert.assertEquals(Monad[Option].map(s)(_.length), lengthOption)
 
   }
 

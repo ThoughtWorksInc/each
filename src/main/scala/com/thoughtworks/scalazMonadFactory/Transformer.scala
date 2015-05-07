@@ -5,7 +5,7 @@ import scala.annotation.compileTimeOnly
 import scala.language.implicitConversions
 import scala.language.higherKinds
 
-case class Transformer[M[_]]() {
+final class Transformer[M[_]] {
 
   /**
    * @usecase def async[X](inputTree: X)(implicit bind: scalaz.Bind[M], applicative: scalaz.Applicative[M]): M[X]
@@ -17,7 +17,7 @@ case class Transformer[M[_]]() {
   implicit def await[X](m: M[X]): X = ???
 }
 
-object Transformer {
+private object Transformer {
 
   def async_impl(c: scala.reflect.macros.blackbox.Context)(inputTree: c.Tree): c.Tree = {
     import c.universe._

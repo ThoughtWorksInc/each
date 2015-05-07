@@ -14,7 +14,7 @@ class TransformerTest {
   def testSomeNilLength(): Unit = {
     import scalaz.std.option._
 
-    val transformer = Transformer[Option]()
+    val transformer = new Transformer[Option]
     import transformer._
     val s = Some(Nil)
 
@@ -30,7 +30,7 @@ class TransformerTest {
   def testNoneLength(): Unit = {
     import scalaz.std.option._
 
-    val transformer = Transformer[Option]()
+    val transformer = new Transformer[Option]
     import transformer._
     val s:Option[Seq[_]] = None
 

@@ -104,35 +104,67 @@ class TransformerTest {
       }))
   }
 
-  def testCatch(): Unit = {
-    val s: IO[String] = ???
+  */
 
-    val transformer = Transformer[IO]
+  /*
+@Test
+def testCatch(): Unit = {
+  var count = 0
+  val io = MonadCatchIO.ensuring(MonadCatchIO.catchSome[IO, Int, IO[Int]]({
+    count += 1
+    MonadCatchIO[IO].point(???)
+  })({(e: Throwable) => e match {
+    case (e@(_: Error)) => Some({
+      count += 1
+      MonadCatchIO[IO].point(100)
+    })
+    case _ => None
+  }}, identity), MonadCatchIO[IO].point(count += 1))
+  Assert.assertEquals(100, io.unsafePerformIO())
+  Assert.assertEquals(3, count)
+}
+*/
+
+  @Test
+  def testBlock(): Unit = {
+    val transformer = new Transformer[IO]
     import transformer._
-    val some2 = async {
-      if (s.length != 0) {
-        try {
-          s.charAt(2)
-        } catch {
-          case e: RuntimeException => {
-            s.charAt(3)
-            ()
-          }
-          case e: Exception => {
-            s.charAt(4)
-            ()
-          }
-        } finally {
-          s.charAt(3)
-
-        }
-      }
-      val nothing = s.charAt(2)
+    var count = 0
+    val io = async {
+      count += 1
+      count += 1
+      count
     }
+    Assert.assertEquals(0, count)
+    Assert.assertEquals(2, io.unsafePerformIO())
+    Assert.assertEquals(2, count)
 
   }
 
-  */
+  @Test
+  def testCatch(): Unit = {
+    val transformer = new Transformer[IO]
+    import transformer._
+    var count = 0
+    val io = async {
+      try {
+        count += 1
+        ???
+      } catch {
+        case e: NotImplementedError => {
+          count += 1
+          100
+        }
+      } finally {
+        count += 1
+      }
+    }
+    Assert.assertEquals(0, count)
+    Assert.assertEquals(100, io.unsafePerformIO())
+    Assert.assertEquals(3, count)
+  }
+
+
 
   /* Disable since it is not implemented yet
   def testWhile(): Unit = {

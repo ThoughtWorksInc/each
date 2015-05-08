@@ -225,7 +225,9 @@ private object Transformer {
           }
         }
         case Assign(left, right) => {
-          ???
+          transform(right).flatMap { x =>
+            new PlainTree(treeCopy.Assign(origin, left, x), origin.tpe)
+          }
         }
         case Match(selector, cases) => {
           ???

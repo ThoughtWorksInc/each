@@ -1,6 +1,4 @@
 # scalaz-monad-factory
 A macro library that converts native imperative syntax to scalaz.Monad
 
-# CI
-https://travis-ci.org/ThoughtWorks-Xi-an-Scala-Camp/scalaz-monad-factory.svg?branch=master
-
+[![Build Status](https://travis-ci.org/mengmeng0927/scalaz-monad-factory.svg?branch=master)](https://travis-ci.org/mengmeng0927/scalaz-monad-factory)

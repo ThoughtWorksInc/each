@@ -69,6 +69,21 @@ class TransformerTest {
     Assert.assertEquals(List(new String("a string")), newS )
   }
 
+  @Test
+  def testConcatList = {
+    import scalaz.std.list._
+    val transformer = new Transformer[List]
+    import transformer._
+
+    val list1 = List("foo", "bar", "baz")
+    val list2 = List("Hello", "World!")
+    val concatList = async {
+      list1.substring(0, 2) + " " + list2.substring(1, 4)
+    }
+
+    Assert.assertEquals(List("fo ell", "ba ell", "ba ell", "fo orl", "ba orl", "ba orl"), concatList)
+  }
+
   /* Legacy tests for debugging
 
   @Test

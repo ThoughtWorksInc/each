@@ -32,15 +32,13 @@ private object Transformer {
       def monad: c.Tree
       def tpe: Type
       def flatMap(f: c.Tree => TransformedTree): TransformedTree
-      def prepend(head: c.Tree): TransformedTree
+      def prepend(head: c.Tree): TransformedTree = {
+        BlockTree(head :: Nil, this)
+      }
     }
 
     final case class OpenTree(prefix: TransformedTree, parameter: ValDef, inner: TransformedTree)
       extends TransformedTree { self =>
-
-      override final def prepend(head: c.Tree) = {
-        OpenTree(prefix.prepend(head), parameter, inner)
-      }
 
       override final def monad: c.Tree = {
         inner match {
@@ -75,10 +73,6 @@ private object Transformer {
     }
 
     final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
-
-      override final def prepend(head: c.Tree) = {
-        BlockTree(head :: Nil, this)
-      }
 
       override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
         val newId = TermName(c.freshName("parameter"))

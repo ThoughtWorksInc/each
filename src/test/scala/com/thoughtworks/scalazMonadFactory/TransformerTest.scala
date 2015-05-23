@@ -42,6 +42,47 @@ class TransformerTest {
 
   }
 
+  @Test
+  def testNewByOption(): Unit = {
+    import scalaz.std.option._
+    val transformer = new Transformer[Option]
+    import transformer._
+    val newS = async {
+      new String("a string")
+    }
+
+    Assert.assertEquals(Monad[Option].pure(new String("a string")), newS )
+    Assert.assertEquals(Some(new String("a string")), newS )
+  }
+
+  @Test
+  def testNewByList(): Unit = {
+    import scalaz.std.list._
+    val transformer = new Transformer[List]
+    import transformer._
+    val newS = async {
+      new String("a string")
+    }
+
+    Assert.assertEquals(Monad[List].pure(new String("a string")), newS )
+    Assert.assertEquals(List(new String("a string")), newS )
+  }
+
+  @Test
+  def testConcatList = {
+    import scalaz.std.list._
+    val transformer = new Transformer[List]
+    import transformer._
+
+    val list1 = List("foo", "bar", "baz")
+    val list2 = List("Hello", "World!")
+    val concatList = async {
+      list1.substring(0, 2) + " " + list2.substring(1, 4)
+    }
+
+    Assert.assertEquals(List("fo ell", "ba ell", "ba ell", "fo orl", "ba orl", "ba orl"), concatList)
+  }
+
   /* Legacy tests for debugging
 
   @Test

@@ -10,6 +10,38 @@ import org.junit.Assert
 
 class TransformerTest {
 
+  def testIf(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = new Transformer[Option]
+    import transformer._
+
+    val ifOption = async {
+      val i = Some(1)
+      val j = if (i > 1) 2 else 3
+      i + j
+    }
+
+    Assert.assertEquals(3, ifOption)
+  }
+
+  def testDefDef(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = new Transformer[Option]
+    import transformer._
+
+    val lengthOption = async {
+      def s = Some(Nil)
+      s.length
+    }
+
+    Assert.assertEquals(Monad[Option].map {
+      def s = Some(Nil)
+      s
+    }(_.length), lengthOption)
+  }
+
   @Test
   def testSomeNilLength(): Unit = {
     import scalaz.std.option._
@@ -40,6 +72,47 @@ class TransformerTest {
 
     Assert.assertEquals(Monad[Option].map(s)(_.length), lengthOption)
 
+  }
+
+  @Test
+  def testNewByOption(): Unit = {
+    import scalaz.std.option._
+    val transformer = new Transformer[Option]
+    import transformer._
+    val newS = async {
+      new String("a string")
+    }
+
+    Assert.assertEquals(Monad[Option].pure(new String("a string")), newS )
+    Assert.assertEquals(Some(new String("a string")), newS )
+  }
+
+  @Test
+  def testNewByList(): Unit = {
+    import scalaz.std.list._
+    val transformer = new Transformer[List]
+    import transformer._
+    val newS = async {
+      new String("a string")
+    }
+
+    Assert.assertEquals(Monad[List].pure(new String("a string")), newS )
+    Assert.assertEquals(List(new String("a string")), newS )
+  }
+
+  @Test
+  def testConcatList = {
+    import scalaz.std.list._
+    val transformer = new Transformer[List]
+    import transformer._
+
+    val list1 = List("foo", "bar", "baz")
+    val list2 = List("Hello", "World!")
+    val concatList = async {
+      list1.substring(0, 2) + " " + list2.substring(1, 4)
+    }
+
+    Assert.assertEquals(List("fo ell", "ba ell", "ba ell", "fo orl", "ba orl", "ba orl"), concatList)
   }
 
   /* Legacy tests for debugging
@@ -149,9 +222,32 @@ def testCatch(): Unit = {
     val io = async {
       try {
         count += 1
-        ???
+        (null:Array[Int])(0)
       } catch {
-        case e: NotImplementedError => {
+        case e: NullPointerException => {
+          count += 1
+          100
+        }
+      } finally {
+        count += 1
+      }
+    }
+    Assert.assertEquals(0, count)
+    Assert.assertEquals(100, io.unsafePerformIO())
+    Assert.assertEquals(3, count)
+  }
+
+  @Test
+  def testThrowCatch(): Unit = {
+    val transformer = new Transformer[IO]
+    import transformer._
+    var count = 0
+    val io = async {
+      try {
+        count += 1
+        throw new Exception
+      } catch {
+        case e: Exception => {
           count += 1
           100
         }

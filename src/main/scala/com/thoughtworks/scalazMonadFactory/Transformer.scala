@@ -34,8 +34,8 @@ private object Transformer {
       def flatMap(f: c.Tree => TransformedTree): TransformedTree
       def prepend(head: c.Tree) = {
         BlockTree(head :: Nil, this)
-      }
     }
+      }
 
     final case class OpenTree(prefix: TransformedTree, parameter: ValDef, inner: TransformedTree) extends TransformedTree { self =>
 
@@ -71,14 +71,6 @@ private object Transformer {
 
     }
 
-    final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
-
-      override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
-        val newId = TermName(c.freshName("parameter"))
-        OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
-      }
-    }
-
     final case class BlockTree(prefix: List[c.Tree], tail: TransformedTree) extends TransformedTree {
 
       override final def tpe = tail.tpe
@@ -94,6 +86,15 @@ private object Transformer {
       }
 
     }
+
+    final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
+
+      override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
+        val newId = TermName(c.freshName("parameter"))
+        OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
+      }
+    }
+
     final case class PlainTree(tree: Tree, tpe: Type) extends TransformedTree {
 
       override final def monad: c.Tree = {
@@ -105,7 +106,7 @@ private object Transformer {
       override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
         f(tree)
       }
-    }
+      }
     def typed(transformedTree: TransformedTree, tpe: Type): TransformedTree = {
       transformedTree.flatMap { x => PlainTree(Typed(x, TypeTree(tpe)), tpe) }
     }
@@ -162,18 +163,6 @@ private object Transformer {
           } else {
             MonadTree(Apply(Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")), List(tryCatch, transform(finalizer).monad)), origin.tpe)
           }
-        }
-        case ClassDef(mods, _, _, _) => {
-          ???
-        }
-        case _: ModuleDef => {
-          ???
-        }
-        case DefDef(mods, _, _, _, _, _) => {
-          ???
-        }
-        case _: Function => {
-          ???
         }
         case Select(instance, field) => {
           transform(instance).flatMap { x =>
@@ -255,7 +244,7 @@ private object Transformer {
         case LabelDef(name, params, rhs) => {
           ???
         }
-        case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Import | _: ImportSelector => {
+        case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
           new PlainTree(origin, origin.tpe)
 
         }

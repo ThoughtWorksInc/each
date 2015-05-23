@@ -254,9 +254,6 @@ private object Transformer {
                 transform(elsep).monad)),
             origin.tpe)
         }
-        case Throw(throwable) => {
-          ???
-        }
         case Typed(expr, tpt) => {
           transform(expr).flatMap { x =>
             new PlainTree(Typed(x, tpt), origin.tpe)
@@ -268,10 +265,7 @@ private object Transformer {
         case LabelDef(name, params, rhs) => {
           ???
         }
-        case _: Return => {
-          ???
-        }
-        case EmptyTree | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Import | _: ImportSelector => {
+        case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Import | _: ImportSelector => {
           new PlainTree(origin, origin.tpe)
 
         }

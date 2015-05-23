@@ -32,12 +32,13 @@ private object Transformer {
       def monad: c.Tree
       def tpe: Type
       def flatMap(f: c.Tree => TransformedTree): TransformedTree
-      def prepend(head: c.Tree) = {
+      def prepend(head: c.Tree): TransformedTree = {
         BlockTree(head :: Nil, this)
       }
     }
 
-    final case class OpenTree(prefix: TransformedTree, parameter: ValDef, inner: TransformedTree) extends TransformedTree { self =>
+    final case class OpenTree(prefix: TransformedTree, parameter: ValDef, inner: TransformedTree)
+      extends TransformedTree { self =>
 
       override final def monad: c.Tree = {
         inner match {
@@ -105,6 +106,11 @@ private object Transformer {
       override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
         f(tree)
       }
+
+      override final def prepend(head: c.Tree) = {
+        PlainTree(Block(List(head), tree), tpe)
+      }
+
     }
     def typed(transformedTree: TransformedTree, tpe: Type): TransformedTree = {
       transformedTree.flatMap { x => PlainTree(Typed(x, TypeTree(tpe)), tpe) }
@@ -160,7 +166,11 @@ private object Transformer {
           if (finalizer.isEmpty) {
             MonadTree(tryCatch, origin.tpe)
           } else {
-            MonadTree(Apply(Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")), List(tryCatch, transform(finalizer).monad)), origin.tpe)
+            MonadTree(
+              Apply(
+                Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")),
+                List(tryCatch, transform(finalizer).monad)),
+              origin.tpe)
           }
         }
         case ClassDef(mods, _, _, _) => {

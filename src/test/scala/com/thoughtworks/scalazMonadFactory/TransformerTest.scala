@@ -10,6 +10,21 @@ import org.junit.Assert
 
 class TransformerTest {
 
+  def testIf(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = new Transformer[Option]
+    import transformer._
+
+    val ifOption = async {
+      val i = Some(1)
+      val j = if (i > 1) 2 else 3
+      i + j
+    }
+
+    Assert.assertEquals(3, ifOption)
+  }
+
   def testDefDef(): Unit = {
     import scalaz.std.option._
 

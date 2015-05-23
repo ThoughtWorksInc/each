@@ -74,18 +74,6 @@ private object Transformer {
 
     }
 
-    final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
-
-      override final def prepend(head: c.Tree) = {
-        BlockTree(head :: Nil, this)
-      }
-
-      override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
-        val newId = TermName(c.freshName("parameter"))
-        OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
-      }
-    }
-
     final case class BlockTree(prefix: List[c.Tree], tail: TransformedTree) extends TransformedTree {
 
       override final def tpe = tail.tpe
@@ -101,6 +89,19 @@ private object Transformer {
       }
 
     }
+
+    final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
+
+      override final def prepend(head: c.Tree) = {
+        BlockTree(head :: Nil, this)
+      }
+
+      override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
+        val newId = TermName(c.freshName("parameter"))
+        OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
+      }
+    }
+
     final case class PlainTree(tree: Tree, tpe: Type) extends TransformedTree {
 
       override final def monad: c.Tree = {

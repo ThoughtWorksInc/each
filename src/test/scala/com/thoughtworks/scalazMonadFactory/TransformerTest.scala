@@ -149,9 +149,32 @@ def testCatch(): Unit = {
     val io = async {
       try {
         count += 1
-        ???
+        (null:Array[Int])(0)
       } catch {
-        case e: NotImplementedError => {
+        case e: NullPointerException => {
+          count += 1
+          100
+        }
+      } finally {
+        count += 1
+      }
+    }
+    Assert.assertEquals(0, count)
+    Assert.assertEquals(100, io.unsafePerformIO())
+    Assert.assertEquals(3, count)
+  }
+
+  @Test
+  def testThrowCatch(): Unit = {
+    val transformer = new Transformer[IO]
+    import transformer._
+    var count = 0
+    val io = async {
+      try {
+        count += 1
+        throw new Exception
+      } catch {
+        case e: Exception => {
           count += 1
           100
         }

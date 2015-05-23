@@ -180,18 +180,6 @@ private object Transformer {
               origin.tpe)
           }
         }
-        case ClassDef(mods, _, _, _) => {
-          ???
-        }
-        case _: ModuleDef => {
-          ???
-        }
-        case DefDef(mods, _, _, _, _, _) => {
-          ???
-        }
-        case _: Function => {
-          ???
-        }
         case Select(instance, field) => {
           transform(instance).flatMap { x =>
             new PlainTree(Select(x, field), origin.tpe)
@@ -272,7 +260,7 @@ private object Transformer {
         case LabelDef(name, params, rhs) => {
           ???
         }
-        case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Import | _: ImportSelector => {
+        case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
           new PlainTree(origin, origin.tpe)
 
         }

@@ -10,6 +10,23 @@ import org.junit.Assert
 
 class TransformerTest {
 
+  def testDefDef(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = new Transformer[Option]
+    import transformer._
+
+    val lengthOption = async {
+      def s = Some(Nil)
+      s.length
+    }
+
+    Assert.assertEquals(Monad[Option].map {
+      def s = Some(Nil)
+      s
+    }(_.length), lengthOption)
+  }
+
   @Test
   def testSomeNilLength(): Unit = {
     import scalaz.std.option._

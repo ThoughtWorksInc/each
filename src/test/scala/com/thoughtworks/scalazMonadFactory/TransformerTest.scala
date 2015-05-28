@@ -10,6 +10,7 @@ import org.junit.Assert
 
 class TransformerTest {
 
+  @Test
   def testIf(): Unit = {
     import scalaz.std.option._
 
@@ -18,13 +19,14 @@ class TransformerTest {
 
     val ifOption = async {
       val i = Some(1)
-      val j = if (i > 1) 2 else 3
+      val j = if (i > 1) 2 else 10
       i + j
     }
 
-    Assert.assertEquals(3, ifOption)
+    Assert.assertEquals(Some(11), ifOption)
   }
 
+  @Test
   def testDefDef(): Unit = {
     import scalaz.std.option._
 
@@ -204,7 +206,7 @@ def testCatch(): Unit = {
     import transformer._
     var count = 0
     val io = async {
-      await(IO(()))
+      val _ = await(IO(()))
       count += 1
       count += 1
       count
@@ -221,7 +223,7 @@ def testCatch(): Unit = {
     import transformer._
     var count = 0
     val io = async {
-      await(IO(()))
+      val _ = await(IO(()))
       try {
         count += 1
         (null:Array[Int])(0)
@@ -245,7 +247,7 @@ def testCatch(): Unit = {
     import transformer._
     var count = 0
     val io = async {
-      await(IO(()))
+      val _ = await(IO(()))
       try {
         count += 1
         throw new Exception

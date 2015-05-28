@@ -239,7 +239,9 @@ private object Transformer {
           }
         }
         case Annotated(annot, arg) => {
-          ???
+          transform(arg).flatMap { x =>
+            new PlainTree(Annotated(annot, x), origin.tpe)
+          }
         }
         case LabelDef(name, params, rhs) => {
           ???

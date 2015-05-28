@@ -265,7 +265,24 @@ def testCatch(): Unit = {
     Assert.assertEquals(3, count)
   }
 
+  @Test
+  def testNestedClass(): Unit = {
+    import scalaz.std.option._
 
+    val transformer = new Transformer[Option]
+    import transformer._
+    trait Base {
+      def bar: Int
+    }
+    val nestedClass = async[Base] {
+      class Foo() extends Base {
+        def bar = 100
+      }
+      new Foo
+    }
+
+    Assert.assertEquals(100, nestedClass.get.bar)
+  }
 
   /* Disable since it is not implemented yet
   def testWhile(): Unit = {

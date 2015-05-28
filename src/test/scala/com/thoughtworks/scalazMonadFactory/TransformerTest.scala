@@ -27,6 +27,23 @@ class TransformerTest {
   }
 
   @Test
+  def testAssignExpressions(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = new Transformer[Option]
+    import transformer._
+
+    val assignExp = async {
+      var pi = 3.1415
+      pi = 1.0
+      pi
+    }
+
+    Assert.assertEquals(Some(1.0), assignExp)
+
+  }
+
+  @Test
   def testDefDef(): Unit = {
     import scalaz.std.option._
 

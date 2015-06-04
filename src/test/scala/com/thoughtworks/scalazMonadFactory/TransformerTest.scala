@@ -14,7 +14,7 @@ class TransformerTest {
   def testIf(): Unit = {
     import scalaz.std.option._
 
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
 
     val ifOption = async {
@@ -30,7 +30,7 @@ class TransformerTest {
   def testAssignExpressions(): Unit = {
     import scalaz.std.option._
 
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
 
     val assignExp = async {
@@ -47,7 +47,7 @@ class TransformerTest {
   def testDefDef(): Unit = {
     import scalaz.std.option._
 
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
 
     val lengthOption = async {
@@ -65,7 +65,7 @@ class TransformerTest {
   def testSomeNilLength(): Unit = {
     import scalaz.std.option._
 
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
     val s = Some(Nil)
 
@@ -81,7 +81,7 @@ class TransformerTest {
   def testNoneLength(): Unit = {
     import scalaz.std.option._
 
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
     val s:Option[Seq[_]] = None
 
@@ -96,7 +96,7 @@ class TransformerTest {
   @Test
   def testNewByOption(): Unit = {
     import scalaz.std.option._
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
     val newS = async {
       new String("a string")
@@ -109,7 +109,7 @@ class TransformerTest {
   @Test
   def testNewByList(): Unit = {
     import scalaz.std.list._
-    val transformer = new Transformer[List]
+    val transformer = Transformer[List]
     import transformer._
     val newS = async {
       new String("a string")
@@ -122,7 +122,7 @@ class TransformerTest {
   @Test
   def testConcatList = {
     import scalaz.std.list._
-    val transformer = new Transformer[List]
+    val transformer = Transformer[List]
     import transformer._
 
     val list1 = List("foo", "bar", "baz")
@@ -219,7 +219,7 @@ def testCatch(): Unit = {
 
   @Test
   def testBlock(): Unit = {
-    val transformer = new Transformer[IO]
+    val transformer = Transformer[IO]
     import transformer._
     var count = 0
     val io = async {
@@ -236,7 +236,7 @@ def testCatch(): Unit = {
 
   @Test
   def testCatch(): Unit = {
-    val transformer = new Transformer[IO]
+    val transformer = Transformer[IO]
     import transformer._
     var count = 0
     val io = async {
@@ -260,7 +260,7 @@ def testCatch(): Unit = {
 
   @Test
   def testThrowCatch(): Unit = {
-    val transformer = new Transformer[IO]
+    val transformer = Transformer[IO]
     import transformer._
     var count = 0
     val io = async {
@@ -286,7 +286,7 @@ def testCatch(): Unit = {
   def testNestedClass(): Unit = {
     import scalaz.std.option._
 
-    val transformer = new Transformer[Option]
+    val transformer = Transformer[Option]
     import transformer._
     trait Base {
       def bar: Int

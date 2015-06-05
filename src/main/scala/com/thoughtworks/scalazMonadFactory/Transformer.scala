@@ -120,18 +120,36 @@ object Transformer {
         transformedTree.flatMap { x => PlainTree(Typed(x, TypeTree(tpe)), tpe) }
       }
 
-      def transform(origin: c.Tree): TransformedTree = {
+      def transform(origin: c.Tree)(implicit forceAwait: Set[Name]): TransformedTree = {
         origin match {
-
           case Apply(
           TypeApply(
           Select(transformer, await),
           List(awaitValueTypeTree)),
-          List(monadTree)) if await.decodedName.toString == "await" &&
-            transformer.tpe <:< thisType => {
+          List(monadTree))
+            if await.decodedName.toString == "await" &&
+              transformer.tpe <:< thisType => {
             transform(monadTree).flatMap { x =>
               new MonadTree(x, awaitValueTypeTree.tpe)
             }
+          }
+          case Apply(method@Ident(name), parameters) if forceAwait(name) => {
+            c.warning(c.enclosingPosition, "name")
+            def transformParameters(untransformed: List[Tree], transformed: List[Tree]): TransformedTree = {
+              untransformed match {
+                case Nil => {
+                  transform(method).flatMap { transformedMethod =>
+                    new MonadTree(Apply(transformedMethod, transformed.reverse), origin.tpe)
+                  }
+                }
+                case head :: tail => {
+                  transform(head).flatMap { transformedHead =>
+                    transformParameters(tail, transformedHead :: transformed)
+                  }
+                }
+              }
+            }
+            transformParameters(parameters, Nil)
           }
           case Try(block, catches, finalizer) => {
             val tryCatch = catches.foldLeft(transform(block).monad) { (tryMonad, cd) =>
@@ -252,6 +270,18 @@ object Transformer {
               new PlainTree(Annotated(annot, x), origin.tpe)
             }
           }
+          case LabelDef(name1, List(), If(condition, block @ Block(body, Apply(Ident(name2), List())), Literal(Constant(()))))
+            if name1 == name2 => {
+            new MonadTree(
+              Apply(
+                TypeApply(
+                  Select(TypeApply(reify(_root_.scalaz.Monad).tree, List(TypeTree(monadType))), TermName("whileM_")),
+                  List(TypeTree(origin.tpe))),
+                List(
+                  transform(condition).monad,
+                  transform(treeCopy.Block(block, body, Literal(Constant(())))).monad)),
+              origin.tpe)
+          }
           case LabelDef(name, params, rhs) => {
             ???
           }
@@ -261,7 +291,7 @@ object Transformer {
           }
         }
       }
-      val result = transform(inputTree)
+      val result = transform(inputTree)(Set.empty)
       //    c.info(c.enclosingPosition, show(result.monad), true)
       c.untypecheck(result.monad)
     }

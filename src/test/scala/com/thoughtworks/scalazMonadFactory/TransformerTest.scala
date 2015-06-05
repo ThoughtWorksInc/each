@@ -1,9 +1,7 @@
 package com.thoughtworks.scalazMonadFactory
 
 import org.junit.Test
-import scalaz.Monad
-import scalaz.Bind
-import scalaz.Applicative
+import scalaz._
 import scalaz.effect.MonadCatchIO
 import scalaz.effect.IO
 import org.junit.Assert
@@ -318,6 +316,45 @@ def testCatch(): Unit = {
     }
 
     Assert.assertEquals(100, nestedClass.get.bar)
+  }
+
+  @Test
+  def testVarIf(): Unit = {
+
+
+    val transformer = Transformer[IO]
+    import transformer._
+    var count = 0
+    def io(initialValue: Int) = async {
+      var i = initialValue
+      if (i == 0) {
+        i = 1
+      } else {
+        i = 2
+      }
+      i += 10
+      i
+    }
+
+    val state = {
+      IndexedStateT.stateTMonadState[Int, IO].ifM(
+        IndexedStateT.stateTMonadState[Int, IO].get.map(_ == 0),
+        IndexedStateT.stateTMonadState[Int, IO].put(1),
+        IndexedStateT.stateTMonadState[Int, IO].put(2)
+      ).flatMap { _ =>
+        IndexedStateT.stateTMonadState[Int, IO].get
+      }.flatMap { v =>
+        IndexedStateT.stateTMonadState[Int, IO].put(v + 10)
+      }.flatMap { _ =>
+        IndexedStateT.stateTMonadState[Int, IO].get
+      }
+    }
+
+    Assert.assertEquals(11, state.eval(0).unsafePerformIO())
+    Assert.assertEquals(12, state.eval(-1).unsafePerformIO())
+
+    Assert.assertEquals(state.eval(0).unsafePerformIO(), io(0).unsafePerformIO())
+    Assert.assertEquals(state.eval(-1).unsafePerformIO(), io(-1).unsafePerformIO())
   }
 
   /* Disable since it is not implemented yet

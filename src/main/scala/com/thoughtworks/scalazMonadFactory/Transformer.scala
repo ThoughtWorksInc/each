@@ -8,10 +8,10 @@ import scala.language.higherKinds
 trait Transformer[F[_]] {
 
   /**
-   * @usecase def async[X](inputTree: X)(implicit bind: scalaz.Bind[M], applicative: scalaz.Applicative[M]): M[X]
-   * @usecase def async[X](inputTree: X)(implicit monadCatchIo: scalaz.effect.MonadCatchIO[M]): M[X]
+   * @usecase def async[X](inputTree: X)(implicit monad: scalaz.Monad[F]): F[X]
+   * @usecase def async[X](inputTree: X)(implicit monadCatchIo: scalaz.effect.MonadCatchIO[F]): F[X]
    */
-  final def async[X](inputTree: X): F[X] = macro Transformer.MacroImplementation.async
+  final def async[X](inputTree: X)(implicit bind: scalaz.Bind[F]): F[X] = macro Transformer.MacroImplementation.async
 
   @compileTimeOnly("`await` must be inside `async`.")
   implicit final def await[X](m: F[X]): X = ???
@@ -22,11 +22,11 @@ object Transformer {
   def apply[F[_]] = new Transformer[F] {}
 
   private[Transformer] object MacroImplementation {
-    def async(c: scala.reflect.macros.blackbox.Context)(inputTree: c.Tree): c.Tree = {
+    def async(c: scala.reflect.macros.blackbox.Context)(inputTree: c.Tree)(bind: c.Tree): c.Tree = {
       import c.universe._
       import c.universe.Flag._
       //    c.info(c.enclosingPosition, showRaw(inputTree), true)
-      val Apply(TypeApply(Select(thisTree, _), List(asyncValueTypeTree)), _) = c.macroApplication
+      val Apply(Apply(TypeApply(Select(thisTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication
       val thisType = thisTree.tpe.baseType(typeOf[_root_.com.thoughtworks.scalazMonadFactory.Transformer[_root_.scala.Option]].typeSymbol)
       val List(monadType) = thisType.widen.typeArgs
       //    c.info(c.enclosingPosition, show(monadType), true)

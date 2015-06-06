@@ -358,7 +358,6 @@ def testCatch(): Unit = {
   @Test
   def testVarIf(): Unit = {
 
-
     val transformer = Transformer[IO]
     import transformer._
     var count = 0

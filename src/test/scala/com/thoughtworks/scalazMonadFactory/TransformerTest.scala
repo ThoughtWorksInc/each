@@ -81,6 +81,29 @@ class TransformerTest {
   }
 
   @Test
+  def testReturn(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    def returnExprssions(input: Option[Int]): Option[Int] = async {
+      if (input < 0) {
+        return Some(-1)
+      }
+      if (input < 10) {
+        return Some(0)
+      }
+      input
+    }
+
+    Assert.assertEquals(Some(-1), returnExprssions(Some(-1234)))
+    Assert.assertEquals(Some(0), returnExprssions(Some(5)))
+    Assert.assertEquals(Some(13), returnExprssions(Some(13)))
+    Assert.assertEquals(None, returnExprssions(None))
+  }
+
+  @Test
   def testAssignExpressions(): Unit = {
     import scalaz.std.option._
 

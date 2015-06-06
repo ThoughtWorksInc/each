@@ -315,8 +315,28 @@ object Transformer {
                   transform(treeCopy.Block(block, body, Literal(Constant(())))).monad)),
               origin.tpe)
           }
-          case LabelDef(name, params, rhs) => {
-            ???
+          case LabelDef(name1, List(), block@Block(body, If(condition, Apply(Ident(name2), List()), Literal(Constant(())))))
+            if name1 == name2 => {
+            new MonadTree(
+              Block(List(
+                ValDef(Modifiers(), name1, TypeTree(), transform(treeCopy.Block(block, body, Literal(Constant(())))).monad)),
+                Apply(
+                  Apply(
+                    TypeApply(
+                      Select(TypeApply(reify(_root_.scalaz.Bind).tree, List(TypeTree(monadType))), TermName("bind")),
+                      List(TypeTree(typeOf[_root_.scala.Unit]), TypeTree(origin.tpe))),
+                    List(Ident(name1))),
+                  List(
+                    Function(
+                      List(ValDef(Modifiers(PARAM), TermName(c.freshName()), TypeTree(typeOf[_root_.scala.Unit]), EmptyTree)),
+                      Apply(
+                        TypeApply(
+                          Select(TypeApply(reify(_root_.scalaz.Monad).tree, List(TypeTree(monadType))), TermName("whileM_")),
+                          List(TypeTree(origin.tpe))),
+                        List(
+                          transform(condition).monad,
+                          Ident(name1))))))),
+              origin.tpe)
           }
           case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
             new PlainTree(origin, origin.tpe)

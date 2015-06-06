@@ -414,6 +414,51 @@ def testCatch(): Unit = {
     Assert.assertEquals(Some("foo"), optionHead)
   }
 
+  @Test
+  def testIoDoWhile(): Unit = {
+    val transformer = Transformer[IO]
+    import transformer._
+
+    def s = IO("123")
+    var count = 0
+    val io = async {
+      var i = 0
+      do {
+        count += s.length
+        i += 1
+      } while (i < 100)
+      i
+    }
+
+    Assert.assertEquals(100, io.unsafePerformIO())
+
+    Assert.assertEquals(300, count)
+  }
+
+
+  @Test
+  def testDoWhile(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    def s = Some("123")
+    var count = 0
+    val option = async {
+      var i = 0
+      do {
+        count += s.length
+        i += 1
+      } while (i < 0)
+      i
+    }
+
+    Assert.assertEquals(Some(1), option)
+
+    Assert.assertEquals(3, count)
+  }
+
 }
 
  

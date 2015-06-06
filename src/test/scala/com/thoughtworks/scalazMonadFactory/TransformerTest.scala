@@ -521,6 +521,43 @@ def testCatch(): Unit = {
     Assert.assertEquals(3, count)
   }
 
+  @Test
+  def testThis(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    import scala.language.existentials
+    val thisClass = async {
+      this.getClass
+    }
+
+    Assert.assertEquals(Some(classOf[TransformerTest]), thisClass)
+  }
+
+  @Test
+  def testSuper(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    class Super {
+      def foo = "super"
+    }
+
+    object Child extends Super {
+      override def foo = "child"
+
+      val superFoo = async {
+        super.foo
+      }
+    }
+
+    Assert.assertEquals(Some("super"), Child.superFoo)
+  }
+
 }
 
  

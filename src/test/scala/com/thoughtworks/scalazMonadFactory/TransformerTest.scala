@@ -393,6 +393,27 @@ def testCatch(): Unit = {
     Assert.assertEquals(state.eval(-1).unsafePerformIO(), io(-1).unsafePerformIO())
   }
 
+  @Test
+  def testMatch(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    val optionHead = async {
+      await(await(Option(List("foo", "bar", "baz"))) match {
+        case head :: tail => {
+          Some(head)
+        }
+        case _ => {
+          None
+        }
+      })
+    }
+
+    Assert.assertEquals(Some("foo"), optionHead)
+  }
+
   /* Disable since it is not implemented yet
   def testWhile(): Unit = {
 

@@ -262,7 +262,24 @@ object Transformer {
             }
           }
           case Match(selector, cases) => {
-            ???
+            val selectorName = TermName(c.freshName("selector"))
+            new MonadTree(
+              Apply(
+                Apply(
+                  TypeApply(
+                    Select(TypeApply(reify(_root_.scalaz.Bind).tree, List(TypeTree(monadType))), TermName("bind")),
+                    List(TypeTree(selector.tpe), TypeTree(origin.tpe))),
+                  List(transform(selector).monad)),
+                List(
+                  Function(
+                    List(ValDef(Modifiers(PARAM), selectorName, TypeTree(selector.tpe), EmptyTree)),
+                    Match(
+                      Ident(selectorName),
+                      for {
+                        cd@CaseDef(pat, guard, body) <- cases
+                      } yield
+                      treeCopy.CaseDef(cd, pat, guard, transform(body).monad))))),
+              origin.tpe)
           }
           case If(cond, thenp, elsep) => {
             new MonadTree(
@@ -286,7 +303,7 @@ object Transformer {
               new PlainTree(Annotated(annot, x), origin.tpe)
             }
           }
-          case LabelDef(name1, List(), If(condition, block @ Block(body, Apply(Ident(name2), List())), Literal(Constant(()))))
+          case LabelDef(name1, List(), If(condition, block@Block(body, Apply(Ident(name2), List())), Literal(Constant(()))))
             if name1 == name2 => {
             new MonadTree(
               Apply(
@@ -308,7 +325,7 @@ object Transformer {
         }
       }
       val result = transform(inputTree)(Set.empty)
-      //    c.info(c.enclosingPosition, show(result.monad), true)
+      //      c.info(c.enclosingPosition, show(result.monad), true)
       c.untypecheck(result.monad)
     }
   }

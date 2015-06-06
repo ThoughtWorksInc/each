@@ -17,7 +17,7 @@ limitations under the License.
 package com.thoughtworks.scalazMonadFactory
 
 import scala.language.experimental.macros
-import scala.annotation.compileTimeOnly
+import scala.annotation.{tailrec, compileTimeOnly}
 import scala.language.implicitConversions
 import scala.language.higherKinds
 
@@ -54,11 +54,6 @@ object Transformer {
 
         def flatMap(f: c.Tree => TransformedTree): TransformedTree
 
-        def prepend(head: c.Tree) = {
-          BlockTree(head :: Nil, this)
-        }
-
-        def isDiscardable: Boolean
       }
 
       final case class OpenTree(prefix: TransformedTree, parameter: ValDef, inner: TransformedTree) extends TransformedTree {
@@ -90,17 +85,11 @@ object Transformer {
           new OpenTree(prefix, parameter, inner.flatMap(f))
         }
 
-        override final def isDiscardable: Boolean = false
-
       }
 
       final case class BlockTree(prefix: List[c.Tree], tail: TransformedTree) extends TransformedTree {
 
         override final def tpe = tail.tpe
-
-        override final def prepend(head: c.Tree) = {
-          BlockTree(head :: prefix, tail)
-        }
 
         override final def monad: c.Tree = {
           Block(prefix, tail.monad)
@@ -110,8 +99,6 @@ object Transformer {
           BlockTree(prefix, tail.flatMap(f))
         }
 
-        override final def isDiscardable: Boolean = tail.isDiscardable
-
       }
 
       final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
@@ -120,8 +107,6 @@ object Transformer {
           val newId = TermName(c.freshName("parameter"))
           OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
         }
-
-        override final def isDiscardable: Boolean = true
 
       }
 
@@ -136,8 +121,6 @@ object Transformer {
         override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
           f(tree)
         }
-
-        override final def isDiscardable: Boolean = false
 
       }
       def typed(transformedTree: TransformedTree, tpe: Type): TransformedTree = {
@@ -251,10 +234,26 @@ object Transformer {
                 case head :: tail => {
                   val transformedTree = transform(head)
                   transformedTree.flatMap { transformedHead =>
-                    if (transformedTree.isDiscardable) {
+                    @tailrec
+                    def isDiscardable(transformedTree: TransformedTree): Boolean = {
+                      transformedTree match {
+                        case _: OpenTree => false
+                        case BlockTree(_, tail) => isDiscardable(tail)
+                        case _: MonadTree => true
+                        case _: PlainTree => false
+                      }
+                    }
+                    if (isDiscardable(transformedTree)) {
                       transformStats(tail)
                     } else {
-                      transformStats(tail).prepend(transformedHead)
+                      transformStats(tail) match {
+                        case BlockTree(prefix, tail) => {
+                          BlockTree(transformedHead :: prefix, tail)
+                        }
+                        case transformedTail@(_: MonadTree | _: OpenTree | _: PlainTree) => {
+                          BlockTree(transformedHead :: Nil, transformedTail)
+                        }
+                      }
                     }
                   }
                 }

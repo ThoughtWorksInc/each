@@ -413,6 +413,9 @@ def testCatch(): Unit = {
       i
     }
 
+    Assert.assertEquals(11, io(0).unsafePerformIO())
+    Assert.assertEquals(12, io(-1).unsafePerformIO())
+
     val state = {
       IndexedStateT.stateTMonadState[Int, IO].ifM(
         IndexedStateT.stateTMonadState[Int, IO].get.map(_ == 0),
@@ -426,9 +429,6 @@ def testCatch(): Unit = {
         IndexedStateT.stateTMonadState[Int, IO].get
       }
     }
-
-    Assert.assertEquals(11, state.eval(0).unsafePerformIO())
-    Assert.assertEquals(12, state.eval(-1).unsafePerformIO())
 
     Assert.assertEquals(state.eval(0).unsafePerformIO(), io(0).unsafePerformIO())
     Assert.assertEquals(state.eval(-1).unsafePerformIO(), io(-1).unsafePerformIO())

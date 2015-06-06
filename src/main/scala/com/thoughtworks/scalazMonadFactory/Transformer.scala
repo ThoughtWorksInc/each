@@ -57,10 +57,11 @@ object Transformer {
         def prepend(head: c.Tree) = {
           BlockTree(head :: Nil, this)
         }
+
+        def isDiscardable: Boolean
       }
 
       final case class OpenTree(prefix: TransformedTree, parameter: ValDef, inner: TransformedTree) extends TransformedTree {
-        self =>
 
         override final def monad: c.Tree = {
           inner match {
@@ -86,11 +87,10 @@ object Transformer {
         override final def tpe = inner.tpe
 
         override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
-          new OpenTree(
-            prefix = self.prefix,
-            parameter = self.parameter,
-            inner = self.inner.flatMap(f))
+          new OpenTree(prefix, parameter, inner.flatMap(f))
         }
+
+        override final def isDiscardable: Boolean = false
 
       }
 
@@ -110,6 +110,8 @@ object Transformer {
           BlockTree(prefix, tail.flatMap(f))
         }
 
+        override final def isDiscardable: Boolean = tail.isDiscardable
+
       }
 
       final case class MonadTree(override final val monad: c.Tree, override final val tpe: Type) extends TransformedTree {
@@ -118,6 +120,9 @@ object Transformer {
           val newId = TermName(c.freshName("parameter"))
           OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
         }
+
+        override final def isDiscardable: Boolean = true
+
       }
 
       final case class PlainTree(tree: Tree, tpe: Type) extends TransformedTree {
@@ -131,6 +136,9 @@ object Transformer {
         override final def flatMap(f: c.Tree => TransformedTree): TransformedTree = {
           f(tree)
         }
+
+        override final def isDiscardable: Boolean = false
+
       }
       def typed(transformedTree: TransformedTree, tpe: Type): TransformedTree = {
         transformedTree.flatMap { x => PlainTree(Typed(x, TypeTree(tpe)), tpe) }
@@ -235,21 +243,24 @@ object Transformer {
             transformParameters(parameters, Nil)
           }
           case Block(stats, expr) => {
-
             def transformStats(untransformed: List[c.Tree]): TransformedTree = {
               untransformed match {
                 case Nil => {
                   transform(expr)
                 }
                 case head :: tail => {
-                  transform(head).flatMap { transformedHead =>
-                    transformStats(tail).prepend(transformedHead)
+                  val transformedTree = transform(head)
+                  transformedTree.flatMap { transformedHead =>
+                    if (transformedTree.isDiscardable) {
+                      transformStats(tail)
+                    } else {
+                      transformStats(tail).prepend(transformedHead)
+                    }
                   }
                 }
               }
             }
             new MonadTree(transformStats(stats).monad, origin.tpe)
-
           }
           case ValDef(mods, name, tpt, rhs) => {
             transform(rhs).flatMap { x =>

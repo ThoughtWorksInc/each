@@ -16,4 +16,6 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % "test"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 
-scalacOptions in Compile += "-deprecation"
+scalacOptions += "-deprecation"
+
+scalacOptions += "-feature"

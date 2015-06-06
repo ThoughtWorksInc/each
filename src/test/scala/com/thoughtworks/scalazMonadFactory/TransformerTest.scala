@@ -104,6 +104,45 @@ class TransformerTest {
   }
 
   @Test
+  def testImport(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    object A {
+      def currentImport = "A"
+    }
+
+    object B {
+      def currentImport = "B"
+    }
+
+    object C {
+      def currentImport = "C"
+    }
+
+    val result = async {
+      import A._
+      Assert.assertEquals("A", currentImport)
+
+      {
+        import B._
+        Assert.assertEquals("B", currentImport)
+
+        {
+          import C._
+          Assert.assertEquals("C", currentImport)
+        }
+      }
+
+      currentImport
+    }
+
+    Assert.assertEquals(Some("A"), result)
+  }
+
+  @Test
   def testAssignExpressions(): Unit = {
     import scalaz.std.option._
 

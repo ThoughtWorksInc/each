@@ -25,6 +25,27 @@ import org.junit.Assert
 class TransformerTest {
 
   @Test
+  def testIoWhile(): Unit = {
+    val transformer = Transformer[IO]
+    import transformer._
+
+    def s = IO("123")
+    var count = 0
+    val io = async {
+      var i = 0
+      while (i < 100) {
+        count += s.length
+        i += 1
+      }
+      i
+    }
+
+    Assert.assertEquals(100, io.unsafePerformIO())
+
+    Assert.assertEquals(300, count)
+  }
+
+  @Test
   def testWhile(): Unit = {
     import scalaz.std.option._
 

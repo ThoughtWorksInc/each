@@ -558,6 +558,23 @@ def testCatch(): Unit = {
     Assert.assertEquals(Some("super"), Child.superFoo)
   }
 
+  @Test
+  def testAnnotation(): Unit = {
+    import scalaz.std.option._
+
+    val transformer = Transformer[Option]
+    import transformer._
+
+    val selector = Seq(1, 2, 3)
+    Assert.assertEquals(Some(Seq(1, 2, 3)), async {
+      (selector: @unchecked) match {
+        case s: Seq[String@unchecked] => {
+          s
+        }
+      }
+    })
+  }
+
 }
 
  

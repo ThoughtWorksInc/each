@@ -209,21 +209,21 @@ object Transformer {
             }
           }
           case Apply(method, parameters) => {
-            def transformParameters(untransformed: List[Tree], transformed: List[Tree]): TransformedTree = {
-              untransformed match {
-                case Nil => {
-                  transform(method).flatMap { transformedMethod =>
+            transform(method).flatMap { transformedMethod =>
+              def transformParameters(untransformed: List[Tree], transformed: List[Tree]): TransformedTree = {
+                untransformed match {
+                  case Nil => {
                     new PlainTree(Apply(transformedMethod, transformed.reverse), origin.tpe)
                   }
-                }
-                case head :: tail => {
-                  transform(head).flatMap { transformedHead =>
-                    transformParameters(tail, transformedHead :: transformed)
+                  case head :: tail => {
+                    transform(head).flatMap { transformedHead =>
+                      transformParameters(tail, transformedHead :: transformed)
+                    }
                   }
                 }
               }
+              transformParameters(parameters, Nil)
             }
-            transformParameters(parameters, Nil)
           }
           case Block(stats, expr) => {
             def transformStats(untransformed: List[c.Tree]): TransformedTree = {

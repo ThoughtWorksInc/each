@@ -230,11 +230,11 @@ class TransformerTest {
 
     Assert.assertEquals(
       for {
-        string2 <- list2
         string1 <- list1
+        string2 <- list2
       } yield (string1.substring(0, 2) + " " + string2.substring(1, 4)),
       concatList)
-    Assert.assertEquals(List("fo ell", "ba ell", "ba ell", "fo orl", "ba orl", "ba orl"), concatList)
+    Assert.assertEquals(List("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatList)
   }
 
   @Test

@@ -225,10 +225,15 @@ class TransformerTest {
 
     val list1 = List("foo", "bar", "baz")
     val list2 = List("Hello", "World!")
-    val concatList = async {
-      list1.substring(0, 2) + " " + list2.substring(1, 4)
-    }
 
+    val concatList = async(list1.substring(0, 2) + " " + list2.substring(1, 4))
+
+    Assert.assertEquals(
+      for {
+        string2 <- list2
+        string1 <- list1
+      } yield (string1.substring(0, 2) + " " + string2.substring(1, 4)),
+      concatList)
     Assert.assertEquals(List("fo ell", "ba ell", "ba ell", "fo orl", "ba orl", "ba orl"), concatList)
   }
 

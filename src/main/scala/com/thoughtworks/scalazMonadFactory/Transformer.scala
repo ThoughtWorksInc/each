@@ -38,7 +38,7 @@ object Transformer {
   def apply[F[_]] = new Transformer[F] {}
 
   private[Transformer] object MacroImplementation {
-    def async(c: scala.reflect.macros.blackbox.Context)(inputTree: c.Tree)(bind: c.Tree): c.Tree = {
+    def async(c: scala.reflect.macros.whitebox.Context)(inputTree: c.Tree)(bind: c.Tree): c.Tree = {
       import c.universe._
       import c.universe.Flag._
       //    c.info(c.enclosingPosition, showRaw(inputTree), true)

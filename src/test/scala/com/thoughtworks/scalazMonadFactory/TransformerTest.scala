@@ -414,20 +414,6 @@ def testCatch(): Unit = {
     Assert.assertEquals(Some("foo"), optionHead)
   }
 
-  /* Disable since it is not implemented yet
-  def testWhile(): Unit = {
-
-    val transformer = Transformer[Option]
-    import transformer._
-    val s = Some(0.5)
-    val some2 = async {
-      while(math.random < s) {
-        println("Hello, World!")
-      }
-    }
-  }
-  */
-
 }
 
  

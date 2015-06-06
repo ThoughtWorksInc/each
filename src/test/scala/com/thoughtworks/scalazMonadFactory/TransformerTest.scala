@@ -16,11 +16,12 @@ limitations under the License.
 
 package com.thoughtworks.scalazMonadFactory
 
-import org.junit.Test
+import org.junit.{Assert, Test}
+
 import scalaz._
-import scalaz.effect.MonadCatchIO
 import scalaz.effect.IO
-import org.junit.Assert
+import scalaz.std.list._
+import scalaz.std.option._
 
 class TransformerTest {
 
@@ -47,8 +48,6 @@ class TransformerTest {
 
   @Test
   def testWhile(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -66,8 +65,6 @@ class TransformerTest {
 
   @Test
   def testIf(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -82,8 +79,6 @@ class TransformerTest {
 
   @Test
   def testReturn(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -105,8 +100,6 @@ class TransformerTest {
 
   @Test
   def testImport(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -144,8 +137,6 @@ class TransformerTest {
 
   @Test
   def testAssignExpressions(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -161,8 +152,6 @@ class TransformerTest {
 
   @Test
   def testDefDef(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -179,8 +168,6 @@ class TransformerTest {
 
   @Test
   def testSomeNilLength(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
     val s = Some(Nil)
@@ -195,8 +182,6 @@ class TransformerTest {
 
   @Test
   def testNoneLength(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
     val s: Option[Seq[_]] = None
@@ -211,7 +196,6 @@ class TransformerTest {
 
   @Test
   def testNewByOption(): Unit = {
-    import scalaz.std.option._
     val transformer = Transformer[Option]
     import transformer._
     val newS = async {
@@ -224,7 +208,6 @@ class TransformerTest {
 
   @Test
   def testNewByList(): Unit = {
-    import scalaz.std.list._
     val transformer = Transformer[List]
     import transformer._
     val newS = async {
@@ -237,7 +220,6 @@ class TransformerTest {
 
   @Test
   def testConcatList = {
-    import scalaz.std.list._
     val transformer = Transformer[List]
     import transformer._
 
@@ -400,8 +382,6 @@ def testCatch(): Unit = {
 
   @Test
   def testNestedClass(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
     trait Base {
@@ -419,7 +399,6 @@ def testCatch(): Unit = {
 
   @Test
   def testVarIf(): Unit = {
-
     val transformer = Transformer[IO]
     import transformer._
     var count = 0
@@ -457,8 +436,6 @@ def testCatch(): Unit = {
 
   @Test
   def testMatch(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -500,8 +477,6 @@ def testCatch(): Unit = {
 
   @Test
   def testDoWhile(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -523,8 +498,6 @@ def testCatch(): Unit = {
 
   @Test
   def testThis(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -538,8 +511,6 @@ def testCatch(): Unit = {
 
   @Test
   def testSuper(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 
@@ -560,8 +531,6 @@ def testCatch(): Unit = {
 
   @Test
   def testAnnotation(): Unit = {
-    import scalaz.std.option._
-
     val transformer = Transformer[Option]
     import transformer._
 

@@ -200,7 +200,7 @@ object Transformer {
           }
           case Select(instance, field) => {
             transform(instance).flatMap { x =>
-              new PlainTree(Select(x, field), origin.tpe)
+              new PlainTree(treeCopy.Select(origin, x, field), origin.tpe)
             }
           }
           case TypeApply(method, parameters) => {

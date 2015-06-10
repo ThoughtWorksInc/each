@@ -466,6 +466,17 @@ class TransformerTest {
     })
   }
 
+  @Test
+  def testXml(): Unit = {
+    val transformer = Transformer[Option]
+
+    import transformer._
+
+    val someFoo = Some(<foo bar="1"/>)
+    val result = async {<baz>{await(someFoo)}</baz>}
+    Assert.assertEquals(Some(<baz><foo bar="1"/></baz>), result)
+  }
+
 }
 
  

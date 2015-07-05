@@ -2,7 +2,9 @@ package com.thoughtworks.scalazMonadFactory
 
 import scalaz._
 
-object ComprehensionImplicits {
+object ComprehensionImplicits extends ComprehensionImplicits
+
+trait ComprehensionImplicits {
 
   implicit def comprehensionApplicative[F[_]]: Applicative[F] = macro ComprehensionApplicative.applyImpl
 

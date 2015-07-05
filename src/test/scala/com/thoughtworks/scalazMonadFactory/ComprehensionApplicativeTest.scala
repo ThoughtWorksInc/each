@@ -11,7 +11,7 @@ class ComprehensionApplicativeTest {
   }
 
   @Test
-  def testArrayAp(): Unit = {
+  def testSeqAp(): Unit = {
     val seqApplicative = ComprehensionApplicative[Seq]
     Assert.assertTrue(Seq("Hello1!", "Hello1?", "Hello2!", "Hello2?") == seqApplicative.ap(Seq("Hello1", "Hello2"))(Seq((_: String) + "!", (_: String) + "?")))
   }

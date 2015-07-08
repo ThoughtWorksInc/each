@@ -13,6 +13,6 @@ trait ComprehensionImplicits {
 
   implicit def comprehensionBind[F[_]]: Bind[F] = macro ComprehensionBind.applyImpl
 
-  implicit def comprehensionMonad[F[_]]: Monad[F] = ???
+  implicit def comprehensionMonad[F[_]]: Monad[F] = macro ComprehensionMonad.applyImpl
 
 }

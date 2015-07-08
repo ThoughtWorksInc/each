@@ -2,6 +2,9 @@ package com.thoughtworks.scalazMonadFactory
 
 import scalaz._
 
+import scala.language.experimental.macros
+import scala.language.higherKinds
+
 object ComprehensionImplicits extends ComprehensionImplicits
 
 trait ComprehensionImplicits {

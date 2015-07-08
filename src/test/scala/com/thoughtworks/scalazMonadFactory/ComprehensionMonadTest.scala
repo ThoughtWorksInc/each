@@ -2,9 +2,6 @@ package com.thoughtworks.scalazMonadFactory
 
 import org.junit.{Assert, Test}
 
-/**
- * Created by longyang.zhang on 7/8/15.
- */
 class ComprehensionMonadTest {
   @Test
   def testSeqPoint(): Unit = {

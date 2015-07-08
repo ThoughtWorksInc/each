@@ -6,9 +6,6 @@ import scala.language.implicitConversions
 import scala.language.higherKinds
 import scalaz.Monad
 
-/**
- * Created by longyang.zhang on 7/8/15.
- */
 object ComprehensionMonad {
   def apply[F[_]]: Monad[F] = macro applyImpl
 

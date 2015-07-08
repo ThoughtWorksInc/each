@@ -25,18 +25,7 @@ object ComprehensionMonad {
     val faName = c.freshName("fa")
     val monadClassName = c.freshName("Monad")
 
-    val ast = c.parse(
-    """
-      |      new _root_.scalaz.Monad[Seq] {
-      |        override def bind[A, B](fa: Seq[A])(f: (A) => Seq[B]): Seq[B] = fa.flatMap(f)
-      |
-      |        override def point[A](a: => A): Seq[A] = Seq(a)
-      |      }
-    """.stripMargin)
-
-    c.info(c.enclosingPosition, showRaw(ast), true)
-
-    val myAst = Block(
+    val ast = Block(
       List(
         ClassDef(
           Modifiers(FINAL),
@@ -46,25 +35,33 @@ object ComprehensionMonad {
             List(AppliedTypeTree(Ident(typeOf[_root_.scalaz.Monad[({type T[A] = {}})#T]].typeSymbol), List(fTypeTree))),
             noSelfType,
             List(
-              DefDef(
-                Modifiers(),
-              termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(pendingSuperCall), Literal(Constant(())))
-              ),
+              DefDef(Modifiers(), termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(pendingSuperCall), Literal(Constant(())))),
               DefDef(
                 Modifiers(OVERRIDE),
                 TermName("bind"),
                 List(
                   TypeDef(Modifiers(PARAM), TypeName(typeParameter1Name), List(), TypeBoundsTree(EmptyTree, EmptyTree)),
-                  TypeDef(Modifiers(PARAM), TypeName(typeParameter2Name), List(), TypeBoundsTree(EmptyTree, EmptyTree))),
+                  TypeDef(Modifiers(PARAM), TypeName(typeParameter2Name), List(), TypeBoundsTree(EmptyTree, EmptyTree))
+                ),
                 List(
-                  List(ValDef(Modifiers(PARAM), TermName(faName), AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter1Name)))), EmptyTree)),
-                  List(ValDef(Modifiers(PARAM), TermName(fName), AppliedTypeTree(Ident(definitions.FunctionClass(1)),
-                        List(Ident(TypeName(typeParameter1Name)), AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol),
-                            List(Ident(TypeName(typeParameter2Name)))))), EmptyTree))),
-                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol),
-                  List(Ident(TypeName(typeParameter2Name)))),
-                  Apply(Select(Ident(TermName(faName)), TermName("flatMap")), List(Ident(TermName(fName))))),
-                DefDef(
+                  List(ValDef(Modifiers(PARAM), TermName(faName), AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol),
+                    List(Ident(TypeName(typeParameter1Name)))), EmptyTree)
+                  ),
+                  List(
+                    ValDef(
+                      Modifiers(PARAM),
+                      TermName(fName),
+                      AppliedTypeTree(
+                        Ident(definitions.FunctionClass(1)),
+                        List(Ident(TypeName(typeParameter1Name)), AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter2Name)))))
+                      ),
+                      EmptyTree)
+                  )
+                ),
+                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter2Name)))),
+                Apply(Select(Ident(TermName(faName)), TermName("flatMap")), List(Ident(TermName(fName))))
+              ),
+              DefDef(
                 Modifiers(OVERRIDE),
                 TermName("point"),
                 List(TypeDef(Modifiers(PARAM), TypeName(typeParameter1Name), List(), TypeBoundsTree(EmptyTree, EmptyTree))),
@@ -75,20 +72,21 @@ object ComprehensionMonad {
                       TermName(aName),
                       AppliedTypeTree(
                         Ident(definitions.ByNameParamClass),
-                        List(Ident(TypeName(typeParameter1Name)))), EmptyTree))),
-                AppliedTypeTree(
-                  Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter1Name)))), Apply(Ident(fTypeTree.tpe.typeSymbol.companion), List(Ident(TermName(aName)))))))
-        )),
-      Apply(
-        Select(
-          New(Ident(TypeName(monadClassName))),
-          termNames.CONSTRUCTOR
-        ),
-        List()
-      )
+                        List(Ident(TypeName(typeParameter1Name)))), EmptyTree)
+                  )
+                ),
+                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter1Name)))),
+                Apply(Ident(fTypeTree.tpe.typeSymbol.companion), List(Ident(TermName(aName))))
+              )
+            )
+          )
+        )
+      ),
+      Apply(Select(New(Ident(TypeName(monadClassName))), termNames.CONSTRUCTOR), List())
     )
 
-    c.info(c.enclosingPosition, show(myAst), true)
-    myAst
+//    c.info(c.enclosingPosition, show(ast), true)
+
+    ast
   }
 }

@@ -17,69 +17,75 @@ object ComprehensionApplicative {
 
     val TypeApply(_, List(fTypeTree: TypeTree)) = c.macroApplication
 
-    c.info(c.enclosingPosition, showRaw(fTypeTree), true)
+    //    c.info(c.enclosingPosition, showRaw(fTypeTree), true)
 
-    println("companion object of: " + fTypeTree.tpe.typeSymbol.companion)
-
+    val typeParameter1Name = c.freshName("A")
+    val typeParameter2Name = c.freshName("B")
+    val aName = c.freshName("a")
+    val fName = c.freshName("f")
+    val faName = c.freshName("fa")
+    val ffName = c.freshName("ff")
+    val applicativeClassName = c.freshName("Applicative")
+    
     Block(
       List(
         ClassDef(
           Modifiers(FINAL),
-          TypeName("$anon"),
+          TypeName(applicativeClassName),
           List(),
           Template(
-            List(AppliedTypeTree(Select(Ident(TermName("scalaz")), TypeName("Applicative")), List(fTypeTree))),
+            List(AppliedTypeTree(Ident(typeOf[_root_.scalaz.Applicative[({type T[A] = {}})#T]].typeSymbol), List(fTypeTree))),
             noSelfType,
             List(
               DefDef(Modifiers(), termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(pendingSuperCall), Literal(Constant(())))),
               DefDef(
-                Modifiers(OVERRIDE), TermName("point"), List(TypeDef(Modifiers(PARAM), TypeName("A"), List(), TypeBoundsTree(EmptyTree, EmptyTree))),
+                Modifiers(OVERRIDE), TermName("point"), List(TypeDef(Modifiers(PARAM), TypeName(typeParameter1Name), List(), TypeBoundsTree(EmptyTree, EmptyTree))),
                 List(List(
                   ValDef(
-                    Modifiers(PARAM | BYNAMEPARAM | COVARIANT), TermName("a"),
-                    AppliedTypeTree(Select(Select(Ident(termNames.ROOTPKG), TermName("scala")), TypeName("<byname>")), List(Ident(TypeName("A")))),
+                    Modifiers(PARAM | BYNAMEPARAM | COVARIANT), TermName(aName),
+                    AppliedTypeTree(Ident(definitions.ByNameParamClass), List(Ident(TypeName(typeParameter1Name)))),
                     EmptyTree)
                 )),
-                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName("A")))),
-                Apply(Ident(fTypeTree.tpe.typeSymbol.companion), List(Ident(TermName("a"))))
+                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter1Name)))),
+                Apply(Ident(fTypeTree.tpe.typeSymbol.companion), List(Ident(TermName(aName))))
               ),
               DefDef(
                 Modifiers(OVERRIDE), TermName("ap"),
                 List(
-                  TypeDef(Modifiers(PARAM), TypeName("A"), List(), TypeBoundsTree(EmptyTree, EmptyTree)),
-                  TypeDef(Modifiers(PARAM), TypeName("B"), List(), TypeBoundsTree(EmptyTree, EmptyTree))
+                  TypeDef(Modifiers(PARAM), TypeName(typeParameter1Name), List(), TypeBoundsTree(EmptyTree, EmptyTree)),
+                  TypeDef(Modifiers(PARAM), TypeName(typeParameter2Name), List(), TypeBoundsTree(EmptyTree, EmptyTree))
                 ),
                 List(
                   List(
                     ValDef(
-                      Modifiers(PARAM | BYNAMEPARAM | COVARIANT), TermName("fa"),
+                      Modifiers(PARAM | BYNAMEPARAM | COVARIANT), TermName(faName),
                       AppliedTypeTree(
-                        Select(Select(Ident(termNames.ROOTPKG), TermName("scala")), TypeName("<byname>")),
-                        List(AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName("A")))))
+                        Ident(definitions.ByNameParamClass),
+                        List(AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter1Name)))))
                       ),
                       EmptyTree)
                   ),
                   List(
-                    ValDef(Modifiers(PARAM | BYNAMEPARAM | COVARIANT), TermName("ff"),
+                    ValDef(Modifiers(PARAM | BYNAMEPARAM | COVARIANT), TermName(ffName),
                       AppliedTypeTree(
-                        Select(Select(Ident(termNames.ROOTPKG), TermName("scala")), TypeName("<byname>")),
+                        Ident(definitions.ByNameParamClass),
                         List(
                           AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol),
                             List(
-                              AppliedTypeTree(Select(Select(Ident(termNames.ROOTPKG), TermName("scala")), TypeName("Function1")),
-                                List(Ident(TypeName("A")), Ident(TypeName("B")))))))
+                              AppliedTypeTree(Ident(definitions.FunctionClass(1)),
+                                List(Ident(TypeName(typeParameter1Name)), Ident(TypeName(typeParameter2Name)))))))
                       ), EmptyTree))),
-                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName("B")))),
+                AppliedTypeTree(Ident(fTypeTree.tpe.typeSymbol), List(Ident(TypeName(typeParameter2Name)))),
                 Apply(
-                  Select(Ident(TermName("fa")), TermName("flatMap")),
+                  Select(Ident(TermName(faName)), TermName("flatMap")),
                   List(Function(
-                    List(ValDef(Modifiers(PARAM), TermName("a"), TypeTree(), EmptyTree)),
+                    List(ValDef(Modifiers(PARAM), TermName(aName), TypeTree(), EmptyTree)),
                     Apply(
-                      Select(Ident(TermName("ff")), TermName("map")),
+                      Select(Ident(TermName(ffName)), TermName("map")),
                       List(Function(
-                        List(ValDef(Modifiers(PARAM), TermName("f"), TypeTree(), EmptyTree)),
-                        Apply(Ident(TermName("f")), List(Ident(TermName("a"))))))))))))))),
-      Apply(Select(New(Ident(TypeName("$anon"))), termNames.CONSTRUCTOR), List()))
+                        List(ValDef(Modifiers(PARAM), TermName(fName), TypeTree(), EmptyTree)),
+                        Apply(Ident(TermName(fName)), List(Ident(TermName(aName))))))))))))))),
+      Apply(Select(New(Ident(TypeName(applicativeClassName))), termNames.CONSTRUCTOR), List()))
   }
 
 }

@@ -17,15 +17,12 @@ limitations under the License.
 package com.thoughtworks.each
 
 import com.thoughtworks.each.Monadic._
+import com.thoughtworks.each.ComprehensionImplicits._
 import org.junit.{Assert, Test}
 
 import scalaz.{IndexedStateT, Monad}
 
-//import scalaz._
-
 import scalaz.effect.IO
-import scalaz.std.list._
-import scalaz.std.option._
 
 class MonadicTest {
 
@@ -188,30 +185,46 @@ class MonadicTest {
   }
 
   @Test
-  def testNewByList(): Unit = {
-    val newS = monadic[List] {
+  def testNewBySeq(): Unit = {
+    val newS = monadic[Seq] {
       new String("a string")
     }
 
-    Assert.assertEquals(Monad[List].pure(new String("a string")), newS)
-    Assert.assertEquals(List(new String("a string")), newS)
+    Assert.assertEquals(Monad[Seq].pure(new String("a string")), newS)
+    Assert.assertEquals(Seq(new String("a string")), newS)
   }
 
   @Test
-  def testConcatList = {
+  def testConcatSeq = {
 
-    val list1 = List("foo", "bar", "baz")
-    val list2 = List("Hello", "World!")
+    val list1 = Seq("foo", "bar", "baz")
+    val list2 = Seq("Hello", "World!")
 
-    val concatList = monadic[List](list1.each.substring(0, 2) + " " + list2.each.substring(1, 4))
+    val concatSeq = monadic[Seq](list1.each.substring(0, 2) + " " + list2.each.substring(1, 4))
 
     Assert.assertEquals(
       for {
         string1 <- list1
         string2 <- list2
       } yield (string1.substring(0, 2) + " " + string2.substring(1, 4)),
-      concatList)
-    Assert.assertEquals(List("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatList)
+      concatSeq)
+    Assert.assertEquals(Seq("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatSeq)
+  }
+  @Test
+  def testConcatSet = {
+
+    val list1 = Set("foo", "bar", "baz")
+    val list2 = Set("Hello", "World!")
+
+    val concatSet = monadic[Set](list1.each.substring(0, 2) + " " + list2.each.substring(1, 4))
+
+    Assert.assertEquals(
+      for {
+        string1 <- list1
+        string2 <- list2
+      } yield (string1.substring(0, 2) + " " + string2.substring(1, 4)),
+      concatSet)
+    Assert.assertEquals(Set("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatSet)
   }
 
   @Test
@@ -327,7 +340,7 @@ class MonadicTest {
   def testMatch(): Unit = {
 
     val optionHead = monadic[Option] {
-      (Option(List("foo", "bar", "baz")).each match {
+      (Option(Seq("foo", "bar", "baz")).each match {
         case head :: tail => {
           Some(head)
         }
@@ -420,9 +433,14 @@ class MonadicTest {
   def testXml(): Unit = {
     val someFoo = Option(<foo bar="1"/>)
     val result = monadic[Option] {
-      <baz>{someFoo.each}</baz>
+      <baz>
+        {someFoo.each}
+      </baz>
     }
-    Assert.assertEquals(Some(<baz><foo bar="1"/></baz>), result)
+    Assert.assertEquals(Some(
+      <baz>
+        <foo bar="1"/>
+      </baz>), result)
   }
 }
 

@@ -1,6 +1,6 @@
 licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 organization := "com.thoughtworks"
 

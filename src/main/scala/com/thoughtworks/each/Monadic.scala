@@ -41,10 +41,6 @@ object Monadic {
 
   implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))(F0.TC)
 
-  /**
-   * @usecase def monadic[F[_], X](inputTree: X)(implicit monad: scalaz.Monad[F]): F[X] = ???
-   * @usecase def monadic[F[_], X](inputTree: X)(implicit monadCatchIo: scalaz.effect.MonadCatchIO[F]): F[X] = ???
-   */
   def monadic[F[_]] = new Monadic[F]
 
   private[Monadic] object Macro {

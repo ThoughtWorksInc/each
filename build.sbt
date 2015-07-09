@@ -21,6 +21,3 @@ libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.4" % Test
 scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
-
-
-fork in run := true

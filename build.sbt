@@ -4,7 +4,7 @@ scalaVersion := "2.11.6"
 
 organization := "com.thoughtworks"
 
-name := "scalaz-monad-factory"
+name := "each"
 
 version := "0.1.0-SNAPSHOT"
 

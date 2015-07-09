@@ -21,7 +21,7 @@ import com.thoughtworks.each.core.MonadicTransformer
 import scala.annotation.compileTimeOnly
 import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.Bind
+import scalaz.{Unapply, Bind}
 
 final class Monadic[F[_]] {
   /**
@@ -38,6 +38,8 @@ object Monadic {
     @compileTimeOnly("`each` must be inside `monadic`.")
     def each: A = ???
   }
+
+  implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))(F0.TC)
 
   /**
    * @usecase def monadic[F[_], X](inputTree: X)(implicit monad: scalaz.Monad[F]): F[X] = ???

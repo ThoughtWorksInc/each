@@ -14,28 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package com.thoughtworks.scalazMonadFactory
+package com.thoughtworks.each
 
+import com.thoughtworks.each.Monadic._
 import org.junit.{Assert, Test}
 
-import scalaz._
+import scalaz.{IndexedStateT, Monad}
+
+//import scalaz._
+
 import scalaz.effect.IO
 import scalaz.std.list._
 import scalaz.std.option._
 
-class TransformerTest {
+class MonadicTest {
 
   @Test
   def testIoWhile(): Unit = {
-    val transformer = Transformer[IO]
-    import transformer._
 
     def s = IO("123")
     var count = 0
-    val io = async {
+    val io = monadic[IO] {
       var i = 0
       while (i < 100) {
-        count += s.length
+        count += s.each.length
         i += 1
       }
       i
@@ -48,48 +50,41 @@ class TransformerTest {
 
   @Test
   def testWhile(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
-    def s = Some("123")
+    def s = Option("123")
     var count = 0
-    async {
+    monadic[Option] {
       val i = 100
       while (i != 100) {
-        count += s.length
+        count += s.each.length
       }
     }
-
     Assert.assertEquals(0, count)
   }
 
+
   @Test
   def testIf(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
-    val ifOption = async {
-      val i = Some(1)
-      val j = if (i > 1) 2 else 10
-      i + j
+    val ifOption = monadic[Option] {
+      val i = Option(1)
+      val j: Int = if (i.each > 1) 2 else 10
+      i.each + j
     }
 
     Assert.assertEquals(Some(11), ifOption)
   }
 
+
   @Test
   def testReturn(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
 
-    def returnExprssions(input: Option[Int]): Option[Int] = async {
-      if (input < 0) {
+    def returnExprssions(input: Option[Int]): Option[Int] = monadic[Option] {
+      if (input.each < 0) {
         return Some(-1)
       }
-      if (input < 10) {
+      if (input.each < 10) {
         return Some(0)
       }
-      input
+      input.each
     }
 
     Assert.assertEquals(Some(-1), returnExprssions(Some(-1234)))
@@ -100,9 +95,6 @@ class TransformerTest {
 
   @Test
   def testImport(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
     object A {
       def currentImport = "A"
     }
@@ -115,7 +107,7 @@ class TransformerTest {
       def currentImport = "C"
     }
 
-    val result = async {
+    val result = monadic[Option] {
       import A._
       Assert.assertEquals("A", currentImport)
 
@@ -137,10 +129,7 @@ class TransformerTest {
 
   @Test
   def testAssignExpressions(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
-    val assignExp = async {
+    val assignExp = monadic[Option] {
       var pi = 3.1415
       pi = 1.0
       pi
@@ -152,28 +141,24 @@ class TransformerTest {
 
   @Test
   def testDefDef(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
 
-    val lengthOption = async {
-      def s = Some(Nil)
-      s.length
+    val lengthOption = monadic[Option] {
+      def s = Option(Nil)
+      s.each.length
     }
 
     Assert.assertEquals(Monad[Option].map {
-      def s = Some(Nil)
+      def s = Option(Nil)
       s
     }(_.length), lengthOption)
   }
 
   @Test
   def testSomeNilLength(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-    val s = Some(Nil)
+    val s = Option(Nil)
 
-    val lengthOption = async {
-      s.length
+    val lengthOption = monadic[Option] {
+      s.each.length
     }
 
     Assert.assertEquals(Monad[Option].map(s)(_.length), lengthOption)
@@ -182,12 +167,10 @@ class TransformerTest {
 
   @Test
   def testNoneLength(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-    val s: Option[Seq[_]] = None
+    val s: Option[Seq[Nothing]] = None
 
-    val lengthOption = async {
-      s.length
+    val lengthOption = monadic[Option] {
+      s.each.length
     }
 
     Assert.assertEquals(Monad[Option].map(s)(_.length), lengthOption)
@@ -196,9 +179,7 @@ class TransformerTest {
 
   @Test
   def testNewByOption(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-    val newS = async {
+    val newS = monadic[Option] {
       new String("a string")
     }
 
@@ -208,9 +189,7 @@ class TransformerTest {
 
   @Test
   def testNewByList(): Unit = {
-    val transformer = Transformer[List]
-    import transformer._
-    val newS = async {
+    val newS = monadic[List] {
       new String("a string")
     }
 
@@ -220,13 +199,11 @@ class TransformerTest {
 
   @Test
   def testConcatList = {
-    val transformer = Transformer[List]
-    import transformer._
 
     val list1 = List("foo", "bar", "baz")
     val list2 = List("Hello", "World!")
 
-    val concatList = async(list1.substring(0, 2) + " " + list2.substring(1, 4))
+    val concatList = monadic[List](list1.each.substring(0, 2) + " " + list2.each.substring(1, 4))
 
     Assert.assertEquals(
       for {
@@ -239,11 +216,9 @@ class TransformerTest {
 
   @Test
   def testBlock(): Unit = {
-    val transformer = Transformer[IO]
-    import transformer._
     var count = 0
-    val io = async {
-      val _ = await(IO(()))
+    val io = monadic[IO] {
+      val _ = IO(()).each
       count += 1
       count += 1
       count
@@ -256,11 +231,9 @@ class TransformerTest {
 
   @Test
   def testCatch(): Unit = {
-    val transformer = Transformer[IO]
-    import transformer._
     var count = 0
-    val io = async {
-      val _ = await(IO(()))
+    val io = monadic[IO] {
+      val _ = IO(()).each
       try {
         count += 1
         (null: Array[Int])(0)
@@ -280,11 +253,9 @@ class TransformerTest {
 
   @Test
   def testThrowCatch(): Unit = {
-    val transformer = Transformer[IO]
-    import transformer._
     var count = 0
-    val io = async {
-      val _ = await(IO(()))
+    val io = monadic[IO] {
+      val _ = IO(()).each
       try {
         count += 1
         throw new Exception
@@ -304,12 +275,10 @@ class TransformerTest {
 
   @Test
   def testNestedClass(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
     trait Base {
       def bar: Int
     }
-    val nestedClass = async[Base] {
+    val nestedClass = monadic[Option][Base] {
       class Foo() extends Base {
         def bar = 100
       }
@@ -321,10 +290,8 @@ class TransformerTest {
 
   @Test
   def testVarIf(): Unit = {
-    val transformer = Transformer[IO]
-    import transformer._
     var count = 0
-    def io(initialValue: Int) = async {
+    def io(initialValue: Int) = monadic[IO] {
       var i = initialValue
       if (i == 0) {
         i = 1
@@ -358,18 +325,16 @@ class TransformerTest {
 
   @Test
   def testMatch(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
 
-    val optionHead = async {
-      await(await(Option(List("foo", "bar", "baz"))) match {
+    val optionHead = monadic[Option] {
+      (Option(List("foo", "bar", "baz")).each match {
         case head :: tail => {
           Some(head)
         }
         case _ => {
           None
         }
-      })
+      }).each
     }
 
     Assert.assertEquals(Some("foo"), optionHead)
@@ -377,15 +342,12 @@ class TransformerTest {
 
   @Test
   def testIoDoWhile(): Unit = {
-    val transformer = Transformer[IO]
-    import transformer._
-
     def s = IO("123")
     var count = 0
-    val io = async {
+    val io = monadic[IO] {
       var i = 0
       do {
-        count += s.length
+        count += s.each.length
         i += 1
       } while (i < 100)
       i
@@ -399,15 +361,12 @@ class TransformerTest {
 
   @Test
   def testDoWhile(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
-    def s = Some("123")
+    def s = Option("123")
     var count = 0
-    val option = async {
+    val option = monadic[Option] {
       var i = 0
       do {
-        count += s.length
+        count += s.each.length
         i += 1
       } while (i < 0)
       i
@@ -420,22 +379,16 @@ class TransformerTest {
 
   @Test
   def testThis(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
     import scala.language.existentials
-    val thisClass = async {
+    val thisClass = monadic[Option] {
       this.getClass
     }
 
-    Assert.assertEquals(Some(classOf[TransformerTest]), thisClass)
+    Assert.assertEquals(Some(classOf[MonadicTest]), thisClass)
   }
 
   @Test
   def testSuper(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
     class Super {
       def foo = "super"
     }
@@ -443,7 +396,7 @@ class TransformerTest {
     object Child extends Super {
       override def foo = "child"
 
-      val superFoo = async {
+      val superFoo = monadic[Option] {
         super.foo
       }
     }
@@ -453,11 +406,8 @@ class TransformerTest {
 
   @Test
   def testAnnotation(): Unit = {
-    val transformer = Transformer[Option]
-    import transformer._
-
     val selector = Seq(1, 2, 3)
-    Assert.assertEquals(Some(Seq(1, 2, 3)), async {
+    Assert.assertEquals(Some(Seq(1, 2, 3)), monadic[Option] {
       (selector: @unchecked) match {
         case s: Seq[String@unchecked] => {
           s
@@ -468,15 +418,12 @@ class TransformerTest {
 
   @Test
   def testXml(): Unit = {
-    val transformer = Transformer[Option]
-
-    import transformer._
-
-    val someFoo = Some(<foo bar="1"/>)
-    val result = async {<baz>{await(someFoo)}</baz>}
+    val someFoo = Option(<foo bar="1"/>)
+    val result = monadic[Option] {
+      <baz>{someFoo.each}</baz>
+    }
     Assert.assertEquals(Some(<baz><foo bar="1"/></baz>), result)
   }
-
 }
 
  

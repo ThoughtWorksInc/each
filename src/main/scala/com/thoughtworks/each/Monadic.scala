@@ -25,8 +25,8 @@ import scalaz.Bind
 
 final class Monadic[F[_]] {
   /**
-   * @usecase def monadic[F[_], X](inputTree: X)(implicit monad: scalaz.Monad[F]): F[X] = ???
-   * @usecase def monadic[F[_], X](inputTree: X)(implicit monadCatchIo: scalaz.effect.MonadCatchIO[F]): F[X] = ???
+   * @usecase def apply[F[_], X](inputTree: X)(implicit monad: scalaz.Monad[F]): F[X] = ???
+   * @usecase def apply[F[_], X](inputTree: X)(implicit monadCatchIo: scalaz.effect.MonadCatchIO[F]): F[X] = ???
    */
   def apply[X](inputTree: X)(implicit bind: scalaz.Bind[F]): F[X] = macro Monadic.Macro.monadic
 

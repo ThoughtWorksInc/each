@@ -34,7 +34,7 @@ final class Monadic[F[_]] {
 
 object Monadic {
 
-  implicit final class EachOps[F[_], A](val underlying: F[A])(implicit bind: Bind[F]) {
+  implicit final class EachOps[F[_], A](val self: F[A])(implicit bind: Bind[F]) {
     @compileTimeOnly("`each` must be inside `monadic`.")
     def each: A = ???
   }
@@ -54,20 +54,28 @@ object Monadic {
       //    c.info(c.enclosingPosition, showRaw(inputTree), true)
       val Apply(Apply(TypeApply(Select(monadicTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication
 
-      val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
-      val eachMethodSymbol = eachOpsType.member(TermName("each"))
-      //      val eachOpsType = thisTree.tpe.baseType()
-      //    c.info(c.enclosingPosition, show(fType), true)
+      val ExistentialType(List(widecard), TypeRef(_, eachOpsSymbol, List(_, widecardRef))) =
+        typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
+
       val transformer = new MonadicTransformer[c.universe.type](c.universe) {
+
         override def freshName(name: String) = c.freshName(name)
 
+        override val fType = monadicTree.tpe.widen.typeArgs(0)
+
+        val expectedEachOpsType = {
+          internal.existentialType(List(widecard), appliedType(eachOpsSymbol, List(fType, widecardRef)))
+        }
+
+        val eachMethodSymbol = expectedEachOpsType.member(TermName("each"))
+
         override val awaitExtractor: PartialFunction[Tree, Tree] = {
-          case eachMethodTree@Select(monadTree, _) if eachMethodTree.symbol == eachMethodSymbol => {
-            Select(monadTree, TermName("underlying"))
+          case eachMethodTree@Select(monadTree, _)
+            if eachMethodTree.symbol == eachMethodSymbol && monadTree.tpe <:< expectedEachOpsType => {
+            Select(monadTree, TermName("self"))
           }
         }
 
-        override val fType = monadicTree.tpe.widen.typeArgs(0)
       }
       val result = transformer.transform(inputTree)
       //      c.info(c.enclosingPosition, show(result.monad), true)

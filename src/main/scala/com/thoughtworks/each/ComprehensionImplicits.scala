@@ -24,9 +24,9 @@ import scalaz._
 
 object ComprehensionImplicits {
 
-  implicit def comprehensionMonad[F[_]]: Monad[F] = macro Macro.comprehensionMonad
+  implicit def comprehensionMonad[F[_]]: Monad[F] = macro MacroImplementation.comprehensionMonad
 
-  private object Macro {
+  private object MacroImplementation {
     def comprehensionMonad(c: scala.reflect.macros.whitebox.Context): c.Tree = {
       import c.universe._
       val TypeApply(_, List(fTypeTree: TypeTree)) = c.macroApplication

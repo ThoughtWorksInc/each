@@ -16,7 +16,7 @@ limitations under the License.
 
 package com.thoughtworks.each
 
-import com.thoughtworks.each.core.{ComprehensionMonad, ComprehensionBind, ComprehensionApplicative}
+import com.thoughtworks.each.core.ComprehensionMonadGenerator
 
 import scala.language.experimental.macros
 import scala.language.higherKinds
@@ -24,6 +24,15 @@ import scalaz._
 
 object ComprehensionImplicits {
 
-  implicit def comprehensionMonad[F[_]]: Monad[F] = macro ComprehensionMonad.applyImpl
+  implicit def comprehensionMonad[F[_]]: Monad[F] = macro Macro.comprehensionMonad
+
+  private object Macro {
+    def comprehensionMonad(c: scala.reflect.macros.whitebox.Context): c.Tree = {
+      import c.universe._
+      val TypeApply(_, List(fTypeTree: TypeTree)) = c.macroApplication
+      val fSymbol = fTypeTree.tpe.typeSymbol.asType
+      ComprehensionMonadGenerator.generatorMonad[c.universe.type](c.universe, c.freshName)(fSymbol)
+    }
+  }
 
 }

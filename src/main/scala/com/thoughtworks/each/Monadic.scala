@@ -65,40 +65,50 @@ object Monadic {
 
 
   /**
+   * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
+   *
    * Captures all the result in the `body` and converts them into a `F`.
    *
-   * `body` must not contain any `try` / `catch` / `throw` expressions.
+   * Note that `body` must not contain any `try` / `catch` / `throw` expressions.
    *
-   * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
    * @tparam F the higher kinded type of the monadic expression.
    * @param body the imperative style expressions that will be transform to monadic style.
    * @param monad the monad that executes expressions in `body`.
    * @return
    */
-  def monadic[F[_]] = new MonadicFactory[Monad, F]
+  def monadic[F[_]] = new PartialAppliedMonadic[Monad, F]
 
   /**
+   * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
+   *
    * Captures all the result in the `body` and converts them into a `F`.
    *
-   * `body` may not contain any `try` / `catch` / `throw` expressions.
+   * Note that `body` may contain any `try` / `catch` / `throw` expressions.
    *
-   * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
    * @tparam F the higher kinded type of the monadic expression.
    * @param body the imperative style expressions that will be transform to monadic style.
    * @param monad the monad that executes expressions in `body`.
    * @return
    */
-  def catchIoMonadic[F[_]] = new MonadicFactory[MonadCatchIO, F]
+  def catchIoMonadic[F[_]] = new PartialAppliedMonadic[MonadCatchIO, F]
 
-  final class MonadicFactory[M[_[_]], F[_]]() {
+  /**
+   * Partial applied function instance to convert a monadic expression.
+   *
+   * For type inferring only.
+   *
+   * @tparam M
+   * @tparam F
+   */
+  final class PartialAppliedMonadic[M[_[_]], F[_]]() {
 
-    def apply[X](body: X)(implicit monad: M[F]): F[X] = macro MonadicFactory.MacroImplementation.apply
+    def apply[X](body: X)(implicit monad: M[F]): F[X] = macro PartialAppliedMonadic.MacroImplementation.apply
 
   }
 
-  private object MonadicFactory {
+  private object PartialAppliedMonadic {
 
-    private[MonadicFactory] object MacroImplementation {
+    private[PartialAppliedMonadic] object MacroImplementation {
 
       def apply(c: scala.reflect.macros.whitebox.Context)(body: c.Tree)(monad: c.Tree): c.Tree = {
         import c.universe._

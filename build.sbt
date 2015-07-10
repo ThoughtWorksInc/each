@@ -44,13 +44,6 @@ homepage := Some(url("https://github.com/ThoughtWorksInc/each"))
 
 startYear := Some(2015)
 
-publishTo <<= (isSnapshot) { isSnapshot: Boolean =>
-  if (isSnapshot)
-    Some("snapshots" at "https://oss.sonatype.org/content/repositories/snapshots")
-  else
-    Some("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
-}
-
 scmInfo := Some(ScmInfo(
   url("https://github.com/ThoughtWorksInc/each"),
   "scm:git:git://github.com/ThoughtWorksInc/each.git",

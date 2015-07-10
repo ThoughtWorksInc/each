@@ -22,6 +22,8 @@ scalacOptions += "-feature"
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
+sonatypeProfileName := raw"""${organization.value}.${name.value}"""
+
 import ReleaseTransformations._
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,

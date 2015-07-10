@@ -20,7 +20,23 @@ scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
 
-releaseProcess += releaseStepCommand("sonatypeRelease")
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+import ReleaseTransformations._
+releaseProcess := Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  runTest,
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  releaseStepCommand("sonatypeRelease"),
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
 
 releaseUseGlobalVersion := false
 

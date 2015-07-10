@@ -38,8 +38,6 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
-releaseUseGlobalVersion := false
-
 description := "A macro library that converts native imperative syntax to scalaz's monadic expressions."
 
 homepage := Some(url("https://github.com/ThoughtWorksInc/each"))

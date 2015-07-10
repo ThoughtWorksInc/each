@@ -133,12 +133,7 @@ object ComprehensionMonadGenerator {
                           Ident(TypeName(typeParameter2Name)))),
                       EmptyTree))),
                 AppliedTypeTree(Ident(fSymbol), List(Ident(TypeName(typeParameter2Name)))),
-                Apply(Select(Ident(TermName(faName)), TermName("map")), List(Ident(TermName(fName)))))
-            )
-          )
-
-        )
-      ),
+                Apply(Select(Ident(TermName(faName)), TermName("map")), List(Ident(TermName(fName))))))))),
       Apply(Select(New(Ident(TypeName(monadClassName))), termNames.CONSTRUCTOR), List()))
 
   }

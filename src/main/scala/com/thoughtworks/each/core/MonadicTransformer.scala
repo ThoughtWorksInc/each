@@ -33,10 +33,14 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
   import Flag._
 
   // See https://issues.scala-lang.org/browse/SI-5712
-  protected val awaitExtractor: PartialFunction[Tree, Tree]
+  protected val eachExtractor: PartialFunction[Tree, Tree]
 
   // See https://issues.scala-lang.org/browse/SI-5712
   protected def fType: Type
+
+  private val monadName = freshName("monad")
+
+  private def monadTree: Tree = Ident(TermName(monadName))
 
   protected def freshName(name: String): String
 
@@ -50,7 +54,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
 
     def apply(origin: Tree)(implicit forceAwait: Set[Name]): CpsTree = {
       origin match {
-        case awaitExtractor.Extractor(monadicTree) => {
+        case eachExtractor.Extractor(monadicTree) => {
           CpsTree(monadicTree).flatMap { x =>
             new MonadTree(x, origin.tpe)
           }
@@ -73,7 +77,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
           transformParameters(parameters, Nil)
         }
         case Try(block, catches, finalizer) => {
-          val tryCatch = catches.foldLeft(CpsTree(block).toReflectTree) { (tryMonad, cd) =>
+          val tryCatch = catches.foldLeft(CpsTree(block).toReflectTree) { (tryF, cd) =>
             val CaseDef(pat, guard, body) = cd
 
             val exceptionName = TermName(freshName("exception"))
@@ -81,35 +85,43 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
 
             Apply(
               Apply(
-                TypeApply(
-                  Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("catchSome")),
-                  List(
-                    Ident(fType.typeSymbol),
-                    TypeTree(origin.tpe),
-                    AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))))),
-                List(tryMonad)),
-              List(
-                Function(
-                  List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
-                  Match(
-                    Ident(exceptionName),
+                Apply(
+                  TypeApply(
+                    Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("catchSome")),
                     List(
-                      treeCopy.CaseDef(cd, pat, guard, Apply(reify(_root_.scala.Some).tree, List(CpsTree(body).toReflectTree))),
-                      CaseDef(Ident(termNames.WILDCARD), EmptyTree, reify(_root_.scala.None).tree)))),
-                Function(
-                  List(
-                    ValDef(
-                      Modifiers(PARAM),
-                      catcherResultName,
-                      AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))),
-                      EmptyTree)),
-                  Ident(catcherResultName))))
+                      Ident(fType.typeSymbol),
+                      TypeTree(origin.tpe),
+                      AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))))),
+                  List(tryF)),
+                List(
+                  Function(
+                    List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
+                    Match(
+                      Ident(exceptionName),
+                      List(
+                        treeCopy.CaseDef(cd, pat, guard, Apply(reify(_root_.scala.Some).tree, List(CpsTree(body).toReflectTree))),
+                        CaseDef(Ident(termNames.WILDCARD), EmptyTree, reify(_root_.scala.None).tree)))),
+                  Function(
+                    List(
+                      ValDef(
+                        Modifiers(PARAM),
+                        catcherResultName,
+                        AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))),
+                        EmptyTree)),
+                    Ident(catcherResultName)))),
+              List(monadTree))
 
           }
           if (finalizer.isEmpty) {
             MonadTree(tryCatch, origin.tpe)
           } else {
-            MonadTree(Apply(Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")), List(tryCatch, CpsTree(finalizer).toReflectTree)), origin.tpe)
+            MonadTree(
+              Apply(
+                Apply(
+                  Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")),
+                  List(tryCatch, CpsTree(finalizer).toReflectTree)),
+                List(monadTree)),
+              origin.tpe)
           }
         }
         case Select(instance, field) => {
@@ -191,7 +203,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
             Apply(
               Apply(
                 TypeApply(
-                  Select(TypeApply(reify(_root_.scalaz.Bind).tree, List(TypeTree(fType))), TermName("bind")),
+                  Select(monadTree, TermName("bind")),
                   List(TypeTree(selector.tpe), TypeTree(origin.tpe))),
                 List(CpsTree(selector).toReflectTree)),
               List(
@@ -209,7 +221,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
           new MonadTree(
             Apply(
               TypeApply(
-                Select(TypeApply(reify(_root_.scalaz.Bind).tree, List(TypeTree(fType))), TermName("ifM")),
+                Select(monadTree, TermName("ifM")),
                 List(TypeTree(origin.tpe))),
               List(
                 CpsTree(cond).toReflectTree,
@@ -232,7 +244,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
           new MonadTree(
             Apply(
               TypeApply(
-                Select(TypeApply(reify(_root_.scalaz.Monad).tree, List(TypeTree(fType))), TermName("whileM_")),
+                Select(monadTree, TermName("whileM_")),
                 List(TypeTree(origin.tpe))),
               List(
                 CpsTree(condition).toReflectTree,
@@ -247,7 +259,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
               Apply(
                 Apply(
                   TypeApply(
-                    Select(TypeApply(reify(_root_.scalaz.Bind).tree, List(TypeTree(fType))), TermName("bind")),
+                    Select(monadTree, TermName("bind")),
                     List(TypeTree(typeOf[_root_.scala.Unit]), TypeTree(origin.tpe))),
                   List(Ident(name1))),
                 List(
@@ -255,7 +267,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
                     List(ValDef(Modifiers(PARAM), TermName(freshName("ignoredParameter")), TypeTree(typeOf[_root_.scala.Unit]), EmptyTree)),
                     Apply(
                       TypeApply(
-                        Select(TypeApply(reify(_root_.scalaz.Monad).tree, List(TypeTree(fType))), TermName("whileM_")),
+                        Select(monadTree, TermName("whileM_")),
                         List(TypeTree(origin.tpe))),
                       List(
                         CpsTree(condition).toReflectTree,
@@ -287,7 +299,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
         case PlainTree(plain, _) => {
           Apply(
             Apply(
-              Select(TypeApply(reify(_root_.scalaz.Apply).tree, List(TypeTree(fType))), TermName("map")),
+              Select(monadTree, TermName("map")),
               List(prefix.toReflectTree)),
             List(
               Function(List(parameter), plain)))
@@ -295,7 +307,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
         case _ => {
           Apply(
             Apply(
-              Select(TypeApply(reify(_root_.scalaz.Bind).tree, List(TypeTree(fType))), TermName("bind")),
+              Select(monadTree, TermName("bind")),
               List(prefix.toReflectTree)),
             List(
               Function(List(parameter), inner.toReflectTree)))
@@ -338,7 +350,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
 
     override final def toReflectTree: Tree = {
       Apply(
-        Select(TypeApply(reify(_root_.scalaz.Applicative).tree, List(TypeTree(fType))), TermName("point")),
+        Select(monadTree, TermName("point")),
         List(tree))
     }
 
@@ -348,7 +360,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
 
   }
 
-  final def transform(origin: Tree): Tree = {
-    CpsTree(origin)(Set.empty).toReflectTree
+  final def transform(origin: Tree, monad: Tree): Tree = {
+    Block(List(ValDef(NoMods, TermName(monadName), TypeTree(monad.tpe), monad)), CpsTree(origin)(Set.empty).toReflectTree)
   }
 }

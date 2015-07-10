@@ -18,17 +18,15 @@ package com.thoughtworks.each
 
 import com.thoughtworks.each.core.MonadicTransformer
 
-import scala.annotation.compileTimeOnly
+import scala.annotation.{elidable, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.{Unapply, Bind}
+import scalaz.effect.MonadCatchIO
+import scalaz.{Monad, Unapply, Bind}
 
-final class Monadic[F[_]] {
-  /**
-   * @usecase def apply[F[_], X](inputTree: X)(implicit monad: scalaz.Monad[F]): F[X] = ???
-   * @usecase def apply[F[_], X](inputTree: X)(implicit monadCatchIo: scalaz.effect.MonadCatchIO[F]): F[X] = ???
-   */
-  def apply[X](inputTree: X)(implicit bind: scalaz.Bind[F]): F[X] = macro Monadic.Macro.monadic
+final class Monadic[M[_[_]], F[_]] {
+
+  def apply[X](body: X)(implicit monad: M[F]): F[X] = macro Monadic.Macro.monadic
 
 }
 
@@ -41,11 +39,13 @@ object Monadic {
 
   implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))(F0.TC)
 
-  def monadic[F[_]] = new Monadic[F]
+  def monadic[F[_]] = new Monadic[Monad, F]
+
+  def catchIoMonadic[F[_]] = new Monadic[MonadCatchIO, F]
 
   private[Monadic] object Macro {
 
-    def monadic(c: scala.reflect.macros.whitebox.Context)(inputTree: c.Tree)(bind: c.Tree): c.Tree = {
+    def monadic(c: scala.reflect.macros.whitebox.Context)(body: c.Tree)(monad: c.Tree): c.Tree = {
       import c.universe._
       //    c.info(c.enclosingPosition, showRaw(inputTree), true)
       val Apply(Apply(TypeApply(Select(monadicTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication
@@ -57,7 +57,7 @@ object Monadic {
 
         override def freshName(name: String) = c.freshName(name)
 
-        override val fType = monadicTree.tpe.widen.typeArgs(0)
+        override val fType = monadicTree.tpe.widen.typeArgs(1)
 
         val expectedEachOpsType = {
           internal.existentialType(List(widecard), appliedType(eachOpsSymbol, List(fType, widecardRef)))
@@ -65,7 +65,7 @@ object Monadic {
 
         val eachMethodSymbol = expectedEachOpsType.member(TermName("each"))
 
-        override val awaitExtractor: PartialFunction[Tree, Tree] = {
+        override val eachExtractor: PartialFunction[Tree, Tree] = {
           case eachMethodTree@Select(monadTree, _)
             if eachMethodTree.symbol == eachMethodSymbol && monadTree.tpe <:< expectedEachOpsType => {
             Select(monadTree, TermName("self"))
@@ -73,8 +73,8 @@ object Monadic {
         }
 
       }
-      val result = transformer.transform(inputTree)
-      //      c.info(c.enclosingPosition, show(result.monad), true)
+      val result = transformer.transform(body, monad)
+      //      c.info(c.enclosingPosition, show(result), true)
       c.untypecheck(result)
     }
   }

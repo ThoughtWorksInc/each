@@ -245,7 +245,7 @@ class MonadicTest {
   @Test
   def testCatch(): Unit = {
     var count = 0
-    val io = monadic[IO] {
+    val io = catchIoMonadic[IO] {
       val _ = IO(()).each
       try {
         count += 1
@@ -267,7 +267,7 @@ class MonadicTest {
   @Test
   def testThrowCatch(): Unit = {
     var count = 0
-    val io = monadic[IO] {
+    val io = catchIoMonadic[IO] {
       val _ = IO(()).each
       try {
         count += 1

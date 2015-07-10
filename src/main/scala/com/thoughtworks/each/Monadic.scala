@@ -26,16 +26,68 @@ import scalaz.{Bind, Monad, Unapply}
 
 object Monadic {
 
-  implicit final class EachOps[F[_], A](val self: F[A])(implicit bind: Bind[F]) {
-    @compileTimeOnly("`each` must be inside `monadic`.")
+  /**
+   * The temporary wrapper that contains the `each` method.
+   *
+   * @param underlying the underlying monadic value.
+   * @tparam F the higher kinded type of the monadic value.
+   * @tparam A the element type of of the monadic value.
+   */
+  implicit final class EachOps[F[_], A](val underlying: F[A]) {
+
+    /**
+     * Semantically, returns the result in the monadic value.
+     *
+     * This macro must be inside a [[com.thoughtworks.each.Monadic.monadic]]
+     * or a [[com.thoughtworks.each.Monadic.catchIoMonadic]]  block.
+     *
+     * This is not a real method, thus it will never actually execute.
+     * Instead, the method will be transformed to monadic expressions.
+     * The actually result is passing as a parameter to some [[scalaz.Monad#bind]] and [[scalaz.Monad#point]] calls
+     * instead of as a return value.
+     *
+     * @return the result in the monadic value.
+     */
+    @compileTimeOnly("`each` must be inside `monadic` or `catchIoMonadic`.")
     def each: A = ???
+
   }
 
-  implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))(F0.TC)
+  /**
+   * An implicit view to enable `.each` for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))
 
 
+  /**
+   * Captures all the result in the `body` and converts them into a `F`.
+   *
+   * `body` must not contain any `try` / `catch` / `throw` expressions.
+   *
+   * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
+   * @tparam F the higher kinded type of the monadic expression.
+   * @param body the imperative style expressions that will be transform to monadic style.
+   * @param monad the monad that executes expressions in `body`.
+   * @return
+   */
   def monadic[F[_]] = new MonadicFactory[Monad, F]
 
+  /**
+   * Captures all the result in the `body` and converts them into a `F`.
+   *
+   * `body` may not contain any `try` / `catch` / `throw` expressions.
+   *
+   * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
+   * @tparam F the higher kinded type of the monadic expression.
+   * @param body the imperative style expressions that will be transform to monadic style.
+   * @param monad the monad that executes expressions in `body`.
+   * @return
+   */
   def catchIoMonadic[F[_]] = new MonadicFactory[MonadCatchIO, F]
 
   final class MonadicFactory[M[_[_]], F[_]]() {
@@ -71,7 +123,7 @@ object Monadic {
           override val eachExtractor: PartialFunction[Tree, Tree] = {
             case eachMethodTree@Select(monadTree, _)
               if eachMethodTree.symbol == eachMethodSymbol && monadTree.tpe <:< expectedEachOpsType => {
-              Select(monadTree, TermName("self"))
+              Select(monadTree, TermName("underlying"))
             }
           }
 

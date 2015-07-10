@@ -22,8 +22,20 @@ import scala.language.experimental.macros
 import scala.language.higherKinds
 import scalaz._
 
+/**
+ * Contains implicit methods to work with types support `for` comprehension.
+ */
 object ComprehensionImplicits {
 
+  /**
+   * Returns a monad implemented by `for` comprehension syntax.
+   *
+   * `F` must support `for` comprehension, containing `map` and `flatMap` methods,
+   * and `F`'s companion object must contains an `apply` method to create a `F[A]` instance from any `A`.
+   *
+   * @tparam F the higher kinded type that the monad works with, e.g. a Scala container `Seq`.
+   * @return the monad.
+   */
   implicit def comprehensionMonad[F[_]]: Monad[F] = macro MacroImplementation.comprehensionMonad
 
   private object MacroImplementation {

@@ -2,7 +2,7 @@ licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/lice
 
 scalaVersion := "2.11.7"
 
-organization := "com.thoughtworks"
+organization := "com.thoughtworks.each"
 
 name := "each"
 
@@ -21,8 +21,6 @@ scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
-
-sonatypeProfileName := raw"""${organization.value}.${name.value}"""
 
 import ReleaseTransformations._
 releaseProcess := Seq[ReleaseStep](

@@ -38,8 +38,8 @@ object Monadic {
     /**
      * Semantically, returns the result in the monadic value.
      *
-     * This macro must be inside a [[com.thoughtworks.each.Monadic.monadic]]
-     * or a [[com.thoughtworks.each.Monadic.catchIoMonadic]]  block.
+     * This macro must be inside a `monadic`
+     * or a `catchIoMonadic`  block.
      *
      * This is not a real method, thus it will never actually execute.
      * Instead, the method will be transformed to monadic expressions.

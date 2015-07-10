@@ -32,9 +32,9 @@ releaseProcess := Seq[ReleaseStep](
   commitReleaseVersion,
   tagRelease,
   publishArtifacts,
-  releaseStepCommand("sonatypeRelease"),
   setNextVersion,
   commitNextVersion,
+  releaseStepCommand("sonatypeRelease"),
   pushChanges
 )
 

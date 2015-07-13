@@ -131,9 +131,10 @@ object Monadic {
           val eachMethodSymbol = expectedEachOpsType.member(TermName("each"))
 
           override val eachExtractor: PartialFunction[Tree, Tree] = {
-            case eachMethodTree@Select(monadTree, _)
-              if eachMethodTree.symbol == eachMethodSymbol && monadTree.tpe <:< expectedEachOpsType => {
-              Select(monadTree, TermName("underlying"))
+            case eachMethodTree@Select(eachOpsTree, _)
+              if eachMethodTree.symbol == eachMethodSymbol &&
+                appliedType(eachOpsTree.tpe.typeArgs(0), List(eachMethodTree.tpe)) <:< appliedType(fType, List(eachMethodTree.tpe)) => {
+              Select(eachOpsTree, TermName("underlying"))
             }
           }
 

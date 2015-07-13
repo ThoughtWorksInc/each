@@ -27,6 +27,18 @@ import scalaz.effect.IO
 class MonadicTest {
 
   @Test
+  def testPow(): Unit = {
+    val pow = monadic[Seq](math.pow(2.0, (0 to 10).each))
+    Assert.assertEquals(Seq(1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0), pow)
+  }
+
+  @Test
+  def testMultiply(): Unit = {
+    val result = monadic[Seq]((0 to 3).each * (10 to 13).each)
+    Assert.assertEquals(Seq(0, 0, 0, 0, 10, 11, 12, 13, 20, 22, 24, 26, 30, 33, 36, 39), result)
+  }
+
+  @Test
   def testIoWhile(): Unit = {
 
     def s = IO("123")
@@ -210,6 +222,7 @@ class MonadicTest {
       concatSeq)
     Assert.assertEquals(Seq("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatSeq)
   }
+
   @Test
   def testConcatSet = {
 

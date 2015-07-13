@@ -67,9 +67,9 @@ object Monadic {
   /**
    * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
    *
-   * Captures all the result in the `body` and converts them into a `F`.
+   *          Captures all the result in the `body` and converts them into a `F`.
    *
-   * Note that `body` must not contain any `try` / `catch` / `throw` expressions.
+   *          Note that `body` must not contain any `try` / `catch` / `throw` expressions.
    *
    * @tparam F the higher kinded type of the monadic expression.
    * @param body the imperative style expressions that will be transform to monadic style.
@@ -81,9 +81,9 @@ object Monadic {
   /**
    * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
    *
-   * Captures all the result in the `body` and converts them into a `F`.
+   *          Captures all the result in the `body` and converts them into a `F`.
    *
-   * Note that `body` may contain any `try` / `catch` / `throw` expressions.
+   *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
    *
    * @tparam F the higher kinded type of the monadic expression.
    * @param body the imperative style expressions that will be transform to monadic style.

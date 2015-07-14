@@ -16,15 +16,29 @@ limitations under the License.
 
 package com.thoughtworks.each
 
-import com.thoughtworks.each.Monadic._
 import com.thoughtworks.each.ComprehensionImplicits._
+import com.thoughtworks.each.Monadic._
 import org.junit.{Assert, Test}
 
+import scala.concurrent.duration
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scalaz.{IndexedStateT, Monad}
 
 import scalaz.effect.IO
 
 class MonadicTest {
+
+  @Test
+  def testFuture(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val f1 = Future(1)
+    def p(left: Int, right: Int) = left + right
+    val f101 = monadic[Future] {
+      f1.each + 100
+    }
+    Assert.assertEquals(101, Await.result(f101, Duration.Inf))
+  }
 
   @Test
   def testPow(): Unit = {

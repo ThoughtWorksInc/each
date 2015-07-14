@@ -99,4 +99,5 @@ val Option[String] = monadic[Option] {
 ## Links
 
  * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.2.0-SNAPSHOT/each_2.11-0.2.0-SNAPSHOT-javadoc.jar/!/index.html)
+ * [ComprehensionMonad](https://github.com/ThoughtWorksInc/each/wiki/ComprehensionMonad)
 

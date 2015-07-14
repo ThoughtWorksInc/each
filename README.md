@@ -67,14 +67,14 @@ import com.thoughtworks.each.Monadic._
 
 ### Step 3: Import implicit Monad instances
 
-Scalaz has provided `Option` monad, you just import it.
+Scalaz has provided `Option` monad, so you just import it.
 
 ``` scala
 import com.thoughtworks.each.Monadic._
 import scalaz.std.option._
 ```
 
-Please import other monad instances if you need other monad.
+Please import other monad instances if you need other monads.
 
 ### Step 4: Use `monadic[F]` to create a monadic expression
 

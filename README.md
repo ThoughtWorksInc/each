@@ -1,5 +1,6 @@
 # Each
 [![Build Status](https://travis-ci.org/ThoughtWorksInc/each.svg?branch=master)](https://travis-ci.org/ThoughtWorksInc/each)
+[![Maven Central](https://img.shields.io/maven-central/v/com.thoughtworks.each/each_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.thoughtworks.each/each_2.11)
 
 **Each** is a macro library that converts native imperative syntax to scalaz's monadic expression.
 

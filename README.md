@@ -99,7 +99,7 @@ val Option[String] = monadic[Option] {
 
 ## Limitation
 
-`monadic` blocks do not support `try`, `catch` and `finally`. If you want these expressions, use `catchIoMonaic` instead, for example:
+`monadic` blocks do not support `try`, `catch` and `finally`. If you want these expressions, use `catchIoMonadic` instead, for example:
 
 ``` scala
 var count = 0
@@ -122,7 +122,7 @@ assertEquals(100, io.unsafePerformIO())
 assertEquals(3, count)
 ```
 
-Note that `catchIoMonaic` requires an implicit parameter `scalaz.effect.MonadCatchIO[F]`, which is only provided for `scalaz.effect.IO` by default.
+Note that `catchIoMonadic` requires an implicit parameter `scalaz.effect.MonadCatchIO[F]`, which is only provided for `scalaz.effect.IO` by default.
 
 ## Links
 

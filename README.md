@@ -5,10 +5,10 @@
 
 ## Motivation
 
-I am the author of [Stateless Future](https://github.com/qifun/stateless-future), which is macro library that provide `await` for asynchronous programming.
+There is a macro library [Stateless Future](https://github.com/qifun/stateless-future) that provide `await` for asynchronous programming.
 `await` is a mechanism that transform synchronous-like code into asynchronous expressions. C# 4.5, ECMAScript 7 and Python 3.5 also support the mechanism.
 
-I implemented the `await` mechanism in Stateless Future in an algorithm called [CPS transform](https://en.wikipedia.org/wiki/Continuation-passing_style). When I learn scalaz, I found that the same algorithm could be applied for any monadic expression, including `Option` monad, `IO` monad, and `Future` monad. So I started this project, Each.
+The `await` mechanism in Stateless Future is implemented by an algorithm called [CPS transform](https://en.wikipedia.org/wiki/Continuation-passing_style). When learning [scalaz](https://scalaz.github.io/scalaz/), we found that the same algorithm could be applied for any monadic expression, including `Option` monad, `IO` monad, and `Future` monad. So we started this project, Each.
 
 Each is a superset of `await` syntax, as Each support multiple types of monads, while `await` only works with `Future`. When we perform a CPS transform for monadic expression with the `Future` monad, the use case looks almost the same with the `await` syntax in [Stateless Future](https://github.com/qifun/stateless-future)
 

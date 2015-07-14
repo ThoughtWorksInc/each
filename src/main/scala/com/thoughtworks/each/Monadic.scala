@@ -131,9 +131,18 @@ object Monadic {
           val eachMethodSymbol = expectedEachOpsType.member(TermName("each"))
 
           override val eachExtractor: PartialFunction[Tree, Tree] = {
-            case eachMethodTree@Select(eachOpsTree, _)
-              if eachMethodTree.symbol == eachMethodSymbol &&
-                appliedType(eachOpsTree.tpe.typeArgs(0), List(eachMethodTree.tpe)) <:< appliedType(fType, List(eachMethodTree.tpe)) => {
+            case eachMethodTree@Select(eachOpsTree, _) if eachMethodTree.symbol == eachMethodSymbol => {
+              val actualFType = eachOpsTree.tpe.typeArgs(0)
+              val resultType = eachMethodTree.tpe
+              val expectedType = appliedType(fType, List(resultType))
+              val actualType = appliedType(actualFType, List(resultType))
+              if (!(actualType <:< expectedType)) {
+                c.error(
+                  eachOpsTree.pos,
+                  raw"""type mismatch;
+ found   : ${show(actualType)}
+ required: ${show(expectedType)}""")
+              }
               Select(eachOpsTree, TermName("underlying"))
             }
           }

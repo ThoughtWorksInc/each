@@ -96,6 +96,33 @@ val Option[String] = monadic[Option] {
 }
 ```
 
+## Limitation
+
+`monadic` blocks do not support `try`, `catch` and `finally`. If you want these expressions, use `catchIoMonaic` instead, for example:
+
+``` scala
+var count = 0
+val io = catchIoMonadic[IO] {
+  val _ = IO(()).each
+  try {
+    count += 1
+    (null: Array[Int])(0) // Will throw a NullPointerException
+  } catch {
+    case e: NullPointerException => {
+      count += 1
+      100
+    }
+  } finally {
+    count += 1
+  }
+}
+assertEquals(0, count)
+assertEquals(100, io.unsafePerformIO())
+assertEquals(3, count)
+```
+
+Note that `catchIoMonaic` requires an implicit parameter `scalaz.effect.MonadCatchIO[F]`, which is only provided for `scalaz.effect.IO` by default.
+
 ## Links
 
  * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.2.0-SNAPSHOT/each_2.11-0.2.1-SNAPSHOT-javadoc.jar/!/index.html)

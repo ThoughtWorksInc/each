@@ -42,7 +42,7 @@ object Monadic {
      * or a `catchIoMonadic`  block.
      *
      * This is not a real method, thus it will never actually execute.
-     * Instead, the method will be transformed to monadic expressions.
+     * Instead, the call to this method will be transformed to a monadic expression.
      * The actually result is passing as a parameter to some [[scalaz.Monad#bind]] and [[scalaz.Monad#point]] calls
      * instead of as a return value.
      *

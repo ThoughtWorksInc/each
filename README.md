@@ -81,7 +81,7 @@ Please import other monad instances if you need other monads.
 ``` scala
 import com.thoughtworks.each.Monadic._
 import scalaz.std.option._
-val Option[String] = monadic[Option] {
+val result: Option[String] = monadic[Option] {
   "Hello, Each!"
 }
 ```
@@ -92,7 +92,7 @@ val Option[String] = monadic[Option] {
 import com.thoughtworks.each.Monadic._
 import scalaz.std.option._
 val name = Option("Each")
-val Option[String] = monadic[Option] {
+val result: Option[String] = monadic[Option] {
   "Hello, " + name.each + "!"
 }
 ```

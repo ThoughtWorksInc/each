@@ -64,7 +64,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
             untransformed match {
               case Nil => {
                 CpsTree(method).flatMap { transformedMethod =>
-                  new MonadTree(Apply(transformedMethod, transformed.reverse), origin.tpe)
+                  new MonadTree(treeCopy.Apply(origin, transformedMethod, transformed.reverse), origin.tpe)
                 }
               }
               case head :: tail => {
@@ -139,7 +139,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
             def transformParameters(untransformed: List[Tree], transformed: List[Tree]): CpsTree = {
               untransformed match {
                 case Nil => {
-                  new PlainTree(Apply(transformedMethod, transformed.reverse), origin.tpe)
+                  new PlainTree(treeCopy.Apply(origin, transformedMethod, transformed.reverse), origin.tpe)
                 }
                 case head :: tail => {
                   CpsTree(head).flatMap { transformedHead =>
@@ -209,7 +209,8 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
               List(
                 Function(
                   List(ValDef(Modifiers(PARAM), selectorName, TypeTree(selector.tpe), EmptyTree)),
-                  Match(
+                  treeCopy.Match(
+                    origin,
                     Ident(selectorName),
                     for {
                       cd@CaseDef(pat, guard, body) <- cases
@@ -219,7 +220,8 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
         }
         case If(cond, thenp, elsep) => {
           new MonadTree(
-            Apply(
+            treeCopy.Apply(
+              origin,
               TypeApply(
                 Select(monadTree, TermName("ifM")),
                 List(TypeTree(origin.tpe))),
@@ -305,12 +307,13 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
               Function(List(parameter), plain)))
         }
         case _ => {
+          val innerTree = inner.toReflectTree
           Apply(
             Apply(
               Select(monadTree, TermName("bind")),
               List(prefix.toReflectTree)),
             List(
-              Function(List(parameter), inner.toReflectTree)))
+              Function(List(parameter), innerTree)))
         }
       }
     }
@@ -340,7 +343,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
   private final case class MonadTree(override final val toReflectTree: Tree, override final val tpe: Type) extends CpsTree {
 
     override final def flatMap(f: Tree => CpsTree): CpsTree = {
-      val newId = TermName(freshName("parameter"))
+      val newId = TermName(freshName("element"))
       OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
     }
 

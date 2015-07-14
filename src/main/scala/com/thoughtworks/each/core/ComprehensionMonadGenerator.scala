@@ -16,7 +16,11 @@ limitations under the License.
 
 package com.thoughtworks.each.core
 
+import scala.language.higherKinds
+
 object ComprehensionMonadGenerator {
+
+  abstract class AbstractMonad[F[_]] extends scalaz.Monad[F]
 
   def generatorMonad[U <: scala.reflect.api.Universe](u: U, freshName: String => String)(fSymbol: u.TypeSymbol): u.Tree = {
     import u._
@@ -36,7 +40,7 @@ object ComprehensionMonadGenerator {
           TypeName(monadClassName),
           List(),
           Template(
-            List(AppliedTypeTree(Ident(typeOf[_root_.scalaz.Monad[({type T[A] = {}})#T]].typeSymbol), List(Ident(fSymbol)))),
+            List(AppliedTypeTree(Ident(typeOf[_root_.com.thoughtworks.each.core.ComprehensionMonadGenerator.AbstractMonad[({type T[A] = {}})#T]].typeSymbol), List(Ident(fSymbol)))),
             noSelfType,
             List(
               DefDef(Modifiers(), termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(pendingSuperCall), Literal(Constant(())))),

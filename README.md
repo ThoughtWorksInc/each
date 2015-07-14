@@ -55,7 +55,7 @@ assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
 ### Step 1: And add the following lines in your build.sbt
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %% "each" % "0.1.0"
+libraryDependencies += "com.thoughtworks.each" %% "each" % "0.2.0"
 ```
 
 ### Step 2: In your source file, import `monadic` and `each` method

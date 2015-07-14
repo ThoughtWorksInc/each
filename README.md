@@ -77,7 +77,7 @@ Please import other monad instances if you need other monad.
 
 ### Step 4: Use `monadic[F]` to create a monadic expression
 
-```
+``` scala
 import com.thoughtworks.each.Monadic._
 import scalaz.std.option._
 val Option[String] = monadic[Option] {
@@ -87,7 +87,7 @@ val Option[String] = monadic[Option] {
 
 ### Step 5: In the `monadic` block, use `.each` postfix to extract each element in a `F`
 
-```
+``` scala
 import com.thoughtworks.each.Monadic._
 import scalaz.std.option._
 val name = Option("Each")

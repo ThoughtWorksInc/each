@@ -126,6 +126,6 @@ Note that `catchIoMonadic` requires an implicit parameter `scalaz.effect.MonadCa
 
 ## Links
 
- * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.2.0-SNAPSHOT/each_2.11-0.2.1-SNAPSHOT-javadoc.jar/!/index.html)
+ * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.2.1-SNAPSHOT/each_2.11-0.2.1-SNAPSHOT-javadoc.jar/!/index.html)
  * [ComprehensionMonad](https://github.com/ThoughtWorksInc/each/wiki/ComprehensionMonad)
 

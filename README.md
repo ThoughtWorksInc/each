@@ -26,7 +26,7 @@ def concat(future1: Future[String], future2: Future[String]): Future[Int] = mona
 }
 ```
 
-The similar code works for other monads than `Future`:
+The similar code works for monads other than `Future`:
 
 ``` scala
 import com.thoughtworks.each.Monadic._

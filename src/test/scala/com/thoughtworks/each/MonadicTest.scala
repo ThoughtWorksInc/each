@@ -33,7 +33,6 @@ class MonadicTest {
   def testFuture(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val f1 = Future(1)
-    def p(left: Int, right: Int) = left + right
     val f101 = monadic[Future] {
       f1.each + 100
     }

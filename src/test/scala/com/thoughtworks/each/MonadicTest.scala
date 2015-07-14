@@ -20,7 +20,6 @@ import com.thoughtworks.each.ComprehensionImplicits._
 import com.thoughtworks.each.Monadic._
 import org.junit.{Assert, Test}
 
-import scala.concurrent.duration
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scalaz.{IndexedStateT, Monad}
@@ -30,11 +29,29 @@ import scalaz.effect.IO
 class MonadicTest {
 
   @Test
+  def testOption(): Unit = {
+    def plusOne(intOption: Option[Int]) = monadic[Option] {
+      intOption.each + 1
+    }
+    Assert.assertEquals(None, plusOne(None))
+    Assert.assertEquals(Some(16), plusOne(Some(15)))
+  }
+
+  @Test
+  def testSeq(): Unit = {
+    def plusOne(intSeq: Seq[Int]) = monadic[Seq] {
+      intSeq.each + 1
+    }
+    Assert.assertEquals(Seq.empty, plusOne(Seq.empty))
+    Assert.assertEquals(Seq(16), plusOne(Seq(15)))
+    Assert.assertEquals(Seq(16, -1, 10), plusOne(Seq(15, -2, 9)))
+  }
+
+  @Test
   def testFuture(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val f1 = Future(1)
     val f101 = monadic[Future] {
-      f1.each + 100
+      Future(1).each + Future(100).each
     }
     Assert.assertEquals(101, Await.result(f101, Duration.Inf))
   }

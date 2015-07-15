@@ -104,10 +104,11 @@ val result: Option[String] = monadic[Option] {
 ``` scala
 var count = 0
 val io = catchIoMonadic[IO] {
-  val _ = IO(()).each
+  count += 1                // Evaluating immediately
+  val _ = IO(()).each       // Paused until io.unsafePerformIO()
   try {
     count += 1
-    (null: Array[Int])(0) // Will throw a NullPointerException
+    (null: Array[Int])(0)   // Will throw a NullPointerException
   } catch {
     case e: NullPointerException => {
       count += 1
@@ -117,9 +118,9 @@ val io = catchIoMonadic[IO] {
     count += 1
   }
 }
-assertEquals(0, count)
+assertEquals(1, count)
 assertEquals(100, io.unsafePerformIO())
-assertEquals(3, count)
+assertEquals(4, count)
 ```
 
 Note that `catchIoMonadic` requires an implicit parameter `scalaz.effect.MonadCatchIO[F]` instead of `Monad[F]`. `scalaz.effect.MonadCatchIO[F]` is only provided for `scalaz.effect.IO` by default.

@@ -104,11 +104,11 @@ val result: Option[String] = monadic[Option] {
 ``` scala
 var count = 0
 val io = catchIoMonadic[IO] {
-  count += 1                // Evaluating immediately
-  val _ = IO(()).each       // Paused until io.unsafePerformIO()
+  count += 1                // Evaluates immediately
+  val _ = IO(()).each       // Pauses until io.unsafePerformIO()
   try {
     count += 1
-    (null: Array[Int])(0)   // Will throw a NullPointerException
+    (null: Array[Int])(0)   // Throws a NullPointerException
   } catch {
     case e: NullPointerException => {
       count += 1

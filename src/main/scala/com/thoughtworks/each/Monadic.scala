@@ -17,12 +17,14 @@ limitations under the License.
 package com.thoughtworks.each
 
 import com.thoughtworks.each.core.MonadicTransformer
+import com.thoughtworks.each.core.MonadicTransformer._
 
+import scala.language.existentials
 import scala.annotation.compileTimeOnly
 import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.effect.MonadCatchIO
-import scalaz.{Bind, Monad, Unapply}
+import scalaz._
 
 object Monadic {
 
@@ -76,7 +78,7 @@ object Monadic {
    * @param monad the monad that executes expressions in `body`.
    * @return
    */
-  def monadic[F[_]] = new PartialAppliedMonadic[Monad, F]
+  def monadic[F[_]] = new PartialAppliedMonadic[Monad, F, UnsupportedExceptionHandlingMode.type]
 
   /**
    * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
@@ -90,7 +92,30 @@ object Monadic {
    * @param monad the monad that executes expressions in `body`.
    * @return
    */
-  def catchIoMonadic[F[_]] = new PartialAppliedMonadic[MonadCatchIO, F]
+  def catchIoMonadic[F[_]] = new PartialAppliedMonadic[MonadCatchIO, F, MonadCatchIoMode.type]
+
+  implicit def monadErrorToMonadThrowable[F[_, _]](implicit monadError: MonadError[F, Throwable]): MonadThrowable[({type λ[α] = F[Throwable, α]})#λ] = {
+    monadError.asInstanceOf[MonadThrowable[({type λ[α] = F[Throwable, α]})#λ]]
+  }
+
+  implicit def eitherTMonadThrowable[F[_]](implicit F0: Monad[F]): MonadThrowable[({type f[x] = EitherT[F, Throwable, x]})#f] = {
+    val monadError = EitherT.eitherTMonadError[F, Throwable]
+    monadErrorToMonadThrowable[({type λ[α, β] = EitherT[F, α, β]})#λ](monadError)
+  }
+
+  /**
+   * TODO
+   * @tparam F
+   */
+  type MonadThrowable[F[_]] = MonadError[G, Throwable] forSome {type G[Throwable, A] <: F[A]}
+
+  /**
+   * @usecase def throwableMonadic[F[_]](body: AnyRef)(implicit monad: MonadThrowable[F]): F[body.type] = ???
+   *          TODO
+   * @tparam F
+   * @return
+   */
+  def throwableMonadic[F[_]] = new PartialAppliedMonadic[MonadThrowable, F, MonadThrowableMode.type]
 
   /**
    * Partial applied function instance to convert a monadic expression.
@@ -100,7 +125,7 @@ object Monadic {
    * @tparam M
    * @tparam F
    */
-  final class PartialAppliedMonadic[M[_[_]], F[_]]() {
+  final class PartialAppliedMonadic[M[_[_]], F[_], Mode <: ExceptionHandlingMode] private[Monadic]() {
 
     def apply[X](body: X)(implicit monad: M[F]): F[X] = macro PartialAppliedMonadic.MacroImplementation.apply
 
@@ -112,23 +137,32 @@ object Monadic {
 
       def apply(c: scala.reflect.macros.whitebox.Context)(body: c.Tree)(monad: c.Tree): c.Tree = {
         import c.universe._
-        //    c.info(c.enclosingPosition, showRaw(inputTree), true)
-        val Apply(Apply(TypeApply(Select(monadicTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication
+        //        c.info(c.enclosingPosition, showRaw(c.macroApplication), true)
+        val Apply(Apply(TypeApply(Select(partialAppliedMonadicTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication
 
-        val ExistentialType(List(widecard), TypeRef(_, eachOpsSymbol, List(_, widecardRef))) =
-          typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
 
-        val transformer = new MonadicTransformer[c.universe.type](c.universe) {
+        val modeType: Type = partialAppliedMonadicTree.tpe.widen.typeArgs(2)
+
+        val mode: ExceptionHandlingMode = if (modeType =:= typeOf[MonadCatchIoMode.type]) {
+          MonadCatchIoMode
+        } else if (modeType =:= typeOf[MonadThrowableMode.type]) {
+          MonadThrowableMode
+        } else if (modeType =:= typeOf[UnsupportedExceptionHandlingMode.type]) {
+          UnsupportedExceptionHandlingMode
+        } else {
+          throw new IllegalStateException("Unsupported ExceptionHandlingMode")
+        }
+
+        val transformer = new MonadicTransformer[c.universe.type](c.universe, mode) {
 
           override def freshName(name: String) = c.freshName(name)
 
-          override val fType = monadicTree.tpe.widen.typeArgs(1)
+          override val fType = partialAppliedMonadicTree.tpe.widen.typeArgs(1)
 
-          val expectedEachOpsType = {
-            internal.existentialType(List(widecard), appliedType(eachOpsSymbol, List(fType, widecardRef)))
+          val eachMethodSymbol = {
+            val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
+            eachOpsType.member(TermName("each"))
           }
-
-          val eachMethodSymbol = expectedEachOpsType.member(TermName("each"))
 
           override val eachExtractor: PartialFunction[Tree, Tree] = {
             case eachMethodTree@Select(eachOpsTree, _) if eachMethodTree.symbol == eachMethodSymbol => {
@@ -149,7 +183,7 @@ object Monadic {
 
         }
         val result = transformer.transform(body, monad)
-        //      c.info(c.enclosingPosition, show(result), true)
+        //        c.info(c.enclosingPosition, show(result), true)
         c.untypecheck(result)
       }
     }

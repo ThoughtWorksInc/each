@@ -16,9 +16,25 @@ limitations under the License.
 
 package com.thoughtworks.each.core
 
+import com.thoughtworks.each.core.MonadicTransformer.ExceptionHandlingMode
+
 import scala.annotation.tailrec
 
-abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[MonadicTransformer] val universe: U) {
+object MonadicTransformer {
+
+  sealed trait ExceptionHandlingMode
+
+  case object MonadThrowableMode extends ExceptionHandlingMode
+
+  case object UnsupportedExceptionHandlingMode extends ExceptionHandlingMode
+
+  case object MonadCatchIoMode extends ExceptionHandlingMode
+
+}
+
+abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
+(private[MonadicTransformer] val universe: U, exceptionHandlingMode: ExceptionHandlingMode) {
+
 
   // See https://groups.google.com/forum/#!topic/scala-language/g0-hbN5qerQ
   private implicit final class PartialFunctionAsExtractor[A, B](pf: PartialFunction[A, B]) {
@@ -29,6 +45,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
 
   }
 
+  import MonadicTransformer._
   import universe._
   import Flag._
 
@@ -77,51 +94,114 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
           transformParameters(parameters, Nil)
         }
         case Try(block, catches, finalizer) => {
-          val tryCatch = catches.foldLeft(CpsTree(block).toReflectTree) { (tryF, cd) =>
-            val CaseDef(pat, guard, body) = cd
+          exceptionHandlingMode match {
+            case UnsupportedExceptionHandlingMode => {
+              new PlainTree(origin, origin.tpe)
+            }
+            case MonadThrowableMode => {
+              val blockTree = CpsTree(block).toReflectTree
+              val exceptionName = TermName(freshName("exception"))
 
-            val exceptionName = TermName(freshName("exception"))
-            val catcherResultName = TermName(freshName("catcherResult"))
-
-            Apply(
-              Apply(
+              val tryCatch = Apply(
                 Apply(
-                  TypeApply(
-                    Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("catchSome")),
-                    List(
-                      Ident(fType.typeSymbol),
-                      TypeTree(origin.tpe),
-                      AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))))),
-                  List(tryF)),
+                  TypeApply(Select(monadTree, TermName("handleError")), List(TypeTree(origin.tpe))),
+                  List(blockTree)
+                ),
                 List(
                   Function(
                     List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
                     Match(
                       Ident(exceptionName),
-                      List(
-                        treeCopy.CaseDef(cd, pat, guard, Apply(reify(_root_.scala.Some).tree, List(CpsTree(body).toReflectTree))),
-                        CaseDef(Ident(termNames.WILDCARD), EmptyTree, reify(_root_.scala.None).tree)))),
-                  Function(
+                      (for (caseTree@CaseDef(pat, guard, body) <- catches) yield {
+                        treeCopy.CaseDef(caseTree, pat, guard, CpsTree(body).toReflectTree)
+                      }) :+ CaseDef(
+                        Ident(termNames.WILDCARD),
+                        EmptyTree,
+                        Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName)))
+                      )))
+                )
+              )
+              if (finalizer.isEmpty) {
+                MonadTree(tryCatch, origin.tpe)
+              } else {
+                MonadTree(
+                  Apply(
+                    Apply(
+                      TypeApply(Select(monadTree, TermName("handleError")), List(TypeTree(origin.tpe))),
+                      List(tryCatch)
+                    ),
                     List(
-                      ValDef(
-                        Modifiers(PARAM),
-                        catcherResultName,
-                        AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))),
-                        EmptyTree)),
-                    Ident(catcherResultName)))),
-              List(monadTree))
+                      Function(
+                        List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
+                        (CpsTree(finalizer).flatMap { transformedFinalizer =>
+                          MonadTree(
+                            Block(List(transformedFinalizer),
+                              Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))
+                              )), origin.tpe)
+                        }).toReflectTree
+                      )
+                    )
+                  ),
+                  origin.tpe
+                ).flatMap { transformedTryCatch =>
+                  (CpsTree(finalizer).flatMap { transformedFinalizer =>
+                    PlainTree(
+                      Block(List(transformedFinalizer),
+                        transformedTryCatch
+                      ), origin.tpe)
+                  })
+                }
+              }
 
-          }
-          if (finalizer.isEmpty) {
-            MonadTree(tryCatch, origin.tpe)
-          } else {
-            MonadTree(
-              Apply(
+            }
+            case MonadCatchIoMode => {
+              val tryCatch = catches.foldLeft(CpsTree(block).toReflectTree) { (tryF, cd) =>
+                val CaseDef(pat, guard, body) = cd
+
+                val exceptionName = TermName(freshName("exception"))
+                val catcherResultName = TermName(freshName("catcherResult"))
+
                 Apply(
-                  Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")),
-                  List(tryCatch, CpsTree(finalizer).toReflectTree)),
-                List(monadTree)),
-              origin.tpe)
+                  Apply(
+                    Apply(
+                      TypeApply(
+                        Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("catchSome")),
+                        List(
+                          Ident(fType.typeSymbol),
+                          TypeTree(origin.tpe),
+                          AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))))),
+                      List(tryF)),
+                    List(
+                      Function(
+                        List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
+                        Match(
+                          Ident(exceptionName),
+                          List(
+                            treeCopy.CaseDef(cd, pat, guard, Apply(reify(_root_.scala.Some).tree, List(CpsTree(body).toReflectTree))),
+                            CaseDef(Ident(termNames.WILDCARD), EmptyTree, reify(_root_.scala.None).tree)))),
+                      Function(
+                        List(
+                          ValDef(
+                            Modifiers(PARAM),
+                            catcherResultName,
+                            AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))),
+                            EmptyTree)),
+                        Ident(catcherResultName)))),
+                  List(monadTree))
+
+              }
+              if (finalizer.isEmpty) {
+                MonadTree(tryCatch, origin.tpe)
+              } else {
+                MonadTree(
+                  Apply(
+                    Apply(
+                      Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")),
+                      List(tryCatch, CpsTree(finalizer).toReflectTree)),
+                    List(monadTree)),
+                  origin.tpe)
+              }
+            }
           }
         }
         case Select(instance, field) => {
@@ -276,9 +356,18 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe](private[Monad
                         Ident(name1))))))),
             origin.tpe)
         }
-        case EmptyTree | _: Throw | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
+        case Throw(throwable) => {
+          exceptionHandlingMode match {
+            case MonadThrowableMode => {
+              new MonadTree(Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(throwable)), origin.tpe)
+            }
+            case UnsupportedExceptionHandlingMode | MonadCatchIoMode => {
+              new PlainTree(origin, origin.tpe)
+            }
+          }
+        }
+        case EmptyTree | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
           new PlainTree(origin, origin.tpe)
-
         }
       }
     }

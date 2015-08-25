@@ -103,6 +103,11 @@ object Monadic {
     monadErrorToMonadThrowable[({type λ[α, β] = EitherT[F, α, β]})#λ](monadError)
   }
 
+  implicit def lazyEitherTMonadThrowable[F[_]](implicit F0: Monad[F]): MonadThrowable[({type f[x] = LazyEitherT[F, Throwable, x]})#f] = {
+    val monadError = LazyEitherT.lazyEitherTMonadError[F, Throwable]
+    monadErrorToMonadThrowable[({type λ[α, β] = LazyEitherT[F, α, β]})#λ](monadError)
+  }
+
   /**
    * A [[scalaz.Monad]] that supports exception handling.
    *

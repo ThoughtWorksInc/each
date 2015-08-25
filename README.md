@@ -56,7 +56,7 @@ assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
 
 ## Usage
 
-### Step 1: And add the following line in your build.sbt
+### Step 1: Add the following line in your build.sbt
 
 ``` sbt
 libraryDependencies += "com.thoughtworks.each" %% "each" % "0.2.1"

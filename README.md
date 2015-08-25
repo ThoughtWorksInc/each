@@ -59,7 +59,7 @@ assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
 ### Step 1: And add the following line in your build.sbt
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %% "each" % "0.2.0"
+libraryDependencies += "com.thoughtworks.each" %% "each" % "0.2.1"
 ```
 
 ### Step 2: In your source file, import `monadic` and `each` method
@@ -130,7 +130,7 @@ Note that `catchIoMonadic` requires an implicit parameter `scalaz.effect.MonadCa
 
 ## Links
 
- * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.2.1-SNAPSHOT/each_2.11-0.2.1-SNAPSHOT-javadoc.jar/!/index.html)
+ * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.2.2-SNAPSHOT/each_2.11-0.2.2-SNAPSHOT-javadoc.jar/!/index.html)
  * Utilities
    * [ComprehensionMonad](https://github.com/ThoughtWorksInc/each/wiki/ComprehensionMonad)
 

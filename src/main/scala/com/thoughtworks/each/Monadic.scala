@@ -104,15 +104,24 @@ object Monadic {
   }
 
   /**
-   * TODO
-   * @tparam F
+   * A [[scalaz.Monad]] that supports exception handling.
+   *
+   * Note this is a simplified version of [[scalaz.MonadError]].
+   *
+   * @tparam F the higher kinded type of the monad.
    */
   type MonadThrowable[F[_]] = MonadError[G, Throwable] forSome {type G[Throwable, A] <: F[A]}
 
   /**
    * @usecase def throwableMonadic[F[_]](body: AnyRef)(implicit monad: MonadThrowable[F]): F[body.type] = ???
-   *          TODO
-   * @tparam F
+   *
+   *          Captures all the result in the `body` and converts them into a `F`.
+   *
+   *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
+   *
+   * @tparam F the higher kinded type of the monadic expression.
+   * @param body the imperative style expressions that will be transform to monadic style.
+   * @param monad the monad that executes expressions in `body`.
    * @return
    */
   def throwableMonadic[F[_]] = new PartialAppliedMonadic[MonadThrowable, F, MonadThrowableMode.type]

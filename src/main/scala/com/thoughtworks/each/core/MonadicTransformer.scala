@@ -460,53 +460,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
     val toTypeParameterName = freshName("To")
     Block(
       List(
-      {
-        val Block(List(importExpr), _) = (reify {
-          import scala.language.implicitConversions
-        }).tree
-        importExpr
-      },
-      ValDef(NoMods, TermName(monadName), TypeTree(monad.tpe), monad),
-      DefDef(
-        Modifiers(IMPLICIT),
-        TermName(castMethodName),
-        List(
-          TypeDef(Modifiers(PARAM), TypeName(fromTypeParameterName), List(), TypeBoundsTree(TypeTree(), TypeTree())),
-          TypeDef(Modifiers(PARAM), TypeName(toTypeParameterName), List(), TypeBoundsTree(TypeTree(), TypeTree()))
-        ),
-        List(
-          List(
-            ValDef(
-              Modifiers(PARAM),
-              TermName(fromParameterName),
-              AppliedTypeTree(fTree, List(Ident(TypeName(fromTypeParameterName)))),
-              EmptyTree
-            )
-          ),
-          List(
-            ValDef(
-              Modifiers(IMPLICIT | PARAM),
-              TermName(viewName),
-              AppliedTypeTree(
-                Ident(definitions.FunctionClass(1)),
-                List(Ident(TypeName(fromTypeParameterName)), Ident(TypeName(toTypeParameterName)))
-              ),
-              EmptyTree
-            )
-          )
-        ),
-        AppliedTypeTree(fTree, List(Ident(TypeName(toTypeParameterName)))),
-        Apply(
-          Apply(
-            TypeApply(
-              Select(Ident(TermName(monadName)), TermName("map")),
-              List(Ident(TypeName(fromTypeParameterName)), Ident(TypeName(toTypeParameterName)))
-            ),
-            List(Ident(TermName(fromParameterName)))
-          ),
-          List(Ident(TermName(viewName)))
-        )
-      )
+        ValDef(NoMods, TermName(monadName), TypeTree(monad.tpe), monad)
       ),
       CpsTree(origin)(Set.empty).toReflectTree
     )

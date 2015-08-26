@@ -24,15 +24,11 @@ class MonadicErrorTest {
     val either = {
       var count = 0
 
-      /*
-      implicit def cast$macro$3[From$macro$4, To$macro$6]
-      (from$macro$5: EitherT[From$macro$4])
-      (implicit view$macro$2: Function1[From$macro$4, To$macro$6]): EitherT[To$macro$6] =
-       monad$macro$1.map[From$macro$4, To$macro$6](from$macro$5)(view$macro$2);
-       */
-      //      implicit def cast[From, To](from: OptionScript[From])(implicit view: From => To): OptionScript[To] = {
-      //        Monad[OptionScript].map[From, To](from)(view)
-      //      }
+      import scala.language.implicitConversions
+      implicit def cast[From, To](from: OptionScript[From])(implicit view: From => To): OptionScript[To] = {
+        Monad[OptionScript].map[From, To](from)(view)
+      }
+
       val either = throwableMonadic[OptionScript] {
         try {
           count += 1

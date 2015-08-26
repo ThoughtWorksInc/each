@@ -19,16 +19,26 @@ class MonadicErrorTest {
 
     case object MyException extends Exception
 
-    type Script[A] = EitherT[Option, Throwable, A]
+    type OptionScript[A] = EitherT[Option, Throwable, A]
 
     val either = {
       var count = 0
-      val either = throwableMonadic[Script] {
+
+      /*
+      implicit def cast$macro$3[From$macro$4, To$macro$6]
+      (from$macro$5: EitherT[From$macro$4])
+      (implicit view$macro$2: Function1[From$macro$4, To$macro$6]): EitherT[To$macro$6] =
+       monad$macro$1.map[From$macro$4, To$macro$6](from$macro$5)(view$macro$2);
+       */
+      //      implicit def cast[From, To](from: OptionScript[From])(implicit view: From => To): OptionScript[To] = {
+      //        Monad[OptionScript].map[From, To](from)(view)
+      //      }
+      val either = throwableMonadic[OptionScript] {
         try {
           count += 1
           throw MyException
           count += 10
-          count
+          throw new Exception("Unreachable code")
         } catch {
           case MyException => {
             count += 100
@@ -45,26 +55,35 @@ class MonadicErrorTest {
     Assert.assertEquals(Some(\/-(101)), either.run)
     Assert.assertEquals({
       var count = 0
-      val monad$macro$1 = Monadic.eitherTMonadThrowable[Option](scalaz.std.option.optionInstance);
-      val expectedEither = monad$macro$1.map(monad$macro$1.handleError[Int](monad$macro$1.handleError[Int]({
-        count = count.+(1);
-        monad$macro$1.bind(monad$macro$1.raiseError[Nothing](MyException))(((element$macro$2: Nothing) => {
-          count = count.+(10);
-          monad$macro$1.point(count)
-        }))
-      })(((exception$macro$3: Throwable) => exception$macro$3 match {
-        case MyException => {
-          count = count.+(100);
-          monad$macro$1.point(count)
+      val monad$macro$1: MonadThrowable[OptionScript] = Monadic.eitherTMonadThrowable[Option](scalaz.std.option.optionInstance);
+
+      val expectedEither = {
+        type F$macro$1[A$macro$11] = OptionScript[A$macro$11];
+        {
+          val monad$macro$2 = Monadic.eitherTMonadThrowable[Option](scalaz.std.option.optionInstance);
+          implicit def cast$macro$4[From$macro$5, To$macro$7](from$macro$6: F$macro$1[From$macro$5])(implicit view$macro$3: Function1[From$macro$5, To$macro$7]): F$macro$1[To$macro$7] = monad$macro$2.map[From$macro$5, To$macro$7](from$macro$6)(view$macro$3);
+          monad$macro$2.map(monad$macro$2.handleError[Int](monad$macro$2.handleError[Int]({
+            count = count.+(1);
+            monad$macro$2.bind(monad$macro$2.raiseError[Nothing](MyException))(((element$macro$8: Nothing) => {
+              count = count.+(10);
+              monad$macro$2.raiseError[Nothing](new Exception("Unreachable code"))
+            }))
+          })(((exception$macro$9: Throwable) => exception$macro$9 match {
+            case MyException => {
+              count = count.+(100);
+              monad$macro$2.point(count)
+            }
+            case _ => monad$macro$2.raiseError[Int](exception$macro$9)
+          })))(((exception$macro$9: Throwable) => {
+            count = count.+(1000);
+            monad$macro$2.raiseError[Int](exception$macro$9)
+          })))(((element$macro$10: Int) => {
+            count = count.+(1000);
+            element$macro$10
+          }))
         }
-        case _ => monad$macro$1.raiseError[Int](exception$macro$3)
-      })))(((exception$macro$3: Throwable) => {
-        count = count.+(1000);
-        monad$macro$1.raiseError[Int](exception$macro$3)
-      })))(((element$macro$4: Int) => {
-        count = count.+(1000);
-        element$macro$4
-      }))
+      }
+
       Assert.assertEquals(1101, count)
       expectedEither
     }.run, either.run)

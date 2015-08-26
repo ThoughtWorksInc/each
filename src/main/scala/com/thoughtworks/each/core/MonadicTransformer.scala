@@ -53,7 +53,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
   protected val eachExtractor: PartialFunction[Tree, Tree]
 
   // See https://issues.scala-lang.org/browse/SI-5712
-  protected def fType: Type
+  protected def fTree: Tree
 
   private val monadName = freshName("monad")
 
@@ -167,9 +167,9 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                       TypeApply(
                         Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("catchSome")),
                         List(
-                          Ident(fType.typeSymbol),
+                          fTree,
                           TypeTree(origin.tpe),
-                          AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))))),
+                          AppliedTypeTree(fTree, List(TypeTree(origin.tpe))))),
                       List(tryF)),
                     List(
                       Function(
@@ -184,7 +184,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                           ValDef(
                             Modifiers(PARAM),
                             catcherResultName,
-                            AppliedTypeTree(Ident(fType.typeSymbol), List(TypeTree(origin.tpe))),
+                            AppliedTypeTree(fTree, List(TypeTree(origin.tpe))),
                             EmptyTree)),
                         Ident(catcherResultName)))),
                   List(monadTree))
@@ -453,6 +453,62 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
   }
 
   final def transform(origin: Tree, monad: Tree): Tree = {
-    Block(List(ValDef(NoMods, TermName(monadName), TypeTree(monad.tpe), monad)), CpsTree(origin)(Set.empty).toReflectTree)
+    val viewName = freshName("view")
+    val castMethodName = freshName("cast")
+    val fromTypeParameterName = freshName("From")
+    val fromParameterName = freshName("from")
+    val toTypeParameterName = freshName("To")
+    Block(
+      List(
+      {
+        val Block(List(importExpr), _) = (reify {
+          import scala.language.implicitConversions
+        }).tree
+        importExpr
+      },
+      ValDef(NoMods, TermName(monadName), TypeTree(monad.tpe), monad),
+      DefDef(
+        Modifiers(IMPLICIT),
+        TermName(castMethodName),
+        List(
+          TypeDef(Modifiers(PARAM), TypeName(fromTypeParameterName), List(), TypeBoundsTree(TypeTree(), TypeTree())),
+          TypeDef(Modifiers(PARAM), TypeName(toTypeParameterName), List(), TypeBoundsTree(TypeTree(), TypeTree()))
+        ),
+        List(
+          List(
+            ValDef(
+              Modifiers(PARAM),
+              TermName(fromParameterName),
+              AppliedTypeTree(fTree, List(Ident(TypeName(fromTypeParameterName)))),
+              EmptyTree
+            )
+          ),
+          List(
+            ValDef(
+              Modifiers(IMPLICIT | PARAM),
+              TermName(viewName),
+              AppliedTypeTree(
+                Ident(definitions.FunctionClass(1)),
+                List(Ident(TypeName(fromTypeParameterName)), Ident(TypeName(toTypeParameterName)))
+              ),
+              EmptyTree
+            )
+          )
+        ),
+        AppliedTypeTree(fTree, List(Ident(TypeName(toTypeParameterName)))),
+        Apply(
+          Apply(
+            TypeApply(
+              Select(Ident(TermName(monadName)), TermName("map")),
+              List(Ident(TypeName(fromTypeParameterName)), Ident(TypeName(toTypeParameterName)))
+            ),
+            List(Ident(TermName(fromParameterName)))
+          ),
+          List(Ident(TermName(viewName)))
+        )
+      )
+      ),
+      CpsTree(origin)(Set.empty).toReflectTree
+    )
   }
 }

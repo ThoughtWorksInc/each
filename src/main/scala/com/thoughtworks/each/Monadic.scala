@@ -139,7 +139,9 @@ object Monadic {
    * @tparam M
    * @tparam F
    */
-  final class PartialAppliedMonadic[M[_[_]], F[_], Mode <: ExceptionHandlingMode] private[Monadic]() {
+  final class PartialAppliedMonadic[M[_[_]], F0[_], Mode <: ExceptionHandlingMode] private[Monadic]() {
+
+    type F[A] = F0[A]
 
     def apply[X](body: X)(implicit monad: M[F]): F[X] = macro PartialAppliedMonadic.MacroImplementation.apply
 
@@ -166,12 +168,14 @@ object Monadic {
         } else {
           throw new IllegalStateException("Unsupported ExceptionHandlingMode")
         }
+        val partialAppliedMonadicType = partialAppliedMonadicTree.tpe.widen
+        val fType = partialAppliedMonadicType.typeArgs(1)
 
         val transformer = new MonadicTransformer[c.universe.type](c.universe, mode) {
 
           override def freshName(name: String) = c.freshName(name)
 
-          override val fType = partialAppliedMonadicTree.tpe.widen.typeArgs(1)
+          override def fTree = SelectFromTypeTree(TypeTree(partialAppliedMonadicType), TypeName("F"))
 
           val eachMethodSymbol = {
             val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]

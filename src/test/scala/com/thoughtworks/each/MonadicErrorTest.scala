@@ -170,6 +170,7 @@ class MonadicErrorTest {
         }
       }
     })
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(throw MyException)), result)
     Assert.assertEquals(-\/(MyException), result)
     Assert.assertEquals(54000, getCount())
   }
@@ -186,6 +187,7 @@ class MonadicErrorTest {
         }
       }
     })
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(throw new IOException)), result)
     Assert.assertEquals(\/-(456), result)
     Assert.assertEquals(54300, getCount())
   }
@@ -202,6 +204,7 @@ class MonadicErrorTest {
         }
       }
     })
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(150)), result)
     Assert.assertEquals(-\/(MyException), result)
     Assert.assertEquals(654000, getCount())
   }
@@ -218,6 +221,7 @@ class MonadicErrorTest {
         }
       }
     })
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(15)), result)
     Assert.assertEquals(\/-(123), result)
     Assert.assertEquals(54001, getCount())
   }
@@ -234,6 +238,7 @@ class MonadicErrorTest {
         }
       }
     })
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(5)), result)
     Assert.assertEquals(\/-(456), result)
     Assert.assertEquals(54320, getCount())
   }

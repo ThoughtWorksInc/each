@@ -22,6 +22,8 @@ scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
 
+scalacOptions += "-unchecked"
+
 releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 import ReleaseTransformations._

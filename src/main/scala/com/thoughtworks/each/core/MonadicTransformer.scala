@@ -17,7 +17,7 @@ limitations under the License.
 package com.thoughtworks.each.core
 
 import com.thoughtworks.each.core.MonadicTransformer.ExceptionHandlingMode
-
+import scala.language.higherKinds
 import scala.annotation.tailrec
 
 object MonadicTransformer {
@@ -29,6 +29,7 @@ object MonadicTransformer {
   case object UnsupportedExceptionHandlingMode extends ExceptionHandlingMode
 
   case object MonadCatchIoMode extends ExceptionHandlingMode
+
 
 }
 
@@ -49,8 +50,19 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
   import universe._
   import Flag._
 
+
+  protected sealed trait Instruction
+
+  protected sealed case class Each(monadicTree: Tree) extends Instruction
+
+  protected sealed case class Foreach(foldableOps: Tree, body: Function) extends Instruction
+
+  protected sealed case class Map(traverseOps: Tree, body: Function) extends Instruction
+
+  protected sealed case class FlatMap(traverseOps: Tree, body: Function, bind: Tree) extends Instruction
+
   // See https://issues.scala-lang.org/browse/SI-5712
-  protected val eachExtractor: PartialFunction[Tree, Tree]
+  protected val instructionExtractor: PartialFunction[Tree, Instruction]
 
   // See https://issues.scala-lang.org/browse/SI-5712
   protected def fTree: Tree
@@ -71,9 +83,54 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
 
     def apply(origin: Tree)(implicit forceAwait: Set[Name]): CpsTree = {
       origin match {
-        case eachExtractor.Extractor(monadicTree) => {
-          CpsTree(monadicTree).flatMap { x =>
-            new MonadTree(x, origin.tpe)
+        case instructionExtractor.Extractor(instruction) => {
+          instruction match {
+            case FlatMap(opsTree, bodyFunctionTree@Function(List(valDefTree), bodyTree), bindTree) => {
+              MonadTree(
+                Apply(
+                  Apply(
+                    Select(opsTree, TermName("traverseM")),
+                    List(treeCopy.Function(bodyFunctionTree, List(valDefTree), CpsTree(bodyTree).toReflectTree))
+                  ),
+                  List(monadTree, bindTree)
+                ),
+                origin.tpe)
+            }
+            case Map(opsTree, bodyFunctionTree@Function(List(valDefTree), bodyTree)) => {
+              MonadTree(
+                Apply(
+                  Apply(
+                    TypeApply(
+                      Select(opsTree, TermName("traverse")),
+                      List(fTree, TypeTree(bodyTree.tpe))
+                    ),
+                    List(treeCopy.Function(bodyFunctionTree, List(valDefTree), CpsTree(bodyTree).toReflectTree))
+                  ),
+                  List(monadTree)
+                ),
+                origin.tpe)
+            }
+            case Foreach(opsTree, bodyFunctionTree@Function(List(valDefTree), bodyTree)) => {
+              MonadTree(
+                Apply(
+                  Apply(
+                    TypeApply(
+                      Select(opsTree, TermName("traverse_")),
+                      List(fTree)
+                    ),
+                    List(treeCopy.Function(bodyFunctionTree, List(valDefTree), CpsTree(bodyTree).flatMap { x =>
+                      PlainTree(Typed(x, TypeTree(definitions.UnitTpe)), definitions.UnitTpe)
+                    }.toReflectTree))
+                  ),
+                  List(monadTree)
+                ),
+                origin.tpe)
+            }
+            case Each(monadicTree) => {
+              CpsTree(monadicTree).flatMap { x =>
+                new MonadTree(x, origin.tpe)
+              }
+            }
           }
         }
         case Apply(method@Ident(name), parameters) if forceAwait(name) => {
@@ -342,27 +399,38 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                 Apply(
                   TypeApply(
                     Select(monadTree, TermName("bind")),
-                    List(TypeTree(typeOf[_root_.scala.Unit]), TypeTree(origin.tpe))),
+                    List(TypeTree(definitions.UnitTpe), TypeTree(origin.tpe))),
                   List(Ident(name1))),
                 List(
                   Function(
-                    List(ValDef(Modifiers(PARAM), TermName(freshName("ignoredParameter")), TypeTree(typeOf[_root_.scala.Unit]), EmptyTree)),
+                    List(ValDef(Modifiers(PARAM), TermName(freshName("ignoredParameter")), TypeTree(definitions.UnitTpe), EmptyTree)),
                     Apply(
                       TypeApply(
                         Select(monadTree, TermName("whileM_")),
-                        List(TypeTree(origin.tpe))),
+                        List(TypeTree(origin.tpe))
+                      ),
                       List(
                         CpsTree(condition).toReflectTree,
-                        Ident(name1))))))),
+                        Ident(name1)
+                      )
+                    )
+                  )
+                )
+              )
+            ),
             origin.tpe)
         }
         case Throw(throwable) => {
           exceptionHandlingMode match {
             case MonadThrowableMode => {
-              new MonadTree(Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(throwable)), origin.tpe)
+              CpsTree(throwable).flatMap { x =>
+                new MonadTree(Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(x)), origin.tpe)
+              }
             }
             case UnsupportedExceptionHandlingMode | MonadCatchIoMode => {
-              new PlainTree(origin, origin.tpe)
+              CpsTree(throwable).flatMap { x =>
+                new PlainTree(treeCopy.Throw(origin, x), origin.tpe)
+              }
             }
           }
         }
@@ -453,11 +521,6 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
   }
 
   final def transform(origin: Tree, monad: Tree): Tree = {
-    val viewName = freshName("view")
-    val castMethodName = freshName("cast")
-    val fromTypeParameterName = freshName("From")
-    val fromParameterName = freshName("from")
-    val toTypeParameterName = freshName("To")
     Block(
       List(
         ValDef(NoMods, TermName(monadName), TypeTree(monad.tpe), monad)

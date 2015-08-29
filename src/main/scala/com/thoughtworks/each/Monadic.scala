@@ -25,8 +25,151 @@ import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
 import scalaz.effect.MonadCatchIO
 import scalaz._
+import scalaz.syntax.{FoldableOps, TraverseOps}
 
 object Monadic {
+
+  final class MonadicLoop[FA](private[Monadic] val underlying: FA)
+
+  implicit final class ToMonadicLoopOps[FA](underlying: FA) {
+
+    def monadicLoop = new MonadicLoop(underlying)
+
+  }
+
+  final class FoldableComprehensionOps[F[_], A](private[Monadic] val underlying: F[A])(implicit F: Foldable[F]) {
+
+    type Element = A
+
+    def toFoldableOps = scalaz.syntax.foldable.ToFoldableOps(underlying)
+
+    @compileTimeOnly("`foreach` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
+    def foreach[U](f: A => U): Unit = ???
+
+  }
+
+  final class TraverseComprehensionOps[F[_], A](private[Monadic] val underlying: F[A])(implicit private[Monadic] val F: Traverse[F]) {
+
+    type Element = A
+
+    def toTraverseOps = scalaz.syntax.traverse.ToTraverseOps(underlying)
+
+    @compileTimeOnly("`map` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
+    def map[B](f: A => B): F[B] = ???
+
+    @compileTimeOnly("`flatMap` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
+    def flatMap[B](f: A => F[B])(implicit bind: Bind[F]): F[B] = ???
+
+
+  }
+
+
+  final class MonadPlusComprehensionOps[F[_], A](private[Monadic] val underlying: F[A])(implicit private[Monadic] val F: MonadPlus[F]) {
+    def withFilter(p: A => Boolean): MonadicLoop[F[A]] = {
+      new MonadicLoop(F.filter(underlying)(p))
+    }
+  }
+
+
+  implicit def monadPlusComprehensionOpsToFoldableComprehensionOpsTo[F[_], A](v: MonadPlusComprehensionOps[F, A])(implicit F: Foldable[F]) = {
+    new FoldableComprehensionOps(v.underlying)
+  }
+
+  implicit def monadPlusComprehensionOpsToTraverseComprehensionOpsTo[F[_], A](v: MonadPlusComprehensionOps[F, A])(implicit F: Traverse[F]) = {
+    new TraverseComprehensionOps(v.underlying)
+  }
+
+  implicit def foldableComprehensionOpsToTraverseComprehensionOpsTo[F[_], A](v: FoldableComprehensionOps[F, A])(implicit F: Traverse[F]) = {
+    new TraverseComprehensionOps(v.underlying)
+  }
+
+
+  implicit def foldableComprehensionOpsToMonadPlusComprehensionOps[F[_], A](v: FoldableComprehensionOps[F, A])(implicit F: MonadPlus[F]) = {
+    new MonadPlusComprehensionOps(v.underlying)
+  }
+
+  implicit def traverseComprehensionOpsToFoldableComprehensionOps[F[_], A](v: TraverseComprehensionOps[F, A]) = {
+    import v._
+    new FoldableComprehensionOps(underlying)
+  }
+
+
+  implicit def traverseComprehensionOpsToMonadPlusComprehensionOps[F[_], A](v: TraverseComprehensionOps[F, A])(implicit F: MonadPlus[F]) = {
+    new MonadPlusComprehensionOps(v.underlying)
+  }
+
+  /**
+   * An implicit view to enable `for` `yield` comprehension for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def monadicLoopToFoldableComprehensionOps[FA](v: MonadicLoop[FA])(implicit F0: Unapply[Foldable, FA]) = {
+    new FoldableComprehensionOps[F0.M, F0.A](F0(v.underlying))(F0.TC)
+  }
+
+  /**
+   * An implicit view to enable `for` `yield` comprehension for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def monadicLoopToTraverseComprehensionOpsUnapply[FA](v: MonadicLoop[FA])(implicit F0: Unapply[Traverse, FA]) = {
+    new TraverseComprehensionOps[F0.M, F0.A](F0(v.underlying))(F0.TC)
+  }
+
+
+  /**
+   * An implicit view to enable `for` `yield` comprehension for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def monadicLoopToMonadPlusComprehensionOpsUnapply[FA](v: MonadicLoop[FA])(implicit F0: Unapply[MonadPlus, FA]) = {
+    new MonadPlusComprehensionOps[F0.M, F0.A](F0(v.underlying))(F0.TC)
+  }
+
+  /**
+   * An implicit view to enable `for` `yield` comprehension for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def toFoldableComprehensionOps[FA](v: FA)(implicit F0: Unapply[Foldable, FA]) = {
+    new FoldableComprehensionOps[F0.M, F0.A](F0(v))(F0.TC)
+  }
+
+  /**
+   * An implicit view to enable `for` `yield` comprehension for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def toTraverseComprehensionOpsUnapply[FA](v: FA)(implicit F0: Unapply[Traverse, FA]) = {
+    new TraverseComprehensionOps[F0.M, F0.A](F0(v))(F0.TC)
+  }
+
+  /**
+   * An implicit view to enable `for` `yield` comprehension for a monadic value.
+   *
+   * @param v the monadic value.
+   * @param F0 a helper to infer types.
+   * @tparam FA type of the monadic value.
+   * @return the temporary wrapper that contains the `each` method.
+   */
+  implicit def toMonadPlusComprehensionOpsUnapply[FA](v: FA)(implicit F0: Unapply[MonadPlus, FA]) = {
+    new MonadPlusComprehensionOps[F0.M, F0.A](F0(v))(F0.TC)
+  }
 
   /**
    * The temporary wrapper that contains the `each` method.
@@ -50,7 +193,7 @@ object Monadic {
      *
      * @return the result in the monadic value.
      */
-    @compileTimeOnly("`each` must be inside `monadic` or `catchIoMonadic`.")
+    @compileTimeOnly("`each` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
     def each: A = ???
 
   }
@@ -177,12 +320,38 @@ object Monadic {
 
           override def fTree = SelectFromTypeTree(TypeTree(partialAppliedMonadicType), TypeName("F"))
 
-          val eachMethodSymbol = {
+          private val eachMethodSymbol = {
             val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
             eachOpsType.member(TermName("each"))
           }
 
-          override val eachExtractor: PartialFunction[Tree, Tree] = {
+          private val foldableComprehensionOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.FoldableComprehensionOps[({type T[F[_]] = {}})#T, _]]
+
+          private val traverseComprehensionOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.TraverseComprehensionOps[({type T[F[_]] = {}})#T, _]]
+
+          private val foreachMethodSymbol = foldableComprehensionOpsType.member(TermName("foreach"))
+
+          private val mapMethodSymbol = traverseComprehensionOpsType.member(TermName("map"))
+
+          private val flatMapMethodSymbol = traverseComprehensionOpsType.member(TermName("flatMap"))
+
+          override val instructionExtractor: PartialFunction[Tree, Instruction] = {
+            case Apply(Apply(TypeApply(methodTree@Select(opsTree, _), _), List(bodyFunctionTree: Function)), List(bindTree)) if methodTree.symbol == flatMapMethodSymbol => {
+              FlatMap(
+                Select(opsTree, TermName("toTraverseOps")),
+                bodyFunctionTree,
+                bindTree)
+            }
+            case Apply(TypeApply(methodTree@Select(opsTree, _), _), List(bodyFunctionTree: Function)) if methodTree.symbol == mapMethodSymbol => {
+              Map(
+                Select(opsTree, TermName("toTraverseOps")),
+                bodyFunctionTree)
+            }
+            case Apply(TypeApply(methodTree@Select(opsTree, _), _), List(bodyFunctionTree: Function)) if methodTree.symbol == foreachMethodSymbol => {
+              Foreach(
+                Select(opsTree, TermName("toFoldableOps")),
+                bodyFunctionTree)
+            }
             case eachMethodTree@Select(eachOpsTree, _) if eachMethodTree.symbol == eachMethodSymbol => {
               val actualFType = eachOpsTree.tpe.typeArgs(0)
               val resultType = eachMethodTree.tpe
@@ -195,7 +364,7 @@ object Monadic {
  found   : ${show(actualType)}
  required: ${show(expectedType)}""")
               }
-              Select(eachOpsTree, TermName("underlying"))
+              Each(Select(eachOpsTree, TermName("underlying")))
             }
           }
 

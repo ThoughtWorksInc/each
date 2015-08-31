@@ -32,6 +32,17 @@ class TraverseComprehensionTest {
     Assert.assertEquals(Some(Iterable(4300, 4020)), result)
   }
 
+
+  @Test
+  def testMapWithAnotherType(): Unit = {
+    val result = monadic[Option] {
+      (for (i <- Iterable("foo", "bar-baz").toEphemeralStream.monadicLoop) yield {
+        i.length
+      }).to[Iterable]
+    }
+    Assert.assertEquals(Some(Iterable(3, 7)), result)
+  }
+
   @Test
   def testFlatMap(): Unit = {
     val n = Some(4000)
@@ -60,20 +71,20 @@ class TraverseComprehensionTest {
     Assert.assertEquals(Some(Iterable(4300)), result)
   }
 
-//  @Test
-//  def testComplex(): Unit = {
-//    val n = Some(4000)
-//    val result = monadic[Option] {
-//      (for {
-//        i <- Iterable(300, 20).toEphemeralStream.monadicLoop
-//        (j, k) <- Iterable(50000->"1111", 600000->"yyy").toEphemeralStream.monadicLoop
-//        if i > 100
-//        a = i + k
-//      } yield {
-//          a + n.each * k.length
-//        }).to[Iterable]
-//    }
-//    Assert.assertEquals(Some(Iterable(16300, 12300)), result)
-//  }
+  @Test
+  def testComplex(): Unit = {
+    val n = Some(4000)
+    val result = monadic[Option] {
+      (for {
+        i <- Iterable(300, 20).toEphemeralStream.monadicLoop
+        (j, k) <- Iterable(50000 -> "1111", 600000 -> "yyy").toEphemeralStream.monadicLoop
+        if i > 100
+        a = i + j
+      } yield {
+          a + n.each * k.length
+        }).to[Iterable]
+    }
+    Assert.assertEquals(Some(Iterable(66300, 612300)), result)
+  }
 
 }

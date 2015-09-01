@@ -128,6 +128,47 @@ assertEquals(4, count)
 
 Note that `catchIoMonadic` requires an implicit parameter `scalaz.effect.MonadCatchIO[F]` instead of `Monad[F]`. `scalaz.effect.MonadCatchIO[F]` is only provided for `scalaz.effect.IO` by default.
 
+## `for` loop
+
+Each supports `.each` magic in a `for` loop on `MonadicLoop`. You can create a `MonadicLoop` instance via `.monadicLoop` method from any instances that support `Foldable` type class. For example, you could `import scalaz.std.list._` to enable the `Foldable` type class for  `List`.
+
+``` scala
+import com.thoughtworks.each.Monadic._
+import scalaz.std.list._
+import scalaz.std.option._
+val n = Some(10)
+val result = monadic[Option] {
+  var count = 1
+  for (i <- List(300, 20).monadicLoop) {
+    count += i * n.each
+  }
+  count
+}
+Assert.assertEquals(Some(3201), result)
+```
+
+## `for` comprehension
+
+Each also supports `.each` magic in a `for` comprehension on `MonadicLoop`. You can create a `MonadicLoop` instance via `.monadicLoop` method from any instances that support `Traverse` and `MonadPlus` type class.
+
+``` scala
+import com.thoughtworks.each.Monadic._
+import scalaz.std.list._
+val n = Some(4000)
+val result = monadic[Option] {
+  (for {
+    i <- List(300, 20).monadicLoop
+    (j, k) <- List(50000 -> "1111", 600000 -> "yyy").monadicLoop
+    if i > n.each - 3900
+    a = i + j
+  } yield {
+      a + n.each * k.length
+    }).underlying
+}
+Assert.assertEquals(Some(List(66300, 612300)), result)
+```
+
+
 ## Links
 
  * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.4.1-SNAPSHOT/each_2.11-0.4.1-SNAPSHOT-javadoc.jar/!/index.html)

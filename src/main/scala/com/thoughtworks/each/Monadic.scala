@@ -72,9 +72,8 @@ object Monadic {
     @compileTimeOnly("`flatMap` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
     def flatMap[B](f: A => F[B])(implicit traverse: Traverse[F], bind: Bind[F]): MonadicLoop[F, B] = ???
 
-    def withFilter(p: A => Boolean)(implicit monadPlus: MonadPlus[F]): MonadicLoop[F, A] = {
-      new MonadicLoop(monadPlus.filter(underlying)(p))
-    }
+    @compileTimeOnly("`withFilter` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
+    def withFilter(p: A => Boolean)(implicit traverse: Traverse[F], monadPlus: MonadPlus[F]): MonadicLoop[F, A] = ???
 
   }
 
@@ -252,6 +251,8 @@ object Monadic {
 
           private val flatMapMethodSymbol = monadciType.member(TermName("flatMap"))
 
+          private val filterMethodSymbol = monadciType.member(TermName("withFilter"))
+
           private def hook(expectedType: Type, resultTree: Tree): Tree = {
             Apply(
               Select(
@@ -263,9 +264,18 @@ object Monadic {
           }
 
           override val instructionExtractor: PartialFunction[Tree, Instruction] = {
-            case origin@Apply(Apply(TypeApply(methodTree@Select(opsTree, _), _), List(bodyFunctionTree: Function)), List(traverseTree, bindTree)) if methodTree.symbol == flatMapMethodSymbol => {
+            case origin@Apply(Apply(methodTree@Select(opsTree, _), List(bodyFunctionTree: Function)), List(traverseTree, monadPlusTree)) if methodTree.symbol == filterMethodSymbol => {
+              Filter(
+                Apply(Select(opsTree, TermName("toTraverseOps")), List(traverseTree)),
+                bodyFunctionTree,
+                monadPlusTree,
+                origin.tpe.member(TermName("underlying")).typeSignatureIn(origin.tpe),
+                hook(origin.tpe, _))
+            }
+            case origin@Apply(Apply(TypeApply(methodTree@Select(opsTree, _), List(resultTypeTree)), List(bodyFunctionTree: Function)), List(traverseTree, bindTree)) if methodTree.symbol == flatMapMethodSymbol => {
               FlatMap(
                 Apply(Select(opsTree, TermName("toTraverseOps")), List(traverseTree)),
+                resultTypeTree,
                 bodyFunctionTree,
                 bindTree,
                 origin.tpe.member(TermName("underlying")).typeSignatureIn(origin.tpe),

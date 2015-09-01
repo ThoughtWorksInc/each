@@ -59,7 +59,9 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
 
   protected sealed case class Map(traverseOps: Tree, body: Function, thisType: Type, hook: Tree => Tree) extends Instruction
 
-  protected sealed case class FlatMap(traverseOps: Tree, body: Function, bind: Tree, thisType: Type, hook: Tree => Tree) extends Instruction
+  protected sealed case class FlatMap(traverseOps: Tree, resultType: Tree, body: Function, bind: Tree, thisType: Type, hook: Tree => Tree) extends Instruction
+
+  protected sealed case class Filter(traverseOps: Tree, body: Function, monadPlus: Tree, thisType: Type, hook: Tree => Tree) extends Instruction
 
   // See https://issues.scala-lang.org/browse/SI-5712
   protected val instructionExtractor: PartialFunction[Tree, Instruction]
@@ -85,12 +87,18 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
       origin match {
         case instructionExtractor.Extractor(instruction) => {
           instruction match {
-            case FlatMap(opsTree, bodyFunctionTree@Function(List(valDefTree), bodyTree), bindTree, thisType, hook) => {
+            case FlatMap(opsTree, resultType, bodyFunctionTree@Function(List(valDefTree), bodyTree), bindTree, thisType, hook) => {
               CpsTree(opsTree).flatMap { x =>
                 MonadTree(
                   Apply(
                     Apply(
-                      Select(x, TermName("traverseM")),
+                      TypeApply(
+                        Select(x, TermName("traverseM")),
+                        List(
+                          fTree,
+                          resultType
+                        )
+                      ),
                       List(treeCopy.Function(bodyFunctionTree, List(valDefTree), CpsTree(bodyTree).toReflectTree))
                     ),
                     List(monadTree, bindTree)
@@ -134,6 +142,40 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                     List(monadTree)
                   ),
                   definitions.UnitTpe)
+              }
+            }
+            case Filter(opsTree, bodyFunctionTree@Function(List(valDefTree), bodyTree), monadPlusTree, thisType, hook) => {
+              CpsTree(opsTree).flatMap { x =>
+                MonadTree(
+                  Apply(
+                    Apply(
+                      TypeApply(
+                        Select(x, TermName("traverseM")),
+                        List(
+                          fTree,
+                          valDefTree.tpt
+                        )
+                      ),
+                      List(treeCopy.Function(bodyFunctionTree, List(valDefTree), (CpsTree(bodyTree).flatMap { x =>
+                        PlainTree(
+                          If(
+                            x,
+                            Apply(
+                              Select(monadPlusTree, TermName("point")),
+                              List(Ident(valDefTree.name))
+                            ),
+                            Select(monadPlusTree, TermName("empty"))
+                          ),
+                          valDefTree.tpt.tpe
+                        )
+                      }).toReflectTree))
+                    ),
+                    List(monadTree, monadPlusTree)
+                  ),
+                  thisType
+                ).flatMap { x =>
+                  PlainTree(hook(x), origin.tpe)
+                }
               }
             }
             case Each(monadicTree) => {

@@ -60,6 +60,7 @@ class TraverseComprehensionTest {
   @Test
   def testFilter(): Unit = {
     val n = Some(4000)
+
     val result = monadic[Option] {
       (for {
         i <- Iterable(300, 20).toEphemeralStream.monadicLoop
@@ -78,12 +79,13 @@ class TraverseComprehensionTest {
       (for {
         i <- Iterable(300, 20).toEphemeralStream.monadicLoop
         (j, k) <- Iterable(50000 -> "1111", 600000 -> "yyy").toEphemeralStream.monadicLoop
-        if i > 100
+        if i > n.each - 3900
         a = i + j
       } yield {
           a + n.each * k.length
         }).to[Iterable]
     }
+
     Assert.assertEquals(Some(Iterable(66300, 612300)), result)
   }
 

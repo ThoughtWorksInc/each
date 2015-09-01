@@ -29,7 +29,7 @@ import scalaz.syntax.{FoldableOps, TraverseOps}
 
 object Monadic {
 
-  final class ToMonadicLoopOps[F[_], A](underlying: F[A])(implicit F: Foldable[F]) {
+  implicit final class ToMonadicLoopOps[F[_], A](underlying: F[A]) {
 
     def monadicLoop = new MonadicLoop(underlying)
 
@@ -86,7 +86,7 @@ object Monadic {
    * @return the temporary wrapper that contains the `each` method.
    */
   implicit def toMonadicLoopOpsUnapply[FA](v: FA)(implicit F0: Unapply[Foldable, FA]) = {
-    new ToMonadicLoopOps[F0.M, F0.A](F0(v))(F0.TC)
+    new ToMonadicLoopOps[F0.M, F0.A](F0(v))
   }
 
   /**

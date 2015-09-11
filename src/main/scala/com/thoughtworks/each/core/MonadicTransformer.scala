@@ -420,9 +420,14 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                 CpsTree(elsep).toReflectTree)),
             origin.tpe)
         }
+        case Typed(expr, tpt@Ident(typeNames.WILDCARD_STAR)) => {
+          CpsTree(expr).flatMap { x =>
+            new PlainTree(treeCopy.Typed(origin, x, tpt), origin.tpe)
+          }
+        }
         case Typed(expr, tpt) => {
           CpsTree(expr).flatMap { x =>
-            new PlainTree(Typed(x, tpt), origin.tpe)
+            new PlainTree(treeCopy.Typed(origin, x, TypeTree(tpt.tpe)), origin.tpe)
           }
         }
         case Annotated(annot, arg) => {

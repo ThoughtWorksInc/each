@@ -444,6 +444,16 @@ class MonadicTest {
   }
 
   @Test
+  def testTuple(): Unit = {
+    val result = monadic[Option] {
+      val (a, b, c) = Some((1, 2, 3)).each
+      a + b + c
+    }
+
+    Assert.assertEquals(Some(6), result)
+  }
+
+  @Test
   def testSuper(): Unit = {
     class Super {
       def foo = "super"

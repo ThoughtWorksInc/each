@@ -59,22 +59,22 @@ class MonadicErrorTest {
           val monad$macro$2 = Monadic.eitherTMonadThrowable[Option](scalaz.std.option.optionInstance);
           implicit def cast$macro$4[From$macro$5, To$macro$7](from$macro$6: F$macro$1[From$macro$5])(implicit view$macro$3: Function1[From$macro$5, To$macro$7]): F$macro$1[To$macro$7] = monad$macro$2.map[From$macro$5, To$macro$7](from$macro$6)(view$macro$3);
           monad$macro$2.map(monad$macro$2.handleError[Int](monad$macro$2.handleError[Int]({
-            count = count.+(1);
+            count += 1
             monad$macro$2.bind(monad$macro$2.raiseError[Nothing](MyException))(((element$macro$8: Nothing) => {
-              count = count.+(10);
+              count += 10
               monad$macro$2.raiseError[Nothing](new Exception("Unreachable code"))
             }))
           })(((exception$macro$9: Throwable) => exception$macro$9 match {
             case MyException => {
-              count = count.+(100);
+              count += 100
               monad$macro$2.point(count)
             }
             case _ => monad$macro$2.raiseError[Int](exception$macro$9)
           })))(((exception$macro$9: Throwable) => {
-            count = count.+(1000);
+            count += 1000
             monad$macro$2.raiseError[Int](exception$macro$9)
           })))(((element$macro$10: Int) => {
-            count = count.+(1000);
+            count += 1000
             element$macro$10
           }))
         }
@@ -91,27 +91,31 @@ class MonadicErrorTest {
 
   private trait Command[A]
 
-  private case object GetInt extends Command[Throwable \/ Int]
+  private case object RandomInt extends Command[Throwable \/ Int]
+
+  private case class Count(delta: Int) extends Command[Throwable \/ Int]
 
   private type FreeCommand[A] = FreeC[Command, A]
 
   private type Script[A] = EitherT[FreeCommand, Throwable, A]
 
-  private val getInt: Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftFC(GetInt))
+  private val randomInt: Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftFC(RandomInt))
+
+  private def count(delta: Int): Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftFC(Count(delta)))
 
   private case object MyException extends Exception
 
 
-  def noScript(getInt: => Int) = {
+  def noScript(randomInt: () => Int) = {
     var count = 0
     count += 50000
     try {
-      if (getInt > 100) {
+      if (randomInt() > 100) {
         count += 600000
         throw MyException
         count += 7000000
         789
-      } else if (getInt > 10) {
+      } else if (randomInt() > 10) {
         count += 1
         123
       } else {
@@ -128,119 +132,189 @@ class MonadicErrorTest {
     }
   }
 
-  private def newScript: (Script[Int], () => Int) = {
-    var count = 0
-    val script = throwableMonadic[Script] {
+  private def newScriptWithoutEach: Script[Int] = {
+    import scalaz.syntax.monadError._
 
-      count += 50000
+    count(50000).flatMap { _ =>
+      implicitly[MonadThrowable[Script]].handleError {
+        Monad[Script].ifM(
+        randomInt map {
+          _ > 100
+        }, {
+          count(600000).flatMap { _ =>
+            implicitly[MonadThrowable[Script]].raiseError(MyException) flatMap { _: Nothing =>
+              count(7000000).map { _ =>
+                789
+              }
+            }
+          }
+        }, {
+          Monad[Script].ifM(
+          randomInt map {
+            _ > 100
+          }, {
+            count(1).map { _ =>
+              123
+            }
+          }, {
+            count(20).flatMap { _ =>
+              implicitly[MonadThrowable[Script]].raiseError(new IOException) map { x: Nothing =>
+                x: Int
+              }
+            }
+          })
+        })
+      } {
+        case e: IOException => {
+          count(300).map { _ =>
+            456
+          }
+        }
+        case e => {
+          count(4000).flatMap { _ =>
+            implicitly[MonadThrowable[Script]].raiseError(e)
+          }
+        }
+      }
+    }
+
+  }
+
+  private def newScript: Script[Int] = {
+    throwableMonadic[Script] {
+      count(50000).each
       try {
-        if (getInt.each > 100) {
-          count += 600000
+        if (randomInt.each > 100) {
+          count(600000).each
           throw MyException
-          count += 7000000
+          count(7000000).each
           789
-        } else if (getInt.each > 10) {
-          count += 1
+        } else if (randomInt.each > 10) {
+          count(1).each
           123
         } else {
-          count += 20
+          count(20).each
           (throw new IOException): Int
         }
       } catch {
         case e: IOException => {
-          count += 300
+          count(300).each
           456
         }
       } finally {
-        count += 4000
+        count(4000).each
       }
     }
-    (script, { () => count })
   }
 
   @Test
   def testFreeMyException(): Unit = {
-    val (script, getCount) = newScript
+    val script = newScript
+    var count = 0
     val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
-          case GetInt => {
+          case Count(delta) => {
+            count += delta
+            \/-(count)
+          }
+          case RandomInt => {
             -\/(MyException)
           }
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(throw MyException)), result)
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => throw MyException)), result)
     Assert.assertEquals(-\/(MyException), result)
-    Assert.assertEquals(54000, getCount())
+    Assert.assertEquals(54000, count)
   }
 
   @Test
   def testFreeIOException(): Unit = {
-    val (script, getCount) = newScript
+    val script = newScript
+    var count = 0
     val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
-          case GetInt => {
+          case Count(delta) => {
+            count += delta
+            \/-(count)
+          }
+          case RandomInt => {
             -\/(new IOException)
           }
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(throw new IOException)), result)
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => throw new IOException)), result)
     Assert.assertEquals(\/-(456), result)
-    Assert.assertEquals(54300, getCount())
+    Assert.assertEquals(54300, count)
   }
 
   @Test
   def testFree150(): Unit = {
-    val (script, getCount) = newScript
+    val script = newScript
+    var count = 0
     val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
-          case GetInt => {
+          case Count(delta) => {
+            count += delta
+            \/-(count)
+          }
+          case RandomInt => {
             \/-(150)
           }
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(150)), result)
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => 150)), result)
     Assert.assertEquals(-\/(MyException), result)
-    Assert.assertEquals(654000, getCount())
+    Assert.assertEquals(654000, count)
   }
 
   @Test
   def testFree15(): Unit = {
-    val (script, getCount) = newScript
+    val script = newScript
+    var count = 0
     val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
-          case GetInt => {
+          case Count(delta) => {
+            count += delta
+            \/-(count)
+          }
+          case RandomInt => {
             \/-(15)
           }
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(15)), result)
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => 15)), result)
     Assert.assertEquals(\/-(123), result)
-    Assert.assertEquals(54001, getCount())
+    Assert.assertEquals(54001, count)
   }
 
   @Test
   def testFree5(): Unit = {
-    val (script, getCount) = newScript
+    val script = newScript
+    var count = 0
     val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
-          case GetInt => {
+          case Count(delta) => {
+            count += delta
+            \/-(count)
+          }
+          case RandomInt => {
             \/-(5)
           }
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(5)), result)
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() =>5)), result)
     Assert.assertEquals(\/-(456), result)
-    Assert.assertEquals(54320, getCount())
+    Assert.assertEquals(54320, count)
   }
 
 }

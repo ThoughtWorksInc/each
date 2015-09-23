@@ -171,7 +171,7 @@ Assert.assertEquals(Some(List(66300, 612300)), result)
 
 ## Links
 
- * [The API Documentation](https://oss.sonatype.org/service/local/repositories/snapshots/archive/com/thoughtworks/each/each_2.11/0.4.1-SNAPSHOT/each_2.11-0.4.1-SNAPSHOT-javadoc.jar/!/index.html)
+ * [The API Documentation](https://oss.sonatype.org/service/local/repositories/releases/archive/com/thoughtworks/each/each_2.11/0.4.1/each_2.11-0.4.1-javadoc.jar/!/index.html)
  * Utilities
    * [ComprehensionMonad](https://github.com/ThoughtWorksInc/each/wiki/ComprehensionMonad)
 

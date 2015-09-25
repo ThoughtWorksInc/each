@@ -35,6 +35,20 @@ object Monadic {
 
   }
 
+  implicit def getUnderlying[F[_], A](monadicLoop: MonadicLoop[F, A]) = monadicLoop.underlying
+
+  implicit def toFoldableOps[F[_] : Foldable, A](monadicLoop: MonadicLoop[F, A]) = {
+    scalaz.syntax.foldable.ToFoldableOps(monadicLoop.underlying)
+  }
+
+  implicit def toTraverseOps[F[_] : Traverse, A](monadicLoop: MonadicLoop[F, A]) = {
+    scalaz.syntax.traverse.ToTraverseOps(monadicLoop.underlying)
+  }
+
+  implicit def toMonadPlusOps[F[_] : MonadPlus, A](monadicLoop: MonadicLoop[F, A]) = {
+    scalaz.syntax.monadPlus.ToMonadPlusOps(monadicLoop.underlying)
+  }
+
   object MonadicLoop {
 
     implicit def getUnderlying[F[_], A](monadicLoop: MonadicLoop[F, A]) = monadicLoop.underlying

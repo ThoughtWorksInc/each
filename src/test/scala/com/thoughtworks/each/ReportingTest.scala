@@ -44,7 +44,7 @@ class ReportingTest {
     <html>
       <body>
         <table>{
-          for {
+          (for {
             email: String <- emailList.monadicLoop
             if email.matches( """[a-z.\-_]+@[a-z.\-_]+""")
           } yield {
@@ -56,7 +56,7 @@ class ReportingTest {
                 {email}
               </td>
             </tr>
-          }
+          }).toList
         }</table>
       </body>
     </html>
@@ -64,16 +64,20 @@ class ReportingTest {
 
   private def rawScript: Script[xml.Elem] = {
     toScript(GetEmailList).flatMap { emailList =>
-      emailList.traverse[Script, xml.Elem] { email =>
+      emailList.traverseM[Script, xml.Elem] { email =>
         toScript(GetContactNameByEmail(email)).map { name =>
-          <tr>
-            <td>
-              {name}
-            </td>
-            <td>
-              {email}
-            </td>
-          </tr>
+          if (email.matches( """[^@]+@[^@]+""")) {
+            List(<tr>
+              <td>
+                {name}
+              </td>
+              <td>
+                {email}
+              </td>
+            </tr>)
+          } else {
+            Nil
+          }
         }
       }.map { trs =>
         <html>
@@ -91,7 +95,7 @@ class ReportingTest {
   def testReporting(): Unit = {
     val Data = Map(
       "atryyang@thoughtworks.com" -> "Yang Bo",
-      "order-man@gmail.com" -> "Ding Fanxia",
+      "invalid-mail-address" -> "N/A",
       "john.smith@gmail.com" -> "John Smith"
     )
     val interpreter = new (AppAction ~> Future) {
@@ -115,14 +119,12 @@ class ReportingTest {
     import scala.concurrent.ExecutionContext.Implicits.global
     import scalaz.std.scalaFuture._
 
-    val rawHtml = xml.Xhtml.toXhtml(
-      Await.result(Free.runFC(rawScript.run)(interpreter), Duration.Inf).fold(throw _, identity),
-      preserveWhitespace = false
-    )
-    val eachHtml = xml.Xhtml.toXhtml(
-      Await.result(Free.runFC(eachScript.run)(interpreter), Duration.Inf).fold(throw _, identity),
-      preserveWhitespace = false
-    )
+    val rawHtml =
+      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(Free.runFC(rawScript.run)(interpreter), Duration.Inf).fold(throw _, identity)))
+
+    val eachHtml =
+      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(Free.runFC(eachScript.run)(interpreter), Duration.Inf).fold(throw _, identity)))
+
     Assert.assertEquals(rawHtml, eachHtml)
 
   }

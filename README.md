@@ -102,7 +102,7 @@ val result: Option[String] = monadic[Option] {
 
 ## Exception handling
 
-`monadic` blocks do not support `try`, `catch` and `finally`. If you want these expressions, use `errorMonadic` or `catchIoMonadic` instead, for example:
+`monadic` blocks do not support `try`, `catch` and `finally`. If you want these expressions, use `throwableMonadic` or `catchIoMonadic` instead, for example:
 
 ``` scala
 var count = 0

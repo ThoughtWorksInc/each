@@ -98,6 +98,44 @@ class ReportingTest {
       "invalid-mail-address" -> "N/A",
       "john.smith@gmail.com" -> "John Smith"
     )
+    val interpreter = new (AppAction ~> scalaz.Id.Id) {
+      override def apply[A](fa: AppAction[A]): A = {
+        fa match {
+          case GetEmailList => {
+            \/-(Data.keys.toList)
+          }
+          case GetContactNameByEmail(email) =>Data.get(email) match {
+            case None => {
+              -\/(new NoSuchElementException)
+            }
+            case Some(name) => {
+              \/-(name)
+            }
+          }
+        }
+      }
+    }
+
+    import scala.concurrent.ExecutionContext.Implicits.global
+    import scalaz.std.scalaFuture._
+
+    val rawHtml =
+      xml.Xhtml.toXhtml(xml.Utility.trim(Free.runFC(rawScript.run)(interpreter).fold(throw _, identity)))
+
+    val eachHtml =
+      xml.Xhtml.toXhtml(xml.Utility.trim(Free.runFC(eachScript.run)(interpreter).fold(throw _, identity)))
+
+    Assert.assertEquals(rawHtml, eachHtml)
+
+  }
+
+  @Test
+  def testAsyncReporting(): Unit = {
+    val Data = Map(
+      "atryyang@thoughtworks.com" -> "Yang Bo",
+      "invalid-mail-address" -> "N/A",
+      "john.smith@gmail.com" -> "John Smith"
+    )
     val interpreter = new (AppAction ~> Future) {
       override def apply[A](fa: AppAction[A]): Future[A] = {
         fa match {

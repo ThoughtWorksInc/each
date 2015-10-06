@@ -162,8 +162,8 @@ val result = monadic[Option] {
     if i > n.each - 3900
     a = i + j
   } yield {
-      a + n.each * k.length
-    }).underlying
+    a + n.each * k.length
+  }).underlying
 }
 Assert.assertEquals(Some(List(66300, 612300)), result)
 ```

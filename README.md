@@ -14,7 +14,7 @@ There is a macro library [Stateless Future](https://github.com/qifun/stateless-f
 
 The `await` mechanism in Stateless Future is implemented by an algorithm called [CPS transform](https://en.wikipedia.org/wiki/Continuation-passing_style). When learning [scalaz](https://scalaz.github.io/scalaz/), we found that the same algorithm could be applied for any monadic expression, including `Option` monad, `IO` monad, and `Future` monad. So we started this project, Each.
 
-Each is a superset of `await` syntax. Each supports multiple types of monads, while `await` only works with `Future`. When we perform a CPS transform for monadic expression with the `Future` monad, the use case looks almost the same as the `await` syntax in [Stateless Future](https://github.com/qifun/stateless-future)
+Each is a superset of `await` syntax. Each supports multiple types of monads, while `await` only works with `Future`. When we perform a CPS transform for monadic expression with the `Future` monad, the use case looks almost the same as the `await` syntax in [Stateless Future](https://github.com/qifun/stateless-future). Each is like F#'s [Computation Expressions](https://msdn.microsoft.com/en-us/library/dd233182.aspx), except Each reuses the normal Scala syntax instead of reinventing new syntax.
 
 For example:
 

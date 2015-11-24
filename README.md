@@ -59,7 +59,13 @@ assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
 ### Step 1: Add the following line in your build.sbt
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %% "each" % "0.4.0"
+libraryDependencies += "com.thoughtworks.each" %% "each" % "0.4.2"
+```
+
+or `%%%` for Scala.js projects:
+
+``` sbt
+libraryDependencies += "com.thoughtworks.each" %%% "each" % "0.4.2"
 ```
 
 ### Step 2: In your source file, import `monadic` and `each` method

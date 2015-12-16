@@ -28,6 +28,6 @@ libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
 libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.4" % Test
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.1.4"
+libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.0"
 
-libraryDependencies += "org.scalaz" %% "scalaz-effect" % "7.1.4"
+libraryDependencies += "org.scalaz" %% "scalaz-effect" % "7.2.0"

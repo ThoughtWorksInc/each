@@ -98,13 +98,13 @@ object Monadic {
   }
 
   /**
-   * The temporary wrapper that contains the `each` method.
-   *
-   * @param underlying the underlying monadic value.
-   * @tparam F the higher kinded type of the monadic value.
-   * @tparam A the element type of of the monadic value.
-   */
-  implicit final class EachOps[F[_], A](val underlying: F[A]) {
+    * The temporary wrapper that contains the `each` method.
+    *
+    * @param underlying the underlying monadic value.
+    * @tparam F the higher kinded type of the monadic value.
+    * @tparam A the element type of of the monadic value.
+    */
+  final case class EachOps[F[_], A](private val underlying: F[A]) {
 
     /**
       * Semantically, returns the result in the monadic value.
@@ -134,6 +134,15 @@ object Monadic {
     */
   @inline
   implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))
+
+  /**
+    * An implicit view to enable `.each` for a monadic value.
+    *
+    * @param v the monadic value.
+    * @return the temporary wrapper that contains the `each` method.
+    */
+  @inline
+  implicit def toEachOps[F[_], A](v: F[A]) = new EachOps(v)
 
 
   /**
@@ -320,7 +329,7 @@ object Monadic {
  found   : ${show(actualType)}
  required: ${show(expectedType)}""")
               }
-              Each(Select(eachOpsTree, TermName("underlying")))
+              Each(Select(Apply(Select(reify(_root_.com.thoughtworks.each.Monadic.EachOps).tree, TermName("unapply")), List(eachOpsTree)), TermName("get")))
             }
           }
 

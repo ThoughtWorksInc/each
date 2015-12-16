@@ -29,24 +29,29 @@ import scalaz.syntax.{FoldableOps, TraverseOps}
 
 object Monadic {
 
+  @inline
   implicit final class ToMonadicLoopOps[F[_], A](underlying: F[A]) {
 
     def monadicLoop = new MonadicLoop(underlying)
 
   }
 
+  @inline
   implicit def getUnderlying[F[_], A](monadicLoop: MonadicLoop[F, A]) = monadicLoop.underlying
 
   object MonadicLoop {
 
+    @inline
     implicit def toFoldableOps[F[_] : Foldable, A](monadicLoop: MonadicLoop[F, A]) = {
       scalaz.syntax.foldable.ToFoldableOps(monadicLoop.underlying)
     }
 
+    @inline
     implicit def toTraverseOps[F[_] : Traverse, A](monadicLoop: MonadicLoop[F, A]) = {
       scalaz.syntax.traverse.ToTraverseOps(monadicLoop.underlying)
     }
 
+    @inline
     implicit def toMonadPlusOps[F[_] : MonadPlus, A](monadicLoop: MonadicLoop[F, A]) = {
       scalaz.syntax.monadPlus.ToMonadPlusOps(monadicLoop.underlying)
     }
@@ -59,8 +64,10 @@ object Monadic {
 
     type Element = A
 
+    @inline
     def toFoldableOps(implicit foldable: Foldable[F]) = scalaz.syntax.foldable.ToFoldableOps(underlying)
 
+    @inline
     def toTraverseOps(implicit traverse: Traverse[F]) = scalaz.syntax.traverse.ToTraverseOps(underlying)
 
     @compileTimeOnly("`foreach` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
@@ -78,13 +85,14 @@ object Monadic {
   }
 
   /**
-   * An implicit view to enable `for` `yield` comprehension for a monadic value.
-   *
-   * @param v the monadic value.
-   * @param F0 a helper to infer types.
-   * @tparam FA type of the monadic value.
-   * @return the temporary wrapper that contains the `each` method.
-   */
+    * An implicit view to enable `for` `yield` comprehension for a monadic value.
+    *
+    * @param v the monadic value.
+    * @param F0 a helper to infer types.
+    * @tparam FA type of the monadic value.
+    * @return the temporary wrapper that contains the `each` method.
+    */
+  @inline
   implicit def toMonadicLoopOpsUnapply[FA](v: FA)(implicit F0: Unapply[Foldable, FA]) = {
     new ToMonadicLoopOps[F0.M, F0.A](F0(v))
   }
@@ -99,107 +107,114 @@ object Monadic {
   implicit final class EachOps[F[_], A](val underlying: F[A]) {
 
     /**
-     * Semantically, returns the result in the monadic value.
-     *
-     * This macro must be inside a `monadic`
-     * or a `catchIoMonadic`  block.
-     *
-     * This is not a real method, thus it will never actually execute.
-     * Instead, the call to this method will be transformed to a monadic expression.
-     * The actually result is passing as a parameter to some [[scalaz.Monad#bind]] and [[scalaz.Monad#point]] calls
-     * instead of as a return value.
-     *
-     * @return the result in the monadic value.
-     */
+      * Semantically, returns the result in the monadic value.
+      *
+      * This macro must be inside a `monadic`
+      * or a `catchIoMonadic`  block.
+      *
+      * This is not a real method, thus it will never actually execute.
+      * Instead, the call to this method will be transformed to a monadic expression.
+      * The actually result is passing as a parameter to some [[scalaz.Monad#bind]] and [[scalaz.Monad#point]] calls
+      * instead of as a return value.
+      *
+      * @return the result in the monadic value.
+      */
     @compileTimeOnly("`each` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
     def each: A = ???
 
   }
 
   /**
-   * An implicit view to enable `.each` for a monadic value.
-   *
-   * @param v the monadic value.
-   * @param F0 a helper to infer types.
-   * @tparam FA type of the monadic value.
-   * @return the temporary wrapper that contains the `each` method.
-   */
+    * An implicit view to enable `.each` for a monadic value.
+    *
+    * @param v the monadic value.
+    * @param F0 a helper to infer types.
+    * @tparam FA type of the monadic value.
+    * @return the temporary wrapper that contains the `each` method.
+    */
+  @inline
   implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))
 
 
   /**
-   * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
-   *
-   *          Captures all the result in the `body` and converts them into a `F`.
-   *
-   *          Note that `body` must not contain any `try` / `catch` / `throw` expressions.
-   *
-   * @tparam F the higher kinded type of the monadic expression.
-   * @param body the imperative style expressions that will be transform to monadic style.
-   * @param monad the monad that executes expressions in `body`.
-   * @return
-   */
+    * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
+    *
+    *          Captures all the result in the `body` and converts them into a `F`.
+    *
+    *          Note that `body` must not contain any `try` / `catch` / `throw` expressions.
+    *
+    * @tparam F the higher kinded type of the monadic expression.
+    * @param body the imperative style expressions that will be transform to monadic style.
+    * @param monad the monad that executes expressions in `body`.
+    * @return
+    */
+  @inline
   def monadic[F[_]] = new PartialAppliedMonadic[Monad, F, UnsupportedExceptionHandlingMode.type]
 
   /**
-   * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
-   *
-   *          Captures all the result in the `body` and converts them into a `F`.
-   *
-   *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
-   *
-   * @tparam F the higher kinded type of the monadic expression.
-   * @param body the imperative style expressions that will be transform to monadic style.
-   * @param monad the monad that executes expressions in `body`.
-   * @return
-   */
+    * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
+    *
+    *          Captures all the result in the `body` and converts them into a `F`.
+    *
+    *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
+    *
+    * @tparam F the higher kinded type of the monadic expression.
+    * @param body the imperative style expressions that will be transform to monadic style.
+    * @param monad the monad that executes expressions in `body`.
+    * @return
+    */
+  @inline
   def catchIoMonadic[F[_]] = new PartialAppliedMonadic[MonadCatchIO, F, MonadCatchIoMode.type]
 
+  @inline
   implicit def monadErrorToMonadThrowable[F[_, _]](implicit monadError: MonadError[F, Throwable]): MonadThrowable[({type λ[α] = F[Throwable, α]})#λ] = {
     monadError.asInstanceOf[MonadThrowable[({type λ[α] = F[Throwable, α]})#λ]]
   }
 
+  @inline
   implicit def eitherTMonadThrowable[F[_]](implicit F0: Monad[F]): MonadThrowable[({type f[x] = EitherT[F, Throwable, x]})#f] = {
     val monadError = EitherT.eitherTMonadError[F, Throwable]
     monadErrorToMonadThrowable[({type λ[α, β] = EitherT[F, α, β]})#λ](monadError)
   }
 
+  @inline
   implicit def lazyEitherTMonadThrowable[F[_]](implicit F0: Monad[F]): MonadThrowable[({type f[x] = LazyEitherT[F, Throwable, x]})#f] = {
     val monadError = LazyEitherT.lazyEitherTMonadError[F, Throwable]
     monadErrorToMonadThrowable[({type λ[α, β] = LazyEitherT[F, α, β]})#λ](monadError)
   }
 
   /**
-   * A [[scalaz.Monad]] that supports exception handling.
-   *
-   * Note this is a simplified version of [[scalaz.MonadError]].
-   *
-   * @tparam F the higher kinded type of the monad.
-   */
+    * A [[scalaz.Monad]] that supports exception handling.
+    *
+    * Note this is a simplified version of [[scalaz.MonadError]].
+    *
+    * @tparam F the higher kinded type of the monad.
+    */
   type MonadThrowable[F[_]] = MonadError[G, Throwable] forSome {type G[Throwable, A] <: F[A]}
 
   /**
-   * @usecase def throwableMonadic[F[_]](body: AnyRef)(implicit monad: MonadThrowable[F]): F[body.type] = ???
-   *
-   *          Captures all the result in the `body` and converts them into a `F`.
-   *
-   *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
-   *
-   * @tparam F the higher kinded type of the monadic expression.
-   * @param body the imperative style expressions that will be transform to monadic style.
-   * @param monad the monad that executes expressions in `body`.
-   * @return
-   */
+    * @usecase def throwableMonadic[F[_]](body: AnyRef)(implicit monad: MonadThrowable[F]): F[body.type] = ???
+    *
+    *          Captures all the result in the `body` and converts them into a `F`.
+    *
+    *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
+    *
+    * @tparam F the higher kinded type of the monadic expression.
+    * @param body the imperative style expressions that will be transform to monadic style.
+    * @param monad the monad that executes expressions in `body`.
+    * @return
+    */
+  @inline
   def throwableMonadic[F[_]] = new PartialAppliedMonadic[MonadThrowable, F, MonadThrowableMode.type]
 
   /**
-   * Partial applied function instance to convert a monadic expression.
-   *
-   * For type inferring only.
-   *
-   * @tparam M
-   * @tparam F
-   */
+    * Partial applied function instance to convert a monadic expression.
+    *
+    * For type inferring only.
+    *
+    * @tparam M
+    * @tparam F
+    */
   final class PartialAppliedMonadic[M[_[_]], F0[_], Mode <: ExceptionHandlingMode] private[Monadic]() {
 
     type F[A] = F0[A]

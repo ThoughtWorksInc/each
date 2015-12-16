@@ -176,21 +176,19 @@ object Monadic {
   def catchIoMonadic[F[_]] = new PartialAppliedMonadic[MonadCatchIO, F, MonadCatchIoMode.type]
 
   @inline
-  implicit def monadErrorToMonadThrowable[F[_, _]](implicit monadError: MonadError[F, Throwable]): MonadThrowable[({type λ[α] = F[Throwable, α]})#λ] = {
-    monadError.asInstanceOf[MonadThrowable[({type λ[α] = F[Throwable, α]})#λ]]
+  implicit def eitherTMonadThrowable[F[_], G[_[_], _]](implicit F0: Monad[({type g[y] = G[F, y]})#g]): MonadThrowable[
+    ({type f[x] = EitherT[({type g[y] = G[F, y]})#g, Throwable, x]})#f
+    ] = {
+    EitherT.eitherTMonadError[({type g[y] = G[F, y]})#g, Throwable]
   }
 
   @inline
-  implicit def eitherTMonadThrowable[F[_]](implicit F0: Monad[F]): MonadThrowable[({type f[x] = EitherT[F, Throwable, x]})#f] = {
-    val monadError = EitherT.eitherTMonadError[F, Throwable]
-    monadErrorToMonadThrowable[({type λ[α, β] = EitherT[F, α, β]})#λ](monadError)
+  implicit def lazyEitherTMonadThrowable[F[_], G[_[_], _]](implicit F0: Monad[({type g[y] = G[F, y]})#g]): MonadThrowable[
+    ({type f[x] = LazyEitherT[({type g[y] = G[F, y]})#g, Throwable, x]})#f
+    ] = {
+    LazyEitherT.lazyEitherTMonadError[({type g[y] = G[F, y]})#g, Throwable]
   }
 
-  @inline
-  implicit def lazyEitherTMonadThrowable[F[_]](implicit F0: Monad[F]): MonadThrowable[({type f[x] = LazyEitherT[F, Throwable, x]})#f] = {
-    val monadError = LazyEitherT.lazyEitherTMonadError[F, Throwable]
-    monadErrorToMonadThrowable[({type λ[α, β] = LazyEitherT[F, α, β]})#λ](monadError)
-  }
 
   /**
     * A [[scalaz.Monad]] that supports exception handling.
@@ -199,7 +197,7 @@ object Monadic {
     *
     * @tparam F the higher kinded type of the monad.
     */
-  type MonadThrowable[F[_]] = MonadError[G, Throwable] forSome {type G[Throwable, A] <: F[A]}
+  type MonadThrowable[F[_]] = MonadError[F, Throwable]
 
   /**
     * @usecase def throwableMonadic[F[_]](body: AnyRef)(implicit monad: MonadThrowable[F]): F[body.type] = ???

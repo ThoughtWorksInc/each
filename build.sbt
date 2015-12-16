@@ -28,7 +28,13 @@ lazy val js: Project = project.addSbtFiles(file("../common.sbt")).settings(sourc
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
-libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.4" % Test
+libraryDependencies ++= {
+  if (scalaBinaryVersion.value == "2.11") {
+    Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.4" % Test)
+  } else {
+    Seq()
+  }
+}
 
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.0"
 

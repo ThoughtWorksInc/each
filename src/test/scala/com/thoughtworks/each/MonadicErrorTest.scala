@@ -4,7 +4,6 @@ import java.io.IOException
 
 import org.junit.{Assert, Test}
 import Monadic._
-import scalaz.Free.FreeC
 import scalaz._
 import scala.language.higherKinds
 import scala.language.existentials
@@ -49,45 +48,8 @@ class MonadicErrorTest {
     }
 
     Assert.assertEquals(Some(\/-(101)), either.run)
-    Assert.assertEquals({
-      var count = 0
-      val monad$macro$1: MonadThrowable[OptionScript] = Monadic.eitherTMonadThrowable[Option](scalaz.std.option.optionInstance);
-
-      val expectedEither = {
-        type F$macro$1[A$macro$11] = OptionScript[A$macro$11];
-        {
-          val monad$macro$2 = Monadic.eitherTMonadThrowable[Option](scalaz.std.option.optionInstance);
-          implicit def cast$macro$4[From$macro$5, To$macro$7](from$macro$6: F$macro$1[From$macro$5])(implicit view$macro$3: Function1[From$macro$5, To$macro$7]): F$macro$1[To$macro$7] = monad$macro$2.map[From$macro$5, To$macro$7](from$macro$6)(view$macro$3);
-          monad$macro$2.map(monad$macro$2.handleError[Int](monad$macro$2.handleError[Int]({
-            count += 1
-            monad$macro$2.bind(monad$macro$2.raiseError[Nothing](MyException))(((element$macro$8: Nothing) => {
-              count += 10
-              monad$macro$2.raiseError[Nothing](new Exception("Unreachable code"))
-            }))
-          })(((exception$macro$9: Throwable) => exception$macro$9 match {
-            case MyException => {
-              count += 100
-              monad$macro$2.point(count)
-            }
-            case _ => monad$macro$2.raiseError[Int](exception$macro$9)
-          })))(((exception$macro$9: Throwable) => {
-            count += 1000
-            monad$macro$2.raiseError[Int](exception$macro$9)
-          })))(((element$macro$10: Int) => {
-            count += 1000
-            element$macro$10
-          }))
-        }
-      }
-
-      Assert.assertEquals(1101, count)
-      expectedEither
-    }.run, either.run)
   }
 
-
-  implicit private def freeMonadC[S[_]]: Monad[({type f[x] = FreeC[S, x]})#f] =
-    Free.freeMonad[({type f[x] = Coyoneda[S, x]})#f]
 
   private trait Command[A]
 
@@ -95,13 +57,13 @@ class MonadicErrorTest {
 
   private case class Count(delta: Int) extends Command[Throwable \/ Int]
 
-  private type FreeCommand[A] = FreeC[Command, A]
+  private type FreeCommand[A] = Free[Command, A]
 
   private type Script[A] = EitherT[FreeCommand, Throwable, A]
 
-  private val randomInt: Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftFC(RandomInt))
+  private val randomInt: Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftF(RandomInt))
 
-  private def count(delta: Int): Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftFC(Count(delta)))
+  private def count(delta: Int): Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftF(Count(delta)))
 
   private case object MyException extends Exception
 
@@ -138,32 +100,32 @@ class MonadicErrorTest {
     count(50000).flatMap { _ =>
       implicitly[MonadThrowable[Script]].handleError {
         Monad[Script].ifM(
-        randomInt map {
-          _ > 100
-        }, {
-          count(600000).flatMap { _ =>
-            implicitly[MonadThrowable[Script]].raiseError(MyException) flatMap { _: Nothing =>
-              count(7000000).map { _ =>
-                789
-              }
-            }
-          }
-        }, {
-          Monad[Script].ifM(
           randomInt map {
             _ > 100
           }, {
-            count(1).map { _ =>
-              123
-            }
-          }, {
-            count(20).flatMap { _ =>
-              implicitly[MonadThrowable[Script]].raiseError(new IOException) map { x: Nothing =>
-                x: Int
+            count(600000).flatMap { _ =>
+              implicitly[MonadThrowable[Script]].raiseError(MyException) flatMap { _: Nothing =>
+                count(7000000).map { _ =>
+                  789
+                }
               }
             }
+          }, {
+            Monad[Script].ifM(
+              randomInt map {
+                _ > 100
+              }, {
+                count(1).map { _ =>
+                  123
+                }
+              }, {
+                count(20).flatMap { _ =>
+                  implicitly[MonadThrowable[Script]].raiseError(new IOException) map { x: Nothing =>
+                    x: Int
+                  }
+                }
+              })
           })
-        })
       } {
         case e: IOException => {
           count(300).map { _ =>
@@ -211,7 +173,7 @@ class MonadicErrorTest {
   def testFreeMyException(): Unit = {
     val script = newScript
     var count = 0
-    val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
+    val result: Throwable \/ Int = script.run.foldMap(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
           case Count(delta) => {
@@ -233,7 +195,7 @@ class MonadicErrorTest {
   def testFreeIOException(): Unit = {
     val script = newScript
     var count = 0
-    val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
+    val result: Throwable \/ Int = script.run.foldMap(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
           case Count(delta) => {
@@ -255,7 +217,7 @@ class MonadicErrorTest {
   def testFree150(): Unit = {
     val script = newScript
     var count = 0
-    val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
+    val result: Throwable \/ Int = script.run.foldMap(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
           case Count(delta) => {
@@ -277,7 +239,7 @@ class MonadicErrorTest {
   def testFree15(): Unit = {
     val script = newScript
     var count = 0
-    val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
+    val result: Throwable \/ Int = script.run.foldMap(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
           case Count(delta) => {
@@ -299,7 +261,7 @@ class MonadicErrorTest {
   def testFree5(): Unit = {
     val script = newScript
     var count = 0
-    val result: Throwable \/ Int = Free.runFC(script.run)(new (Command ~> Id.Id) {
+    val result: Throwable \/ Int = script.run.foldMap(new (Command ~> Id.Id) {
       override def apply[A](command: Command[A]): A = {
         command match {
           case Count(delta) => {
@@ -312,7 +274,7 @@ class MonadicErrorTest {
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() =>5)), result)
+    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => 5)), result)
     Assert.assertEquals(\/-(456), result)
     Assert.assertEquals(54320, count)
   }

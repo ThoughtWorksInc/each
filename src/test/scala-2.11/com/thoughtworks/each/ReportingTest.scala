@@ -5,10 +5,9 @@ import org.junit.{Assert, Test}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scalaz.Free._
 import scalaz._
-import scalaz.syntax.traverse._
 import scalaz.std.list._
+import scalaz.syntax.traverse._
 
 
 class ReportingTest {
@@ -19,24 +18,18 @@ class ReportingTest {
 
   private case class GetContactNameByEmail(email: String) extends AppAction[Throwable \/ String]
 
-  private type FreeCommand[A] = FreeC[AppAction, A]
+  private type FreeCommand[A] = Free[AppAction, A]
 
   private type Script[A] = EitherT[FreeCommand, Throwable, A]
 
   private def toScript[A](action: AppAction[Throwable \/ A]): Script[A] = {
-    new Script[A](Free.liftFC(action))
+    new Script[A](Free.liftF(action))
   }
 
-  import scala.language.higherKinds
-
-  import scala.language.implicitConversions
+  import scala.language.{higherKinds, implicitConversions}
 
   private implicit def cast[From, To](from: Script[From])(implicit view: From => To): Script[To] = {
     Monad[Script].map[From, To](from)(view)
-  }
-
-  private implicit def freeMonadC[S[_]]: Monad[({type f[x] = FreeC[S, x]})#f] = {
-    Free.freeMonad[({type f[x] = Coyoneda[S, x]})#f]
   }
 
   private def eachScript: Script[xml.Elem] = throwableMonadic[Script] {
@@ -116,14 +109,11 @@ class ReportingTest {
       }
     }
 
-    import scala.concurrent.ExecutionContext.Implicits.global
-    import scalaz.std.scalaFuture._
-
     val rawHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(Free.runFC(rawScript.run)(interpreter).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(xml.Utility.trim(rawScript.run.foldMap(interpreter).fold(throw _, identity)))
 
     val eachHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(Free.runFC(eachScript.run)(interpreter).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(xml.Utility.trim(eachScript.run.foldMap(interpreter).fold(throw _, identity)))
 
     Assert.assertEquals(rawHtml, eachHtml)
 
@@ -158,10 +148,10 @@ class ReportingTest {
     import scalaz.std.scalaFuture._
 
     val rawHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(Free.runFC(rawScript.run)(interpreter), Duration.Inf).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(rawScript.run.foldMap(interpreter), Duration.Inf).fold(throw _, identity)))
 
     val eachHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(Free.runFC(eachScript.run)(interpreter), Duration.Inf).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(eachScript.run.foldMap(interpreter), Duration.Inf).fold(throw _, identity)))
 
     Assert.assertEquals(rawHtml, eachHtml)
 

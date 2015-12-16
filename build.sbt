@@ -15,6 +15,8 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
+crossScalaVersions := Seq("2.11.7", "2.12.0-M3")
+
 lazy val root: Project = project in file(".") aggregate js
 
 val compileSourceDirectory = settingKey[File]("Default directory containing sources for compile configuration")

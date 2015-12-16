@@ -349,6 +349,8 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
               case head :: tail => {
                 val transformedTree = CpsTree(head)
                 transformedTree.flatMap { transformedHead =>
+
+                  // Avoid warning: a pure expression does nothing in statement position
                   @tailrec
                   def isDiscardable(transformedTree: CpsTree): Boolean = {
                     transformedTree match {

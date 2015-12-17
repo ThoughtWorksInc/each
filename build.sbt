@@ -15,7 +15,7 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
-crossScalaVersions := Seq("2.11.7", "2.12.0-M3")
+scalaVersion in ThisBuild := "2.11.7"
 
 lazy val root: Project = project in file(".") aggregate js
 

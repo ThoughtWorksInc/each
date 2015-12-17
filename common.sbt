@@ -2,8 +2,6 @@ enablePlugins(ApiMappings)
 
 licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-releaseCrossBuild := true
-
 organization := "com.thoughtworks.each"
 
 name := "each"

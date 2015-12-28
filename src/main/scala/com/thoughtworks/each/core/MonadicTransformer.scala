@@ -244,7 +244,8 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                         List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
                         (CpsTree(finalizer).flatMap { transformedFinalizer =>
                           MonadTree(
-                            Block(List(transformedFinalizer),
+                            Block(
+                              List(Apply(Select(reify(_root_.scala.Predef).tree, TermName("locally")),List(transformedFinalizer))),
                               Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))
                               )), origin.tpe)
                         }).toReflectTree
@@ -255,7 +256,8 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                 ).flatMap { transformedTryCatch =>
                   (CpsTree(finalizer).flatMap { transformedFinalizer =>
                     PlainTree(
-                      Block(List(transformedFinalizer),
+                      Block(
+                        List(Apply(Select(reify(_root_.scala.Predef).tree, TermName("locally")),List(transformedFinalizer))),
                         transformedTryCatch
                       ), origin.tpe)
                   })

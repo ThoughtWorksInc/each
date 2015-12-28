@@ -59,14 +59,18 @@ assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
 ### Step 1: Add the following line in your build.sbt
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %% "each" % "0.4.2"
+libraryDependencies += "com.thoughtworks.each" %% "each" % "0.5.1"
 ```
 
 or `%%%` for Scala.js projects:
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %%% "each" % "0.4.2"
+libraryDependencies += "com.thoughtworks.each" %%% "each" % "0.5.1"
 ```
+
+Note that Each version 0.5.x requires Scalaz 7.2.x . If you have to use Scalaz 7.1.x, please specify version of Each 0.4.x .
+
+See https://repo1.maven.org/maven2/com/thoughtworks/each/ for a list of available versions.
 
 ### Step 2: In your source file, import `monadic` and `each` method
 

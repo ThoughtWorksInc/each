@@ -356,7 +356,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                   @tailrec
                   def isDiscardable(transformedTree: CpsTree): Boolean = {
                     transformedTree match {
-                      case _: OpenTree => false
+                      case OpenTree(_, _, inner) => isDiscardable(inner)
                       case BlockTree(_, tail) => isDiscardable(tail)
                       case _: MonadTree => true
                       case _: PlainTree => false

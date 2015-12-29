@@ -83,6 +83,17 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
       }
     }
 
+    // Avoid warning: a pure expression does nothing in statement position
+    @tailrec
+    private def isDiscardable(transformedTree: CpsTree): Boolean = {
+      transformedTree match {
+        case OpenTree(_, _, inner) => isDiscardable(inner)
+        case BlockTree(_, tail) => isDiscardable(tail)
+        case _: MonadTree => true
+        case _: PlainTree => false
+      }
+    }
+
     def apply(origin: Tree)(implicit forceAwait: Set[Name]): CpsTree = {
       origin match {
         case instructionExtractor.Extractor(instruction) => {
@@ -233,6 +244,7 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
               if (finalizer.isEmpty) {
                 MonadTree(tryCatch, origin.tpe)
               } else {
+                val finalizerCpsTree = CpsTree(finalizer)
                 MonadTree(
                   Apply(
                     Apply(
@@ -242,25 +254,31 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
                     List(
                       Function(
                         List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
-                        (CpsTree(finalizer).flatMap { transformedFinalizer =>
-                          MonadTree(
-                            Block(
-                              List(Apply(Select(reify(_root_.scala.Predef).tree, TermName("locally")),List(transformedFinalizer))),
-                              Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))
-                              )), origin.tpe)
-                        }).toReflectTree
+                        finalizerCpsTree.flatMap { transformedFinalizer =>
+                          if (isDiscardable(finalizerCpsTree)) {
+                            MonadTree(
+                              Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))),
+                              origin.tpe)
+                          } else {
+                            MonadTree(
+                              Block(
+                                List(transformedFinalizer),
+                                Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))
+                                )), origin.tpe)
+                          }
+                        }.toReflectTree
                       )
                     )
                   ),
                   origin.tpe
                 ).flatMap { transformedTryCatch =>
-                  (CpsTree(finalizer).flatMap { transformedFinalizer =>
-                    PlainTree(
-                      Block(
-                        List(Apply(Select(reify(_root_.scala.Predef).tree, TermName("locally")),List(transformedFinalizer))),
-                        transformedTryCatch
-                      ), origin.tpe)
-                  })
+                  finalizerCpsTree.flatMap { transformedFinalizer =>
+                    if (isDiscardable(finalizerCpsTree)) {
+                      PlainTree(transformedTryCatch, origin.tpe)
+                    } else {
+                      PlainTree(Block(List(transformedFinalizer), transformedTryCatch), origin.tpe)
+                    }
+                  }
                 }
               }
 
@@ -351,17 +369,6 @@ abstract class MonadicTransformer[U <: scala.reflect.api.Universe]
               case head :: tail => {
                 val transformedTree = CpsTree(head)
                 transformedTree.flatMap { transformedHead =>
-
-                  // Avoid warning: a pure expression does nothing in statement position
-                  @tailrec
-                  def isDiscardable(transformedTree: CpsTree): Boolean = {
-                    transformedTree match {
-                      case OpenTree(_, _, inner) => isDiscardable(inner)
-                      case BlockTree(_, tail) => isDiscardable(tail)
-                      case _: MonadTree => true
-                      case _: PlainTree => false
-                    }
-                  }
                   if (isDiscardable(transformedTree)) {
                     transformStats(tail)
                   } else {

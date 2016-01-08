@@ -178,6 +178,17 @@ val result = monadic[Option] {
 Assert.assertEquals(Some(List(66300, 612300)), result)
 ```
 
+## Limitation
+`Each` cannot perform proper transformation of monadic expression which act as a `call-by-name` parameter, it was discussed [#37](https://github.com/ThoughtWorksInc/each/issues/37).
+
+```scala
+val err = Future.failed(new Exception("foo"))
+val opt = Some("bar")
+val baz = monadic[Future] {
+  opt.getOrElse(err.each)
+}
+```
+Result of `baz` will fail.
 
 ## Links
 

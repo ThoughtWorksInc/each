@@ -179,16 +179,26 @@ Assert.assertEquals(Some(List(66300, 612300)), result)
 ```
 
 ## Limitation
-`Each` cannot perform proper transformation of monadic expression which act as a `call-by-name` parameter, it was discussed [#37](https://github.com/ThoughtWorksInc/each/issues/37).
+
+If a `call-by-name` parameter of a method call is a transforms monadic expression, `Each` will transforms the monadic expression before the method call.. The behavior was discussed [#37](https://github.com/ThoughtWorksInc/each/issues/37).
 
 ```scala
-val err = Future.failed(new Exception("foo"))
-val opt = Some("bar")
-val baz = monadic[Future] {
-  opt.getOrElse(err.each)
+def innerFailureFuture = Future.failed(new Exception("foo"))
+val someValue = Some("value")
+val result = monadic[Future] {
+  someValue.getOrElse(innerFailureFuture.each)
 }
 ```
-Result of `baz` will fail.
+
+`result` will be a future of failure because the above example equals to
+
+```scala
+def innerFailureFuture = Future.failed(new Exception("foo"))
+val someValue = Some("value")
+val result = innerFailureFuture.map(someValue.getOrElse)
+```
+
+`innerFailureFuture.each` is evaluated before being passed to `getOrElse` method call, even if `getOrElse` accepts a call-by-name parameter.
 
 ## Links
 

@@ -188,7 +188,7 @@ val baz = monadic[Future] {
   opt.getOrElse(err.each)
 }
 ```
-`baz` will faill.
+Result of `baz` will fail.
 
 ## Links
 

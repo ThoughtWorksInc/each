@@ -180,7 +180,7 @@ Assert.assertEquals(Some(List(66300, 612300)), result)
 
 ## Limitation
 
-If a [call-by-name parameter](http://www.scala-lang.org/files/archive/spec/2.11/06-expressions.html#function-applications) of a method call is a monadic expression, `Each` will transforms the monadic expression before the method call. The behavior was discussed [#37](https://github.com/ThoughtWorksInc/each/issues/37).
+If a [call-by-name parameter](http://www.scala-lang.org/files/archive/spec/2.11/06-expressions.html#function-applications) of a method call is a monadic expression, `Each` will transform the monadic expression before the method call. The behavior was discussed at [#37](https://github.com/ThoughtWorksInc/each/issues/37).
 
 ```scala
 def innerFailureFuture = Future.failed(new Exception("foo"))

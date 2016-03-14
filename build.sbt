@@ -39,3 +39,5 @@ libraryDependencies ++= {
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.0"
 
 libraryDependencies += "org.scalaz" %% "scalaz-effect" % "7.2.0"
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)

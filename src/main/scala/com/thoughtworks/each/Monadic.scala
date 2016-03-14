@@ -265,15 +265,15 @@ object Monadic {
             eachOpsType.member(TermName("each"))
           }
 
-          private val monadciType = typeOf[_root_.com.thoughtworks.each.Monadic.MonadicLoop[({type T[F[_]] = {}})#T, _]]
+          private val monadicType = typeOf[_root_.com.thoughtworks.each.Monadic.MonadicLoop[({type T[F[_]] = {}})#T, _]]
 
-          private val foreachMethodSymbol = monadciType.member(TermName("foreach"))
+          private val foreachMethodSymbol = monadicType.member(TermName("foreach"))
 
-          private val mapMethodSymbol = monadciType.member(TermName("map"))
+          private val mapMethodSymbol = monadicType.member(TermName("map"))
 
-          private val flatMapMethodSymbol = monadciType.member(TermName("flatMap"))
+          private val flatMapMethodSymbol = monadicType.member(TermName("flatMap"))
 
-          private val filterMethodSymbol = monadciType.member(TermName("withFilter"))
+          private val filterMethodSymbol = monadicType.member(TermName("withFilter"))
 
           private def hook(expectedType: Type, resultTree: Tree): Tree = {
             Apply(

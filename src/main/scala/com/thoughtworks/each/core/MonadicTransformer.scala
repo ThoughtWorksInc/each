@@ -30,6 +30,7 @@ object MonadicTransformer {
 
   case object MonadCatchIoMode extends ExceptionHandlingMode
 
+  // TODO: CatchableMode
 
 }
 

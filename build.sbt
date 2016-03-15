@@ -42,30 +42,29 @@ scmInfo in ThisBuild := Some(ScmInfo(
   "scm:git:git://github.com/ThoughtWorksInc/each.git",
   Some("scm:git:git@github.com:ThoughtWorksInc/each.git")))
 
-pomExtra in ThisBuild :=
-  <developers>
-    <developer>
-      <id>Atry</id>
-      <name>杨博 (Yang Bo)</name>
-      <timezone>+8</timezone>
-      <email>pop.atry@gmail.com</email>
-    </developer>
-    <developer>
-      <id>freewind</id>
-      <name>Peng Li</name>
-      <timezone>+8</timezone>
-      <email>nowind_lee@qq.com</email>
-    </developer>
-    <developer>
-      <id>zhanglongyang</id>
-      <name>Longyang Zhang</name>
-      <timezone>+8</timezone>
-      <email>lyzhang@thoughtworks.com</email>
-    </developer>
-    <developer>
-      <id>mengmeng0927</id>
-      <name>Niu Yameng</name>
-      <timezone>+8</timezone>
-      <email>mengmeng0927@gmail.com</email>
-    </developer>
-  </developers>
+developers in ThisBuild := List(
+  Developer(
+    "Atry",
+    "杨博 (Yang Bo)",
+    "pop.atry@gmail.com",
+    url("https://github.com/Atry")
+  ),
+  Developer(
+    "freewind",
+    "Peng Li",
+    "nowind_lee@qq.com",
+    url("https://github.com/freewind")
+  ),
+  Developer(
+    "zhanglongyang",
+    "Longyang Zhang",
+    "lyzhang@thoughtworks.com",
+    url("https://github.com/zhanglongyang")
+  ),
+  Developer(
+    "mengmeng0927",
+    "Niu Yameng",
+    "mengmeng0927@gmail.com",
+    url("https://github.com/mengmeng0927")
+  )
+)

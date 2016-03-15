@@ -55,7 +55,14 @@ developers in ThisBuild := List(
 )
 
 releaseProcess := {
-  releaseProcess.value.patch(releaseProcess.value.indexOf(pushChanges), Seq[ReleaseStep](releaseStepCommand("sonatypeRelease")), 0)
+  import xerial.sbt.Sonatype.SonatypeCommand.sonatypeReleaseAll
+  releaseProcess.value.patch(
+    releaseProcess.value.indexOf(pushChanges),
+    Seq[ReleaseStep](
+      releaseStepCommand(sonatypeReleaseAll, "com.thoughtworks.sde"),
+      releaseStepCommand(sonatypeReleaseAll, "com.thoughtworks.each")
+    ),
+  0)
 }
 
 releaseProcess -= runClean

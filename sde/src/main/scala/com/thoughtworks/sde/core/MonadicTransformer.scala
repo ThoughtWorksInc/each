@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package com.thoughtworks.each.core
+package com.thoughtworks.sde.core
 
-import com.thoughtworks.each.core.MonadicTransformer.ExceptionHandlingMode
+import com.thoughtworks.sde.core.MonadicTransformer.ExceptionHandlingMode
 import scala.language.higherKinds
 import scala.annotation.tailrec
 

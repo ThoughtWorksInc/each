@@ -16,7 +16,7 @@ limitations under the License.
 
 package com.thoughtworks.each
 
-import com.thoughtworks.each.core.ComprehensionMonadGenerator
+import com.thoughtworks.sde.core.ComprehensionMonadGenerator
 
 import scala.language.experimental.macros
 import scala.language.higherKinds

@@ -16,8 +16,8 @@ limitations under the License.
 
 package com.thoughtworks.each
 
-import com.thoughtworks.each.core.MonadicTransformer
-import com.thoughtworks.each.core.MonadicTransformer._
+import com.thoughtworks.sde.core.MonadicTransformer
+import com.thoughtworks.sde.core.MonadicTransformer._
 
 import scala.language.existentials
 import scala.annotation.compileTimeOnly

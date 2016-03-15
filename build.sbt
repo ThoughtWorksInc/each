@@ -15,29 +15,57 @@ releaseProcess := Seq[ReleaseStep](
   pushChanges
 )
 
+publishArtifact := false
+
 scalaVersion in ThisBuild := "2.11.7"
 
-lazy val root: Project = project in file(".") aggregate js
+lazy val sde = crossProject.crossType(CrossType.Pure)
 
-val compileSourceDirectory = settingKey[File]("Default directory containing sources for compile configuration")
+lazy val sdeJS = sde.js.addSbtFiles(file("../build.sbt.shared"))
 
-compileSourceDirectory in js := (sourceDirectory in Compile).value
+lazy val sdeJVM = sde.jvm.addSbtFiles(file("../build.sbt.shared"))
 
-lazy val js: Project = project.addSbtFiles(file("../common.sbt")).settings(sourceDirectory in Compile := compileSourceDirectory.value)
+lazy val each = crossProject.crossType(CrossType.Pure) dependsOn sde
 
+lazy val eachJS = each.js.addSbtFiles(file("../build.sbt.shared"))
 
-libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
+lazy val eachJVM = each.jvm.addSbtFiles(file("../build.sbt.shared"))
 
-libraryDependencies ++= {
-  if (scalaBinaryVersion.value == "2.11") {
-    Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.4" % Test)
-  } else {
-    Seq()
-  }
-}
+licenses in ThisBuild := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.0"
+homepage in ThisBuild  := Some(url("https://github.com/ThoughtWorksInc/each"))
 
-libraryDependencies += "org.scalaz" %% "scalaz-effect" % "7.2.0"
+startYear in ThisBuild  := Some(2015)
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+scmInfo in ThisBuild := Some(ScmInfo(
+  url("https://github.com/ThoughtWorksInc/each"),
+  "scm:git:git://github.com/ThoughtWorksInc/each.git",
+  Some("scm:git:git@github.com:ThoughtWorksInc/each.git")))
+
+pomExtra in ThisBuild :=
+  <developers>
+    <developer>
+      <id>Atry</id>
+      <name>杨博 (Yang Bo)</name>
+      <timezone>+8</timezone>
+      <email>pop.atry@gmail.com</email>
+    </developer>
+    <developer>
+      <id>freewind</id>
+      <name>Peng Li</name>
+      <timezone>+8</timezone>
+      <email>nowind_lee@qq.com</email>
+    </developer>
+    <developer>
+      <id>zhanglongyang</id>
+      <name>Longyang Zhang</name>
+      <timezone>+8</timezone>
+      <email>lyzhang@thoughtworks.com</email>
+    </developer>
+    <developer>
+      <id>mengmeng0927</id>
+      <name>Niu Yameng</name>
+      <timezone>+8</timezone>
+      <email>mengmeng0927@gmail.com</email>
+    </developer>
+  </developers>

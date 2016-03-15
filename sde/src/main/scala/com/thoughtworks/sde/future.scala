@@ -16,8 +16,8 @@ limitations under the License.
 
 package com.thoughtworks.sde
 
-import com.thoughtworks.each.core.MonadicTransformer
-import com.thoughtworks.each.core.MonadicTransformer.MonadThrowableMode
+import com.thoughtworks.sde.core.MonadicTransformer
+import com.thoughtworks.sde.core.MonadicTransformer.MonadThrowableMode
 
 import scala.annotation.{compileTimeOnly, StaticAnnotation}
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,8 +31,8 @@ import scala.language.higherKinds
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-final class async extends StaticAnnotation {
-  def macroTransform(annottees: Any*): Any = macro async.transformAnnotation
+final class future extends StaticAnnotation {
+  def macroTransform(annottees: Any*): Any = macro future.transformAnnotation
 
 }
 
@@ -45,18 +45,18 @@ final class async extends StaticAnnotation {
 // TODO: reuseability
 // TODO: EitherT, OptionT, ... 似乎可以通过 Instruction 实现
 // 如何区分手动指定隐式参数的 comprehension 和没有隐式参数的? 不区分,只要在async块,就认为是monad版的
-object async {
+object future {
 
   object Implicits {
 
     import scala.language.implicitConversions
 
     implicit final class AwaitOps[A](future: Future[A]) {
-      @compileTimeOnly("`await` must be inside an `async` block.")
+      @compileTimeOnly("`await` must be inside an `future` block.")
       def await: A = ???
     }
 
-    @compileTimeOnly("`await` must be inside an `async` block.")
+    @compileTimeOnly("`await` must be inside an `future` block.")
     implicit def await[A](future: Future[A]): A = ???
 
   }
@@ -67,11 +67,11 @@ object async {
     import c.universe._
 
     val awaitOpsSymbol = {
-      typeOf[_root_.com.thoughtworks.sde.async.Implicits.type].member(TermName("AwaitOps"))
+      typeOf[_root_.com.thoughtworks.sde.future.Implicits.type].member(TermName("AwaitOps"))
     }
 
     val prefixAwaitMethodSymbol = {
-      typeOf[_root_.com.thoughtworks.sde.async.Implicits.type].member(TermName("await"))
+      typeOf[_root_.com.thoughtworks.sde.future.Implicits.type].member(TermName("await"))
     }
 
     val monadicComprehensionSymbol = {
@@ -179,8 +179,8 @@ object async {
   private def transformBody(c: whitebox.Context)(body: c.Tree): c.Tree = {
     import c.universe._
     q"""{
-      import _root_.com.thoughtworks.sde.async.Implicits._
-      _root_.com.thoughtworks.sde.async.monadic(${virtualizeComprehension(c)(body)})
+      import _root_.com.thoughtworks.sde.future.Implicits._
+      _root_.com.thoughtworks.sde.future.monadic(${virtualizeComprehension(c)(body)})
     }"""
   }
 

@@ -1,0 +1,19 @@
+enablePlugins(ApiMappings)
+
+organization := "com.thoughtworks.each"
+
+name := "each"
+
+scalacOptions += "-deprecation"
+
+scalacOptions += "-feature"
+
+scalacOptions += "-unchecked"
+
+description := "A macro library that converts native imperative syntax to scalaz's monadic expressions."
+
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
+
+libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.4" % Test

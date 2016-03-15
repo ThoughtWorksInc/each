@@ -31,8 +31,8 @@ class AsyncTest {
 
 
    * 支持 for / yield （不重要）
-   * 支持 async 中内嵌的 OptionT, EitherT （应该在类型推导后）
-   * 支持 async 中内嵌的 SeqT, ListT, ...
+   * 支持 future 中内嵌的 OptionT, EitherT （应该在类型推导后）
+   * 支持 future 中内嵌的 SeqT, ListT, ...
    * 支持 Scala.js
    * 支持运行时反射
    * 支持显式的 .each 和隐式转换两种语法
@@ -59,7 +59,7 @@ XML
   @Test
   def testSimpleValue(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    @async
+    @future
     def async100: Future[Int] = 100
 
     Assert.assertEquals(100, Await.result(async100, Duration.Inf))
@@ -67,7 +67,7 @@ XML
 
   @Test
   def testImplicitParameter(): Unit = {
-    @async
+    @future
     def async100(implicit ec: ExecutionContext): Future[Int] = 100
 
     Assert.assertEquals(100, Await.result(async100(ExecutionContext.Implicits.global), Duration.Inf))
@@ -76,7 +76,7 @@ XML
   @Test
   def testMath(): Unit = {
     import ExecutionContext.Implicits.global
-    @async
+    @future
     def asyncExpr: Future[Int] = {
       val i = 1 + Future(20) + 300 - await(Future(4000)) + Future(50000).await
       i * 10
@@ -91,7 +91,7 @@ XML
     import scalaz.std.list._
 
     var count = 0
-    @async
+    @future
     def asyncForLoop: Future[Unit] = {
       for (i <- List(Future(1), Future(2), Future(3))) {
         count += i
@@ -106,7 +106,7 @@ XML
     import ExecutionContext.Implicits.global
     import scalaz.std.list._
 
-    @async
+    @future
     def asyncList: Future[List[Int]] = {
       for {
         i <- List(Future(1), Future(2), Future(3))
@@ -121,7 +121,7 @@ XML
     import scalaz.std.list._
     import ExecutionContext.Implicits.global
 
-    @async
+    @future
     def asyncList: Future[List[String]] = {
       for {
         i <- Nil
@@ -142,7 +142,7 @@ XML
     val list1 = List(Future(10), Future(20))
     val list2 = List(3, 5, 7)
 
-    @async
+    @future
     def asyncList: Future[List[Int]] = {
       for {
         i <- list0
@@ -160,7 +160,7 @@ XML
   //  @Test
   //  def `testOptionalInAsyncNone`(): Unit = {
   //
-  //    @async
+  //    @future
   //    def asyncOptional = {
   //      optional(None: String)
   //    }
@@ -171,7 +171,7 @@ XML
   //  @Test
   //  def testOptionalInAsync(): Unit = {
   //
-  //    @async
+  //    @future
   //    def asyncOptional = {
   //      optional(Some(1000): Int)
   //    }
@@ -182,7 +182,7 @@ XML
   //  @Test
   //  def `testOptionalInAsyncNone`(): Unit = {
   //
-  //    @async
+  //    @future
   //    def asyncOptional = optional(None.!)
   //
   //    Assert.assertEquals(None, Await.result(async100, Duration.Inf))
@@ -191,7 +191,7 @@ XML
   //  @Test
   //  def testOptionalInAsync(): Unit = {
   //
-  //    @async
+  //    @future
   //    def asyncOptional = optional(Some(1000).!)
   //
   //    Assert.assertEquals(Some(1000), Await.result(async100, Duration.Inf))

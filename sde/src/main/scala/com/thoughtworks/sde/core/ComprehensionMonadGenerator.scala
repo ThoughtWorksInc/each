@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package com.thoughtworks.each.core
+package com.thoughtworks.sde.core
 
 import scala.language.higherKinds
 
@@ -40,7 +40,7 @@ object ComprehensionMonadGenerator {
           TypeName(monadClassName),
           List(),
           Template(
-            List(AppliedTypeTree(Ident(typeOf[_root_.com.thoughtworks.each.core.ComprehensionMonadGenerator.AbstractMonad[({type T[A] = {}})#T]].typeSymbol), List(Ident(fSymbol)))),
+            List(AppliedTypeTree(Ident(typeOf[_root_.com.thoughtworks.sde.core.ComprehensionMonadGenerator.AbstractMonad[({type T[A] = {}})#T]].typeSymbol), List(Ident(fSymbol)))),
             noSelfType,
             List(
               DefDef(Modifiers(), termNames.CONSTRUCTOR, List(), List(List()), TypeTree(), Block(List(pendingSuperCall), Literal(Constant(())))),

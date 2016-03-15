@@ -2,3 +2,7 @@
 target/
 local.sbt
 *.class
+
+# Files created for deployment
+secret/
+local.sbt

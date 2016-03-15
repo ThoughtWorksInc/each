@@ -59,8 +59,8 @@ releaseProcess := {
   releaseProcess.value.patch(
     releaseProcess.value.indexOf(pushChanges),
     Seq[ReleaseStep](
-      releaseStepCommand(sonatypeReleaseAll, "\"com.thoughtworks.sde\""),
-      releaseStepCommand(sonatypeReleaseAll, "\"com.thoughtworks.each\"")
+      releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.sde"),
+      releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.each")
     ),
   0)
 }

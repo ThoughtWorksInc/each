@@ -23,8 +23,7 @@ val compileSourceDirectory = settingKey[File]("Default directory containing sour
 
 compileSourceDirectory in js := (sourceDirectory in Compile).value
 
-lazy val js: Project = project.addSbtFiles(file("../common.sbt")).settings(sourceDirectory in Compile := compileSourceDirectory.value)
-
+lazy val js: Project = project.enablePlugins(ScalaJSPlugin).addSbtFiles(file("../common.sbt")).settings(sourceDirectory in Compile := compileSourceDirectory.value)
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
@@ -35,7 +34,3 @@ libraryDependencies ++= {
     Seq()
   }
 }
-
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.0"
-
-libraryDependencies += "org.scalaz" %% "scalaz-effect" % "7.2.0"

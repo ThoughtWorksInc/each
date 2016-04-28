@@ -1,5 +1,9 @@
 enablePlugins(ApiMappings)
 
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.2"
+
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.2"
+
 licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
 organization := "com.thoughtworks.each"

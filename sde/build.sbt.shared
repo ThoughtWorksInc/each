@@ -14,9 +14,9 @@ scalacOptions += "-unchecked"
 
 description := "A collection of Scala language extension for specific domains."
 
-libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.0"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.2"
 
-libraryDependencies += "org.scalaz" %% "scalaz-effect" % "7.2.0"
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.2"
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 

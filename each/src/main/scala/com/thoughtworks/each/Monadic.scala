@@ -254,18 +254,18 @@ object Monadic {
         val partialAppliedMonadicType = partialAppliedMonadicTree.tpe.widen
         val fType = partialAppliedMonadicType.typeArgs(1)
 
+        val eachMethodSymbol = {
+          val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
+          eachOpsType.member(TermName("each"))
+        }
+
+        val monadicType = typeOf[_root_.com.thoughtworks.each.Monadic.MonadicLoop[({type T[F[_]] = {}})#T, _]]
+
         val transformer = new MonadicTransformer[c.universe.type](c.universe, mode) {
 
           override def freshName(name: String) = c.freshName(name)
 
           override def fTree = SelectFromTypeTree(TypeTree(partialAppliedMonadicType), TypeName("F"))
-
-          private val eachMethodSymbol = {
-            val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
-            eachOpsType.member(TermName("each"))
-          }
-
-          private val monadicType = typeOf[_root_.com.thoughtworks.each.Monadic.MonadicLoop[({type T[F[_]] = {}})#T, _]]
 
           private val foreachMethodSymbol = monadicType.member(TermName("foreach"))
 

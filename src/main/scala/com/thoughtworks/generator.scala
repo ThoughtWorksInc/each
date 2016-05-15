@@ -1,23 +1,13 @@
 package com.thoughtworks
 
-import scala.collection.generic.SeqFactory
+import com.thoughtworks.each.Monadic._
 
-
-import scala.annotation.{StaticAnnotation,  tailrec}
-import scala.collection.GenSeq
-import scala.collection.mutable.LazyBuilder
-import scala.collection.mutable.ListBuffer
 import scala.collection.LinearSeqOptimized
-import scala.collection.LinearSeq
-import scala.collection.generic.GenericTraversableTemplate
-import scala.collection.generic.SeqFactory
-
-import scalaz.Free
-import scalaz.\/
-import scalaz.-\/
+import scala.collection.generic.{GenericTraversableTemplate, SeqFactory}
+import scalaz.{-\/, Free}
 import scalaz.std.list._
 import scalaz.std.tuple._
-import com.thoughtworks.each.Monadic._
+
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */

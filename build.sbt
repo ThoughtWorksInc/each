@@ -6,13 +6,18 @@ scalaVersion in ThisBuild := "2.11.8"
 
 lazy val core = project
 
+lazy val `comprehension-monad` = crossProject.crossType(CrossType.Pure)
+
+lazy val `comprehension-monadJVM` = `comprehension-monad`.jvm.addSbtFiles(file("../build.sbt.shared"))
+lazy val `comprehension-monadJS` = `comprehension-monad`.js.addSbtFiles(file("../build.sbt.shared"))
+
 lazy val sde = crossProject.crossType(CrossType.Pure)
 
 lazy val sdeJS = sde.js.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
 
 lazy val sdeJVM = sde.jvm.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
 
-lazy val each = crossProject.crossType(CrossType.Pure) dependsOn sde
+lazy val each = crossProject.crossType(CrossType.Pure).dependsOn(sde).dependsOn(`comprehension-monad`)
 
 lazy val eachJS = each.js.addSbtFiles(file("../build.sbt.shared"))
 
@@ -20,9 +25,9 @@ lazy val eachJVM = each.jvm.addSbtFiles(file("../build.sbt.shared"))
 
 licenses in ThisBuild := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 
-homepage in ThisBuild  := Some(url("https://github.com/ThoughtWorksInc/each"))
+homepage in ThisBuild := Some(url("https://github.com/ThoughtWorksInc/each"))
 
-startYear in ThisBuild  := Some(2015)
+startYear in ThisBuild := Some(2015)
 
 scmInfo in ThisBuild := Some(ScmInfo(
   url("https://github.com/ThoughtWorksInc/each"),
@@ -64,7 +69,7 @@ releaseProcess := {
       releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.sde"),
       releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.each")
     ),
-  0)
+    0)
 }
 
 releaseProcess -= runClean

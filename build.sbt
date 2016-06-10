@@ -2,13 +2,15 @@ import ReleaseTransformations._
 
 publishArtifact := false
 
-scalaVersion in ThisBuild := "2.11.7"
+scalaVersion in ThisBuild := "2.11.8"
+
+lazy val core = project
 
 lazy val sde = crossProject.crossType(CrossType.Pure)
 
-lazy val sdeJS = sde.js.addSbtFiles(file("../build.sbt.shared"))
+lazy val sdeJS = sde.js.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
 
-lazy val sdeJVM = sde.jvm.addSbtFiles(file("../build.sbt.shared"))
+lazy val sdeJVM = sde.jvm.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
 
 lazy val each = crossProject.crossType(CrossType.Pure) dependsOn sde
 

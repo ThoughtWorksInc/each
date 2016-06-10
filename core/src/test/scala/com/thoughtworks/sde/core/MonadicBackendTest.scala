@@ -1,7 +1,7 @@
 package com.thoughtworks.sde.core
 
 import com.thoughtworks.enableIf
-import com.thoughtworks.sde.core.MonadicTransformer.ExceptionHandlingMode.{MonadCatchIoMode, MonadThrowableMode, UnsupportedExceptionHandlingMode}
+import com.thoughtworks.sde.core.MonadicBackend.ExceptionHandlingMode.{MonadCatchIoMode, MonadThrowableMode, UnsupportedExceptionHandlingMode}
 import org.junit.Assert._
 import org.junit.Test
 
@@ -10,7 +10,7 @@ import scalaz.{Id, Monad}
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
-class MonadicTransformerTest {
+class MonadicBackendTest {
 
   @enableIf(!scala.util.Properties.versionNumberString.startsWith("2.10."))
   @Test
@@ -20,17 +20,17 @@ class MonadicTransformerTest {
     val tb = reflect.runtime.currentMirror.mkToolBox()
     assertEquals(0, tb.eval(
       q"""
-        import com.thoughtworks.sde.core.MonadicTransformer.ExceptionHandlingMode.UnsupportedExceptionHandlingMode
-        import com.thoughtworks.sde.core.MonadicTransformer
+        import com.thoughtworks.sde.core.MonadicBackend.ExceptionHandlingMode.UnsupportedExceptionHandlingMode
+        import com.thoughtworks.sde.core.MonadicBackend
         import scalaz.{Id, Monad}
-        MonadicTransformer[Monad, Id.Id, Int](Monad[Id.Id], UnsupportedExceptionHandlingMode, 0)
+        MonadicBackend.run[Monad, Id.Id, Int](Monad[Id.Id], UnsupportedExceptionHandlingMode, 0)
       """
     ))
   }
 
   @Test
   def testEmptyMonadic(): Unit = {
-    assertEquals(0, MonadicTransformer[Monad, Id.Id, Int](Monad[Id.Id], UnsupportedExceptionHandlingMode, 0))
+    assertEquals(0, MonadicBackend.run[Monad, Id.Id, Int](Monad[Id.Id], UnsupportedExceptionHandlingMode, 0))
   }
 
 }

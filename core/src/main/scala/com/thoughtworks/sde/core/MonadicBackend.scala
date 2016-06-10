@@ -11,7 +11,7 @@ import macrocompat.bundle
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
-object MonadicTransformer {
+object MonadicBackend {
 
   sealed trait ExceptionHandlingMode
 
@@ -25,19 +25,18 @@ object MonadicTransformer {
 
     // TODO: CatchableMode
 
-    private[MonadicTransformer] def fromModeName(modeName: String) = {
+    private[MonadicBackend] def fromModeName(modeName: String) = {
       import reflect.runtime.universe._
       reflect.runtime.currentMirror.reflectModule(typeOf[this.type].member(newTermName(modeName)).asModule).instance.asInstanceOf[ExceptionHandlingMode]
     }
 
   }
 
-  def apply[M[_[_]], F[_], A](typeClass: M[F], exceptionHandlingMode: MonadicTransformer.ExceptionHandlingMode, body: A): F[A] = macro MacroBundle.apply
+  def run[M[_[_]], F[_], A](typeClass: M[F], exceptionHandlingMode: MonadicBackend.ExceptionHandlingMode, body: => A): F[A] = macro MacroBundle.run
 
   @bundle
-  private[thoughtworks] final class MacroBundle(private[MonadicTransformer] val c: whitebox.Context) {
+  private[thoughtworks] final class MacroBundle(private[MonadicBackend] val c: whitebox.Context) {
 
-    import c.universe
     import c.universe._
     import Flag._
 
@@ -58,11 +57,11 @@ object MonadicTransformer {
 
       import ExceptionHandlingMode._
 
-      private val eachMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicTransformer.Instructions.type].member(TermName("each"))
-      private val foreachMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicTransformer.Instructions.type].member(TermName("foreach"))
-      private val mapMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicTransformer.Instructions.type].member(TermName("map"))
-      private val flatMapMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicTransformer.Instructions.type].member(TermName("flatMap"))
-      private val filterMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicTransformer.Instructions.type].member(TermName("filter"))
+      private val eachMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicBackend.Instructions.type].member(TermName("each"))
+      private val foreachMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicBackend.Instructions.type].member(TermName("foreach"))
+      private val mapMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicBackend.Instructions.type].member(TermName("map"))
+      private val flatMapMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicBackend.Instructions.type].member(TermName("flatMap"))
+      private val filterMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicBackend.Instructions.type].member(TermName("filter"))
 
       private val monadName = c.freshName("monad")
 
@@ -570,7 +569,7 @@ object MonadicTransformer {
       }
     }
 
-    def apply(typeClass: Tree, exceptionHandlingMode: Tree, body: Tree): Tree = {
+    def run(typeClass: Tree, exceptionHandlingMode: Tree, body: Tree): Tree = {
       val q"$method[$m, $f, $a](..$arguments)" = c.macroApplication
       val mode = ExceptionHandlingMode.fromModeName(exceptionHandlingMode.tpe.typeSymbol.name.toString)
       val transformer = new MonadicContext(mode, f)
@@ -584,19 +583,19 @@ object MonadicTransformer {
 
   object Instructions {
 
-    @compileTimeOnly("Instructions must be inside a `MonadicTransformer` block")
+    @compileTimeOnly("Instructions must be inside a SDE block")
     def each[F[_], A](fa: F[A]): A = ???
 
-    @compileTimeOnly("Instructions must be inside a `MonadicTransformer` block")
+    @compileTimeOnly("Instructions must be inside a SDE block")
     def foreach[F[_], A, U](fa: F[A], foldable: Foldable[F], body: A => U): Unit = ???
 
-    @compileTimeOnly("Instructions must be inside a `MonadicTransformer` block")
+    @compileTimeOnly("Instructions must be inside a SDE block")
     def map[F[_], A, B](fa: F[A], traverse: Traverse[F], body: A => B): F[B] = ???
 
-    @compileTimeOnly("Instructions must be inside a `MonadicTransformer` block")
+    @compileTimeOnly("Instructions must be inside a SDE block")
     def flatMap[F[_], A, B](fa: F[A], traverse: Traverse[F], bind: Bind[F], body: A => F[B]): F[B] = ???
 
-    @compileTimeOnly("Instructions must be inside a `MonadicTransformer` block")
+    @compileTimeOnly("Instructions must be inside a SDE block")
     def filter[F[_], A](fa: F[A], traverse: Traverse[F], monadPlus: MonadPlus[F], body: A => Boolean): F[A] = ???
 
   }

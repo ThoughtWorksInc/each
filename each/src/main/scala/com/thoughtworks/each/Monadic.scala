@@ -17,7 +17,9 @@ limitations under the License.
 package com.thoughtworks.each
 
 import com.thoughtworks.sde.core.MonadicTransformer
+import com.thoughtworks.sde.core.MonadicTransformer.ExceptionHandlingMode._
 import com.thoughtworks.sde.core.MonadicTransformer._
+import macrocompat.bundle
 
 import scala.language.existentials
 import scala.annotation.compileTimeOnly
@@ -226,15 +228,16 @@ object Monadic {
 
     type F[A] = F0[A]
 
-    def apply[X](body: X)(implicit monad: M[F]): F[X] = macro PartialAppliedMonadic.MacroImplementation.apply
+    def apply[X](body: X)(implicit monad: M[F]): F[X] = macro PartialAppliedMonadic.MacroBundle.apply
 
   }
 
   private object PartialAppliedMonadic {
 
-    private[PartialAppliedMonadic] object MacroImplementation {
+    @bundle
+    private[PartialAppliedMonadic] final class MacroBundle(c: scala.reflect.macros.whitebox.Context) {
 
-      def apply(c: scala.reflect.macros.whitebox.Context)(body: c.Tree)(monad: c.Tree): c.Tree = {
+      def apply(body: c.Tree)(monad: c.Tree): c.Tree = {
         import c.universe._
         //        c.info(c.enclosingPosition, showRaw(c.macroApplication), true)
         val Apply(Apply(TypeApply(Select(partialAppliedMonadicTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication

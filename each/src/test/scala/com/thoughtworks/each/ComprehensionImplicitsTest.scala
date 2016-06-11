@@ -35,7 +35,7 @@ class ComprehensionImplicitsTest {
   @Test
   def testSeqAp(): Unit = {
     val seqApplicative = ComprehensionImplicits.comprehensionMonad[Seq]
-    Assert.assertEquals(Seq("Hello1!", "Hello1?", "Hello2!", "Hello2?"), seqApplicative.ap(Seq("Hello1", "Hello2"))(Seq((_: String) + "!", (_: String) + "?")))
+    Assert.assertEquals(Seq("Hello1!", "Hello2!", "Hello1?", "Hello2?"), seqApplicative.ap(Seq("Hello1", "Hello2"))(Seq((_: String) + "!", (_: String) + "?")))
   }
 
   @Test

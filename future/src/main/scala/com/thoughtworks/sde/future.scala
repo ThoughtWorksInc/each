@@ -61,6 +61,7 @@ object future {
 
   }
 
+  @bundle
   private[future] class AwaitBundle(val c: whitebox.Context) {
     import c.universe._
 

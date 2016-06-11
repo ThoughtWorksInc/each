@@ -1,26 +1,25 @@
 sudo: false
 
+language: scala
+
+before_cache:
+  - find $HOME/.sbt -name '*.lock' -delete
+  - find $HOME/.ivy2 -name 'ivydata-*.properties' -delete
+
 cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
 
-before_cache:
-  - find $HOME/.sbt -name '*.lock' | xargs rm
-  - find $HOME/.ivy2 -name 'ivydata-*.properties' | xargs rm
-
-language: scala
-
 script:
   - sbt test
 
 before_deploy:
-  - travis_retry git clone --depth=1 $secret_git ./secret
 
 deploy:
   skip_cleanup: true
   provider: script
-  script: ./deploy.sh
+  script: sbt "release with-defaults"
   on:
-    condition: -e ./deploy.sh
+    condition: -e ./deploy.sbt
     all_branches: true

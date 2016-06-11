@@ -1,5 +1,3 @@
-import ReleaseTransformations._
-
 organization in ThisBuild := "com.thoughtworks.sde"
 
 publishArtifact := false
@@ -26,18 +24,4 @@ lazy val futureJS = future.js.addSbtFiles(file("../build.sbt.shared"))
 
 lazy val futureJVM = future.jvm.addSbtFiles(file("../build.sbt.shared"))
 
-licenses in ThisBuild := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-
-homepage in ThisBuild := Some(url("https://github.com/ThoughtWorksInc/each"))
-
 startYear in ThisBuild := Some(2015)
-
-releaseProcess := {
-  import xerial.sbt.Sonatype.SonatypeCommand.sonatypeReleaseAll
-  releaseProcess.value.patch(
-    releaseProcess.value.indexOf(pushChanges),
-    Seq[ReleaseStep](
-      releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.each")
-    ),
-    0)
-}

@@ -16,15 +16,15 @@ limitations under the License.
 
 package com.thoughtworks.sde
 
-import org.junit.{ Assert, Test }
-import scala.concurrent.{ Future, Await }
+import org.junit.{Assert, Test}
+import scala.concurrent.{Future, Await}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 
 /**
- * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
- */
-class AsyncTest {
+  * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
+  */
+class FutureTest {
 
   /*
   要实现的功能:
@@ -116,6 +116,7 @@ XML
     }
     Assert.assertEquals(List(10, 20, 30), Await.result(asyncList, Duration.Inf))
   }
+
   @Test
   def testForNil(): Unit = {
     import scalaz.std.list._
@@ -124,7 +125,7 @@ XML
     @future
     def asyncList: Future[List[String]] = {
       for {
-        i <- Nil
+        i <- Nil: List[Int]
       } yield {
         i.toString
       }

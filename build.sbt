@@ -9,19 +9,14 @@ lazy val core = project
 lazy val `comprehension-monad` = crossProject.crossType(CrossType.Pure)
 
 lazy val `comprehension-monadJVM` = `comprehension-monad`.jvm.addSbtFiles(file("../build.sbt.shared"))
+
 lazy val `comprehension-monadJS` = `comprehension-monad`.js.addSbtFiles(file("../build.sbt.shared"))
 
-lazy val sde = crossProject.crossType(CrossType.Pure)
+lazy val future = crossProject.crossType(CrossType.Pure)
 
-lazy val sdeJS = sde.js.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
+lazy val futureJS = future.js.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
 
-lazy val sdeJVM = sde.jvm.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
-
-lazy val each = crossProject.crossType(CrossType.Pure).dependsOn(sde).dependsOn(`comprehension-monad`)
-
-lazy val eachJS = each.js.addSbtFiles(file("../build.sbt.shared"))
-
-lazy val eachJVM = each.jvm.addSbtFiles(file("../build.sbt.shared"))
+lazy val futureJVM = future.jvm.addSbtFiles(file("../build.sbt.shared")).dependsOn(core)
 
 licenses in ThisBuild := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
 

@@ -38,4 +38,4 @@ releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.0.1" % Test
+libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.0.1"

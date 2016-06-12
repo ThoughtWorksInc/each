@@ -90,6 +90,32 @@ XML
     }
   }
 
+  test("throw an exception in a `for` loop") {
+
+    import scalaz.std.list._
+
+    object MyException extends Exception
+    var count = 0
+
+    // Note that these futures run parallelly
+    @future
+    def asyncForLoop: Future[Unit] = {
+      for (f <- List(Future(1), Future(2), Future(3))) {
+        val i = f.await
+        count += i
+        if (i != 2) {
+          count += f * 10
+          throw MyException
+        }
+      }
+    }
+
+    asyncForLoop.failed.map { case e =>
+      e shouldBe MyException
+      count shouldBe 46
+    }
+  }
+
   test("ForLoop") {
 
     import scalaz.std.list._

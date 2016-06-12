@@ -18,10 +18,9 @@ package com.thoughtworks.sde
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.concurrent.{ExecutionContext, Future}
-import scala.reflect.macros.{blackbox, whitebox}
+import scala.reflect.macros.{whitebox}
 import scala.language.experimental.macros
 import scalaz._
-import scalaz.Id.Id
 import scala.language.higherKinds
 import macrocompat.bundle
 import com.thoughtworks.sde.core.{MonadicFactory, Preprocessor}
@@ -52,7 +51,7 @@ object future extends MonadicFactory[MonadError[?[_], Throwable], Future]{
             _root_.scala.concurrent.Future
           ].apply {
             import _root_.com.thoughtworks.sde.future.AutoImports._
-            ${(new Virtualizer).transform(body)}
+            ${(new ComprehensionTransformer).transform(body)}
           }(${
             c.macroApplication match {
               case q"new $annotationClass()($executionContext).macroTransform(..$annottees)" =>

@@ -60,6 +60,17 @@ XML
 
    */
 
+  test("block API") {
+
+    import scalaz.std.scalaFuture._
+
+    val async100 = future {
+      100
+    }
+
+    async100.map(_ shouldBe 100)
+  }
+
   test("SimpleValue") {
     @future
     def async100: Future[Int] = 100

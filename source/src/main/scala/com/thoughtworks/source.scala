@@ -44,7 +44,7 @@ object source {
             ({type T[A] = _root_.scalaz.Free.Source[$elementType, A]})#T
           ].apply {
             import _root_.com.thoughtworks.source.AutoImports._
-            ${(new Virtualizer).transform(body)}
+            ${(new ComprehensionTransformer).transform(body)}
           }(_root_.scalaz.Free.sourceMonad[$elementType])
         """
       })

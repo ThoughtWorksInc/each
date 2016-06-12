@@ -47,7 +47,7 @@ class Preprocessor(val c: whitebox.Context) {
     result
   }
 
-  class Virtualizer extends Transformer {
+  class ComprehensionTransformer extends Transformer {
     override def transform(tree: Tree): Tree = {
       atPos(tree.pos) {
         tree match {

@@ -1,6 +1,6 @@
 package com.thoughtworks
 
-import com.thoughtworks.generator.Generator
+import com.thoughtworks.source.SourceSeq
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.language.higherKinds
@@ -12,42 +12,42 @@ import scalaz.std.tuple._
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
-class GeneratorSuite extends FunSuite with Matchers {
+class SourceSuite extends FunSuite with Matchers {
 
-  test("empty generator") {
+  test("empty source") {
 
     type N = Nothing
 
-    @generator[N] def emptyGeneratorMethod: Generator[Nothing] = ()
-    @generator[N] val emptyGeneratorVal: Free.Source[Nothing, Unit] = ()
-    val generator: Generator[Nothing] = emptyGeneratorVal
+    @source[N] def emptySourceMethod: SourceSeq[Nothing] = ()
+    @source[N] val emptySourceVal: Free.Source[Nothing, Unit] = ()
+    val source: SourceSeq[Nothing] = emptySourceVal
 
-    emptyGeneratorMethod shouldBe Generator.empty[Nothing]
-    Generator.sourceToGenerator(emptyGeneratorVal) shouldBe Generator.empty[Nothing]
-    generator shouldBe Generator.empty[Nothing]
+    emptySourceMethod shouldBe SourceSeq.empty[Nothing]
+    SourceSeq.sourceToSeq(emptySourceVal) shouldBe SourceSeq.empty[Nothing]
+    source shouldBe SourceSeq.empty[Nothing]
 
   }
 
-  test("simple generator") {
-    @generator[Int] def g: Generator[Int] = {
+  test("simple source") {
+    @source[Int] def g: SourceSeq[Int] = {
       1.yieldOne
       2.yieldOne
     }
-    g shouldBe Generator(1, 2)
+    g shouldBe SourceSeq(1, 2)
   }
 
   test("yield all") {
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
       yieldAll(1, 2)
     }
-    g shouldBe Generator(1, 2)
+    g shouldBe SourceSeq(1, 2)
   }
 
-  test("generator call another generator") {
+  test("source call another source") {
 
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
 
-      @generator[Int] def internal = {
+      @source[Int] def internal = {
         100.yieldOne
         200.yieldOne
       }
@@ -56,28 +56,28 @@ class GeneratorSuite extends FunSuite with Matchers {
       internal.yieldAll
       2.yieldOne
     }
-    g shouldBe Generator(1, 100, 200, 2)
+    g shouldBe SourceSeq(1, 100, 200, 2)
 
   }
 
   test("List.foreach") {
 
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
 
       1.yieldOne
       List("100", "200").foreach { s: String => s.toInt.yieldOne }
       2.yieldOne
     }
-    g shouldBe Generator(1, 100, 200, 2)
+    g shouldBe SourceSeq(1, 100, 200, 2)
 
   }
 
 
   test("Source.foreach") {
 
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
 
-      @generator[String] def internal = {
+      @source[String] def internal = {
         "100".yieldOne
         "200".yieldOne
       }
@@ -85,13 +85,13 @@ class GeneratorSuite extends FunSuite with Matchers {
       internal.foreach { s: String => s.toInt.yieldOne }
       2.yieldOne
     }
-    g shouldBe Generator(1, 100, 200, 2)
+    g shouldBe SourceSeq(1, 100, 200, 2)
 
   }
 
   test("List.filter") {
 
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
 
       1.yieldOne
       for (s <- List("100", "200") if s != "100") {
@@ -99,12 +99,12 @@ class GeneratorSuite extends FunSuite with Matchers {
       }
       2.yieldOne
     }
-    g shouldBe Generator(1, 200, 2)
+    g shouldBe SourceSeq(1, 200, 2)
 
   }
 
   test("List.flatMap") {
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
 
       1.yieldOne
       val l = for {
@@ -118,14 +118,14 @@ class GeneratorSuite extends FunSuite with Matchers {
       l shouldBe List("200-1", "200-2")
       2.yieldOne
     }
-    g shouldBe Generator(1, 200, 200, 2)
+    g shouldBe SourceSeq(1, 200, 200, 2)
 
   }
 
   test("Source.filter") {
 
-    @generator[Int] def g: Generator[Int] = {
-      @generator[String] def internal = {
+    @source[Int] def g: SourceSeq[Int] = {
+      @source[String] def internal = {
         "100".yieldOne
         "200".yieldOne
       }
@@ -135,12 +135,12 @@ class GeneratorSuite extends FunSuite with Matchers {
       }
       2.yieldOne
     }
-    g shouldBe Generator(1, 200, 2)
+    g shouldBe SourceSeq(1, 200, 2)
 
   }
 
   test("throw exceptions") {
-    @generator[Int] def g: Generator[Int] = {
+    @source[Int] def g: SourceSeq[Int] = {
       "xx".toInt
     }
     intercept[NumberFormatException](g)

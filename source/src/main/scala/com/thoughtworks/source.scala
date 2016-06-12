@@ -22,28 +22,28 @@ import scalaz.std.tuple._
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-final class generator[Element] extends StaticAnnotation {
+final class source[Element] extends StaticAnnotation {
 
-  def macroTransform(annottees: Any*): Any = macro generator.AnnotationBundle.macroTransform
+  def macroTransform(annottees: Any*): Any = macro source.AnnotationBundle.macroTransform
 
 }
 
-object generator {
+object source {
 
   @bundle
-  private[generator] final class AnnotationBundle(context: whitebox.Context) extends Preprocessor(context) {
+  private[source] final class AnnotationBundle(context: whitebox.Context) extends Preprocessor(context) {
 
     import c.universe._
 
     def macroTransform(annottees: Tree*): Tree = {
       replaceDefBody(annottees, { body =>
-        val q"new $generatorClass[$elementType]().macroTransform(..$arguments)" = c.macroApplication
+        val q"new $annotationClass[$elementType]().macroTransform(..$arguments)" = c.macroApplication
         q"""
           new _root_.com.thoughtworks.sde.core.MonadicFactory[
             _root_.scalaz.Monad,
             ({type T[A] = _root_.scalaz.Free.Source[$elementType, A]})#T
           ].apply {
-            import _root_.com.thoughtworks.generator.AutoImports._
+            import _root_.com.thoughtworks.source.AutoImports._
             ${(new Virtualizer).transform(body)}
           }(_root_.scalaz.Free.sourceMonad[$elementType])
         """
@@ -81,7 +81,7 @@ object generator {
   }
 
   @bundle
-  private[generator] final class YieldBundle(val c: whitebox.Context) {
+  private[source] final class YieldBundle(val c: whitebox.Context) {
 
     import c.universe._
 
@@ -202,13 +202,13 @@ object generator {
       def yieldOne: Unit = macro YieldBundle.yieldOne
     }
 
-    implicit def sourceToGenerator[A](freeSource: Source[A, Unit]): Generator[A] = {
-      Generator.sourceToGenerator(freeSource)
+    implicit def sourceToSeq[A](freeSource: Source[A, Unit]): SourceSeq[A] = {
+      SourceSeq.sourceToSeq(freeSource)
     }
 
   }
 
-  object Generator extends SeqFactory[Generator] {
+  object SourceSeq extends SeqFactory[SourceSeq] {
 
     override final def newBuilder[Element] = {
       List.newBuilder[Element].mapResult { upstream =>
@@ -221,11 +221,11 @@ object generator {
             Free.produce(element)
           }
         }
-        sourceToGenerator(buildingSource)
+        sourceToSeq(buildingSource)
       }
     }
 
-    implicit def sourceToGenerator[A](freeSource: Source[_ <: A, _]): Generator[A] = {
+    implicit def sourceToSeq[A](freeSource: Source[_ <: A, _]): SourceSeq[A] = {
       freeSource.resume match {
         case -\/((head, tailSource)) => NonEmpty(head, tailSource)
         case _ => Empty
@@ -234,7 +234,7 @@ object generator {
 
     override final def empty[A] = Empty
 
-    private[Generator] final case object Empty extends Generator[Nothing] {
+    private[SourceSeq] final case object Empty extends SourceSeq[Nothing] {
 
       override final def isEmpty: Boolean = true
 
@@ -250,29 +250,29 @@ object generator {
 
     import scala.language.existentials
 
-    private[Generator] final case class NonEmpty[+A](override val head: A, tailSource: Source[_ <: A, _]) extends Generator[A] {
+    private[SourceSeq] final case class NonEmpty[+A](override val head: A, tailSource: Source[_ <: A, _]) extends SourceSeq[A] {
 
       override final def isEmpty: Boolean = false
 
-      override final def tail: Generator[A] = {
-        sourceToGenerator(tailSource)
+      override final def tail: SourceSeq[A] = {
+        sourceToSeq(tailSource)
       }
 
     }
 
     override final def apply[A](elements: A*) = {
-      sourceToGenerator(seqToSource(elements))
+      sourceToSeq(seqToSource(elements))
     }
 
   }
 
-  sealed abstract class Generator[+A]
+  sealed abstract class SourceSeq[+A]
     extends scala.collection.immutable.Seq[A]
       with scala.collection.immutable.LinearSeq[A]
-      with GenericTraversableTemplate[A, Generator]
-      with LinearSeqOptimized[A, Generator[A]] {
+      with GenericTraversableTemplate[A, SourceSeq]
+      with LinearSeqOptimized[A, SourceSeq[A]] {
 
-    override final def companion = Generator
+    override final def companion = SourceSeq
 
   }
 

@@ -28,20 +28,20 @@ import scala.concurrent.duration.Duration
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
-class FutureTest extends AsyncFunSuite with ScalaFutures with Matchers {
+class FutureSuite extends AsyncFunSuite with ScalaFutures with Matchers {
 
   /*
   要实现的功能:
 
 
-   * 支持 for / yield （不重要）
+   * 支持 for / yield （不重要） - DONE
    * 支持 future 中内嵌的 OptionT, EitherT （应该在类型推导后）
    * 支持 future 中内嵌的 SeqT, ListT, ...
-   * 支持 Scala.js
-   * 支持运行时反射
-   * 支持显式的 .each 和隐式转换两种语法
-   * 像 F# 一样,预先封装好所有参数,不需要 import 任何额外模块,就能启用以上功能,包括隐式转换
-   * 方法注解
+   * 支持 Scala.js - DONE
+   * 支持运行时反射 - DONE
+   * 支持显式的 .each 和隐式转换两种语法 - DONE
+   * 像 F# 一样,预先封装好所有参数,不需要 import 任何额外模块,就能启用以上功能,包括隐式转换 - DONE
+   * 方法注解 - DONE
 
 不支持的功能
    * 支持 IntelliJ IDEA 中的类型推断, 怎么做到? 是否要显式定义 await 参数?

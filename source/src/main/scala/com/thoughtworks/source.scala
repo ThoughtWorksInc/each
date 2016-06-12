@@ -3,7 +3,7 @@ package com.thoughtworks
 import scala.language.experimental.macros
 import scala.language.implicitConversions
 import scala.language.higherKinds
-import com.thoughtworks.sde.core.Preprocessor
+import com.thoughtworks.sde.core.{MonadicFactory, Preprocessor}
 import macrocompat.bundle
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
@@ -207,6 +207,8 @@ object source {
     }
 
   }
+
+  def apply[Element] = new MonadicFactory[Monad, Source[Element, ?]]
 
   object SourceSeq extends SeqFactory[SourceSeq] {
 

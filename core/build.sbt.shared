@@ -6,9 +6,9 @@ libraryDependencies += "org.typelevel" %% "macro-compat" % "1.1.1"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.2"
+libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.3"
 
-libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.2"
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.3"
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 

@@ -24,4 +24,10 @@ lazy val futureJS = future.js.addSbtFiles(file("../build.sbt.shared"))
 
 lazy val futureJVM = future.jvm.addSbtFiles(file("../build.sbt.shared"))
 
+lazy val generator = crossProject.crossType(CrossType.Pure).dependsOn(core)
+
+lazy val generatorJS = generator.js.addSbtFiles(file("../build.sbt.shared"))
+
+lazy val generatorJVM = generator.jvm.addSbtFiles(file("../build.sbt.shared"))
+
 startYear in ThisBuild := Some(2015)

@@ -1,6 +1,8 @@
 libraryDependencies += "org.scalaz" %% "scalaz-core" % "7.2.2"
 
-libraryDependencies += "com.thoughtworks.each" %% "each" % "0.6.0"
+libraryDependencies += "com.thoughtworks.sde" %% "core" % "1.0.0-alpha1"
+
+libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0-M15" % Test
 

@@ -2,10 +2,10 @@ package com.thoughtworks
 
 import com.thoughtworks.generator.Generator
 import org.scalatest.{FunSuite, Matchers}
-import scala.language.higherKinds
 
+import scala.language.higherKinds
 import scalaz.Free._
-import scalaz.{-\/, Applicative, Free, MonadPlus, Monoid, Traverse, \/-}
+import scalaz.{-\/, Applicative, Free, Leibniz, MonadPlus, Monoid, Traverse, Unapply, \/-}
 import scalaz.std.list._
 import scalaz.std.tuple._
 
@@ -13,57 +13,6 @@ import scalaz.std.tuple._
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 class GeneratorSuite extends FunSuite with Matchers {
-
-  implicit object UnitSourceInstance extends MonadPlus[Source[?, Unit]] {
-
-    private type F[A] = Source[A, Unit]
-
-    override def bind[A, B](fa: F[A])(f: (A) => F[B]): F[B] = {
-      fa.resume match {
-        case -\/((head, tailSource)) => {
-          f(head).flatMap { _: Unit =>
-            bind(tailSource)(f)
-          }
-        }
-        case \/-(a) =>
-          Free.point[(B, ?), Unit](())
-      }
-    }
-
-    override def empty[A]: F[A] = {
-      Free.point[(A, ?), Unit](())
-    }
-
-    override def plus[A](a: F[A], b: => F[A]): F[A] = {
-      a.flatMap { _: Unit => b }
-    }
-
-    override def point[A](a: => A): F[A] = {
-      Free.produce(a)
-    }
-  }
-
-  // This type class is not available on current scalaz version. See https://github.com/scalaz/scalaz/pull/1160
-  implicit def sourceTraverse[A0]: Traverse[Source[?, A0]] = {
-    type F[A] = Source[A, A0]
-    new Traverse[F] {
-      def traverseImpl[G[_] : Applicative, A, B](fa: F[A])(f: A => G[B]): G[F[B]] = {
-        fa.resume match {
-          case -\/((head, tailSource)) => {
-            implicitly[Applicative[G]].apply2(f(head), traverseImpl[G, A, B](tailSource)(f)) { (mappedHead: B, mappedTail: F[B]) =>
-              Free.produce(mappedHead).flatMap { _: Unit =>
-                mappedTail
-              }
-            }
-          }
-          case \/-(a) =>
-            implicitly[Applicative[G]].point(Free.point[(B, ?), A0](a))
-        }
-      }
-
-    }
-  }
-
 
   test("empty generator") {
 
@@ -80,13 +29,18 @@ class GeneratorSuite extends FunSuite with Matchers {
   }
 
   test("simple generator") {
-
     @generator[Int] def g: Generator[Int] = {
-      1.gen
-      2.gen
+      1.yieldOne
+      2.yieldOne
     }
     g shouldBe Generator(1, 2)
+  }
 
+  test("yield all") {
+    @generator[Int] def g: Generator[Int] = {
+      yieldAll(1, 2)
+    }
+    g shouldBe Generator(1, 2)
   }
 
   test("generator call another generator") {
@@ -94,26 +48,25 @@ class GeneratorSuite extends FunSuite with Matchers {
     @generator[Int] def g: Generator[Int] = {
 
       @generator[Int] def internal = {
-        100.gen
-        200.gen
+        100.yieldOne
+        200.yieldOne
       }
 
-      1.gen
-      internal.gen
-      2.gen
+      1.yieldOne
+      internal.yieldAll
+      2.yieldOne
     }
     g shouldBe Generator(1, 100, 200, 2)
 
   }
 
-
   test("List.foreach") {
 
     @generator[Int] def g: Generator[Int] = {
 
-      1.gen
-      List("100", "200").foreach { s: String => s.toInt.gen }
-      2.gen
+      1.yieldOne
+      List("100", "200").foreach { s: String => s.toInt.yieldOne }
+      2.yieldOne
     }
     g shouldBe Generator(1, 100, 200, 2)
 
@@ -125,12 +78,12 @@ class GeneratorSuite extends FunSuite with Matchers {
     @generator[Int] def g: Generator[Int] = {
 
       @generator[String] def internal = {
-        "100".gen
-        "200".gen
+        "100".yieldOne
+        "200".yieldOne
       }
-      1.gen
-      internal.foreach { s: String => s.toInt.gen }
-      2.gen
+      1.yieldOne
+      internal.foreach { s: String => s.toInt.yieldOne }
+      2.yieldOne
     }
     g shouldBe Generator(1, 100, 200, 2)
 
@@ -140,56 +93,57 @@ class GeneratorSuite extends FunSuite with Matchers {
 
     @generator[Int] def g: Generator[Int] = {
 
-      1.gen
+      1.yieldOne
       for (s <- List("100", "200") if s != "100") {
-        s.toInt.gen
+        s.toInt.yieldOne
       }
-      2.gen
+      2.yieldOne
     }
     g shouldBe Generator(1, 200, 2)
 
   }
 
   test("List.flatMap") {
-
     @generator[Int] def g: Generator[Int] = {
 
-      1.gen
+      1.yieldOne
       val l = for {
         s <- List("100", "200")
         if s != "100"
         i <- List(1, 2)
       } yield {
-        s.toInt.gen
+        s.toInt.yieldOne
         s"$s-$i"
       }
       l shouldBe List("200-1", "200-2")
-      2.gen
+      2.yieldOne
     }
     g shouldBe Generator(1, 200, 200, 2)
 
   }
 
-  // Disabled due to lack of Unapply
-  //  test("Source.filter") {
-  //
-  //    @generator[Int] def g: Generator[Int] = {
-  //
-  //      @generator[String] def internal = {
-  //        "100".gen
-  //        "200".gen
-  //      }
-  //      1.gen
-  //      for (s <- internal if s != "100") {
-  //        s.toInt.gen
-  //      }
-  //      2.gen
-  //    }
-  //    g shouldBe Generator(1, 200, 2)
-  //
-  //  }
+  test("Source.filter") {
 
-  // TODO: Traversable type class for Source itself
+    @generator[Int] def g: Generator[Int] = {
+      @generator[String] def internal = {
+        "100".yieldOne
+        "200".yieldOne
+      }
+      1.yieldOne
+      for (s <- internal if s != "100") {
+        s.toInt.yieldOne
+      }
+      2.yieldOne
+    }
+    g shouldBe Generator(1, 200, 2)
+
+  }
+
+  test("throw exceptions") {
+    @generator[Int] def g: Generator[Int] = {
+      "xx".toInt
+    }
+    intercept[NumberFormatException](g)
+  }
 
 }
-

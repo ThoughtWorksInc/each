@@ -1,1 +1,1 @@
-resolvers += sonatypeDefaultResolver.value
+resolvers in ThisBuild += sonatypeDefaultResolver.value

@@ -16,15 +16,19 @@ limitations under the License.
 
 package com.thoughtworks.sde
 
-import org.junit.{Assert, Test}
-import scala.concurrent.{Future, Await}
-import scala.concurrent.duration.Duration
-import scala.concurrent.ExecutionContext
+import java.util.concurrent.ConcurrentLinkedQueue
 
+import org.scalatest._
+import org.scalatest.concurrent.ScalaFutures
+
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.Duration
+
+//import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
-class FutureTest {
+class FutureTest extends AsyncFunSuite with ScalaFutures with Matchers {
 
   /*
   要实现的功能:
@@ -56,38 +60,38 @@ XML
 
    */
 
-  @Test
-  def testSimpleValue(): Unit = {
-    import scala.concurrent.ExecutionContext.Implicits.global
+  test("SimpleValue") {
     @future
     def async100: Future[Int] = 100
 
-    Assert.assertEquals(100, Await.result(async100, Duration.Inf))
+    async100.map {
+      _ shouldBe 100
+    }
   }
 
-  @Test
-  def testImplicitParameter(): Unit = {
-    @future
-    def async100(implicit ec: ExecutionContext): Future[Int] = 100
+  test("explicit parameter") {
+    @future()(executionContext)
+    def async100: Future[Int] = 100
 
-    Assert.assertEquals(100, Await.result(async100(ExecutionContext.Implicits.global), Duration.Inf))
+    async100.map {
+      _ shouldBe 100
+    }
   }
 
-  @Test
-  def testMath(): Unit = {
-    import ExecutionContext.Implicits.global
+  test("Math") {
     @future
     def asyncExpr: Future[Int] = {
       val i = 1 + Future(20) + 300 - await(Future(4000)) + Future(50000).await
       i * 10
     }
 
-    Assert.assertEquals(463210, Await.result(asyncExpr, Duration.Inf))
+    asyncExpr.map {
+      _ shouldBe 463210
+    }
   }
 
-  @Test
-  def testForLoop(): Unit = {
-    import ExecutionContext.Implicits.global
+  test("ForLoop") {
+
     import scalaz.std.list._
 
     var count = 0
@@ -97,13 +101,15 @@ XML
         count += i
       }
     }
-    Assert.assertEquals((), Await.result(asyncForLoop, Duration.Inf))
-    Assert.assertEquals(6, count)
+
+    asyncForLoop.map { u =>
+      u shouldBe (())
+      count shouldBe 6
+    }
   }
 
-  @Test
-  def testComprehension(): Unit = {
-    import ExecutionContext.Implicits.global
+  test("Comprehension") {
+
     import scalaz.std.list._
 
     @future
@@ -114,13 +120,14 @@ XML
         i * 10
       }
     }
-    Assert.assertEquals(List(10, 20, 30), Await.result(asyncList, Duration.Inf))
+    asyncList.map {
+      _ shouldBe List(10, 20, 30)
+    }
   }
 
-  @Test
-  def testForNil(): Unit = {
+  test("ForNil") {
     import scalaz.std.list._
-    import ExecutionContext.Implicits.global
+
 
     @future
     def asyncList: Future[List[String]] = {
@@ -130,13 +137,15 @@ XML
         i.toString
       }
     }
-    Assert.assertEquals(Nil, Await.result(asyncList, Duration.Inf))
+
+    asyncList.map {
+      _ shouldBe Nil
+    }
 
   }
 
-  @Test
-  def testMultiLineComprehension(): Unit = {
-    import ExecutionContext.Implicits.global
+  test("MultiLineComprehension") {
+
     import scalaz.std.list._
 
     val list0 = List(Future(1), Future(2), Future(3))
@@ -154,7 +163,10 @@ XML
         i * j * k
       }
     }
-    Assert.assertEquals(List(30, 70, 60, 140, 60, 140, 120, 280, 90, 210, 180, 420), Await.result(asyncList, Duration.Inf))
+
+    asyncList.map {
+      _ shouldBe List(30, 70, 60, 140, 60, 140, 120, 280, 90, 210, 180, 420)
+    }
   }
 
   //

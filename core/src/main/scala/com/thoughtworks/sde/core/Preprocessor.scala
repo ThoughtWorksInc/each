@@ -29,7 +29,7 @@ class Preprocessor(val c: whitebox.Context) {
 
   import c.universe._
 
-  final def replaceDefBody(annottees: Seq[c.universe.Tree], transformBody:  Tree => Tree) = {
+  final def replaceDefBody(annottees: Seq[c.universe.Tree], transformBody: Tree => Tree) = {
     val result = annottees match {
       case Seq(annottee@DefDef(mods, name, tparams, vparamss, tpt, rhs)) =>
         atPos(annottee.pos) {
@@ -51,13 +51,7 @@ class Preprocessor(val c: whitebox.Context) {
     override def transform(tree: Tree): Tree = {
       atPos(tree.pos) {
         tree match {
-          case q"""$fa.filter(${f: Function})""" =>
-            q"""_root_.com.thoughtworks.sde.core.Preprocessor.Internal.filter(${
-              transform(fa)
-            })(${
-              transform(f)
-            })"""
-          case q"""$fa.withFilter(${f: Function})""" =>
+          case q"""$fa.${TermName("filter" | "withFilter")}(${f: Function})""" =>
             q"""_root_.com.thoughtworks.sde.core.Preprocessor.Internal.traverseOps(${
               transform(fa)
             }).filter(${
@@ -142,7 +136,7 @@ object Preprocessor {
         }
       }
 
-      def foreach(f: Tree): Tree =  {
+      def foreach(f: Tree): Tree = {
         c.macroApplication match {
           case q"$method[$m, $a]($ma)($tc).foreach[$u]($f)" =>
             q"_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.foreach[$m, $a, $u]($ma, $tc, $f)"

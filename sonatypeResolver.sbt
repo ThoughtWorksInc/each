@@ -1,0 +1,1 @@
+resolvers += sonatypeDefaultResolver.value

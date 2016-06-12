@@ -30,9 +30,8 @@ import com.thoughtworks.sde.core.Preprocessor
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 @compileTimeOnly("enable macro paradise to expand macro annotations")
-final class future extends StaticAnnotation {
+final class future(implicit val executionContext: ExecutionContext) extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro future.AnnotationBundle.macroTransform
-
 }
 
 // TODO: EitherT, OptionT, ... 似乎可以通过 Instruction 实现
@@ -54,7 +53,16 @@ object future {
           ].apply {
             import _root_.com.thoughtworks.sde.future.AutoImports._
             ${(new Virtualizer).transform(body)}
-          }(_root_.scalaz.std.scalaFuture.futureInstance)
+          }(${
+            c.macroApplication match {
+              case q"new $annotationClass()($executionContext).macroTransform(..$annottees)" =>
+                q"_root_.scalaz.std.scalaFuture.futureInstance($executionContext)"
+              case q"new $annotationClass($executionContext).macroTransform(..$annottees)" =>
+                q"_root_.scalaz.std.scalaFuture.futureInstance($executionContext)"
+              case q"new $annotationClass().macroTransform(..$annottees)" =>
+                q"_root_.scalaz.std.scalaFuture.futureInstance"
+            }
+          })
         """
       })
     }

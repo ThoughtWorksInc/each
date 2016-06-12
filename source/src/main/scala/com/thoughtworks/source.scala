@@ -91,14 +91,15 @@ object source {
       q"""
         type $fName[A] = _root_.scalaz.Free.Source[$a, A]
         ..${
-          for {
-            element <- elements
-          } yield q"""
+        for {
+          element <- elements
+        } yield
+          q"""
             _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.each[$fName, _root_.scala.Unit](
               _root_.scalaz.Free.produce($element)
             )
           """
-        }
+      }
       """
     }
 
@@ -178,34 +179,42 @@ object source {
 
     /** Enable type classes at type parameter position 0 of Free.Source */
     implicit def unapplyMTMAB0[TC[_[_]], MT[_[_], _], MAB[_, _], A0, A1](implicit TC0: TC[λ[α => MT[MAB[α, ?], A1]]]):
-      Unapply[TC, MT[MAB[A0, ?], A1]] {
-        type M[X] = MT[MAB[X, ?], A1]
-        type A = A0
-      } = new Unapply[TC, MT[MAB[A0, ?], A1]] {
-        type M[X] = MT[MAB[X, ?], A1]
-        type A = A0
-        def TC = TC0
-        def leibniz = Leibniz.refl
-      }
+    Unapply[TC, MT[MAB[A0, ?], A1]] {
+      type M[X] = MT[MAB[X, ?], A1]
+      type A = A0
+    } = new Unapply[TC, MT[MAB[A0, ?], A1]] {
+      type M[X] = MT[MAB[X, ?], A1]
+      type A = A0
+
+      def TC = TC0
+
+      def leibniz = Leibniz.refl
+    }
 
     final def yieldAll[A](elements: A*): Unit = macro YieldBundle.prefixYieldAll
 
     implicit final class YieldAllOps[Element, B](val underlying: Source[Element, B]) extends AnyVal {
       type A = B
       type F[X] = Source[Element, X]
+
       def yieldAll: B = macro YieldBundle.postfixYieldAll
     }
 
     implicit final class YieldOneOps[Element](val underlying: Element) extends AnyVal {
       type A = Unit
       type F[X] = Source[Element, X]
+
       def yieldOne: Unit = macro YieldBundle.yieldOne
     }
 
-    implicit def sourceToSeq[A](freeSource: Source[A, Unit]): SourceSeq[A] = {
+    implicit def sourceToSeq[A](freeSource: Source[A, _]): SourceSeq[A] = {
       SourceSeq.sourceToSeq(freeSource)
     }
 
+  }
+
+  def sourceToSeq[A](freeSource: Source[A, _]): SourceSeq[A] = {
+    SourceSeq.sourceToSeq(freeSource)
   }
 
   def apply[Element] = new MonadicFactory[Monad, Source[Element, ?]]
@@ -227,7 +236,7 @@ object source {
       }
     }
 
-    implicit def sourceToSeq[A](freeSource: Source[_ <: A, _]): SourceSeq[A] = {
+    implicit def sourceToSeq[A](freeSource: Source[A, _]): SourceSeq[A] = {
       freeSource.resume match {
         case -\/((head, tailSource)) => NonEmpty(head, tailSource)
         case _ => Empty

@@ -14,17 +14,24 @@ import scalaz.std.tuple._
   */
 class SourceSuite extends FunSuite with Matchers {
 
+  test("block API") {
+    source.sourceToSeq(source[Int] {
+      source.AutoImports.yieldAll(1, 2)
+      source.AutoImports.yieldAll(3, 4)
+    }) shouldBe SourceSeq(1, 2, 3, 4)
+  }
+
   test("empty source") {
 
     type N = Nothing
 
     @source[N] def emptySourceMethod: SourceSeq[Nothing] = ()
     @source[N] val emptySourceVal: Free.Source[Nothing, Unit] = ()
-    val source: SourceSeq[Nothing] = emptySourceVal
+    val s: SourceSeq[Nothing] = emptySourceVal
 
     emptySourceMethod shouldBe SourceSeq.empty[Nothing]
-    SourceSeq.sourceToSeq(emptySourceVal) shouldBe SourceSeq.empty[Nothing]
-    source shouldBe SourceSeq.empty[Nothing]
+    source.sourceToSeq(emptySourceVal) shouldBe SourceSeq.empty[Nothing]
+    s shouldBe SourceSeq.empty[Nothing]
 
   }
 

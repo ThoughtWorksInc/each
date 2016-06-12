@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 import scalaz.{Bind, Foldable, MonadPlus, Traverse}
 import macrocompat.bundle
 
-final class MonadicFactory[M0[_[_]], F0[_]] {
+class MonadicFactory[M0[_[_]], F0[_]] {
   type M[F[_]] = M0[F]
   type F[A] = F0[A]
 

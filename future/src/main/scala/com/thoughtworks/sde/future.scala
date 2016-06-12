@@ -16,7 +16,7 @@ limitations under the License.
 
 package com.thoughtworks.sde
 
-import scala.annotation.{compileTimeOnly, StaticAnnotation}
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.macros.{blackbox, whitebox}
 import scala.language.experimental.macros
@@ -24,7 +24,7 @@ import scalaz._
 import scalaz.Id.Id
 import scala.language.higherKinds
 import macrocompat.bundle
-import com.thoughtworks.sde.core.Preprocessor
+import com.thoughtworks.sde.core.{MonadicFactory, Preprocessor}
 
 /**
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
@@ -35,7 +35,7 @@ final class future(implicit val executionContext: ExecutionContext) extends Stat
 }
 
 // TODO: EitherT, OptionT, ... 似乎可以通过 Instruction 实现
-object future {
+object future extends MonadicFactory[MonadError[?[_], Throwable], Future]{
 
   type MonadThrowable[F[_]] = MonadError[F, Throwable]
 

@@ -1,5 +1,7 @@
 organization in ThisBuild := "com.thoughtworks.sde"
 
+publishArtifact := false
+
 crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.8", "2.12.0-M3")
 
 description in ThisBuild := "A collection of Scala language extension for specific domains."

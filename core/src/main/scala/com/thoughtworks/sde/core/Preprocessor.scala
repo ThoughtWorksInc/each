@@ -97,7 +97,7 @@ object Preprocessor {
       import c.universe._
 
       def filter(f: Tree)(monadPlus: Tree): Tree = {
-        val q"$ops.filter($f)($monadPlus)" = c.macroApplication
+        val q"$ops.${TermName("filter"|"withFilter")}($f)($monadPlus)" = c.macroApplication
         val opsName = TermName(c.freshName("ops"))
         q"""{
           val $opsName = $ops
@@ -141,6 +141,8 @@ object Preprocessor {
       type A = A0
 
       def filter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
+
+      def withFilter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
 
       def map[B](f: A => B): M0[B] = macro MacroBundle.map
 

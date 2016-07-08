@@ -18,7 +18,6 @@ package com.thoughtworks.sde.core
 
 import macrocompat.bundle
 
-import scala.annotation.compileTimeOnly
 import scalaz.{Bind, Foldable, MonadPlus, Traverse, Unapply}
 import scala.language.higherKinds
 import scala.language.experimental.macros
@@ -51,10 +50,10 @@ class Preprocessor(val c: whitebox.Context) {
     override def transform(tree: Tree): Tree = {
       atPos(tree.pos) {
         tree match {
-          case q"""$fa.${TermName("filter" | "withFilter")}(${f: Function})""" =>
+          case q"""$fa.${methodName@TermName("filter" | "withFilter")}(${f: Function})""" =>
             q"""_root_.com.thoughtworks.sde.core.Preprocessor.Internal.traverseOps(${
               transform(fa)
-            }).filter(${
+            }).$methodName(${
               transform(f)
             })"""
           case q"""$fa.map(${f: Function})""" =>
@@ -98,85 +97,131 @@ object Preprocessor {
       import c.universe._
 
       def filter(f: Tree)(monadPlus: Tree): Tree = {
-        c.macroApplication match {
-          case q"$method[$m, $a]($ma)($tc).filter($f)($monadPlus)" =>
-            q"_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.filter[$m, $a]($ma, $tc, $monadPlus, $f)"
-          case q"$method[$maType]($ma)($unapply).filter($f)($monadPlus)" =>
-            val unapplyName = TermName(c.freshName("unapply"))
-            q"""{
-              val $unapplyName = $unapply
-              _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.filter[$unapplyName.M, $unapplyName.A]($ma, $unapplyName.TC, $monadPlus, $f)
-            }"""
-        }
+        val q"$ops.filter($f)($monadPlus)" = c.macroApplication
+        val opsName = TermName(c.freshName("ops"))
+        q"""{
+          val $opsName = $ops
+          _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.filter[$opsName.M, $opsName.A]($opsName.ma, $opsName.TC, $monadPlus, $f)
+        }"""
       }
 
       def map(f: Tree): Tree = {
-        c.macroApplication match {
-          case q"$method[$m, $a]($ma)($tc).map[$b]($f)" =>
-            q"_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.map[$m, $a, $b]($ma, $tc, $f)"
-          case q"$method[$maType]($ma)($unapply).map[$b]($f)" =>
-            val unapplyName = TermName(c.freshName("unapply"))
-            q"""{
-              val $unapplyName = $unapply
-              _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.map[$unapplyName.M, $unapplyName.A, $b]($ma, $unapplyName.TC, $f)
-            }"""
-        }
+        val q"$ops.map[$b]($f)" = c.macroApplication
+        val opsName = TermName(c.freshName("ops"))
+        q"""{
+          val $opsName = $ops
+          _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.map[$opsName.M, $opsName.A, $b]($opsName.ma, $opsName.TC, $f)
+        }"""
       }
 
       def flatMap(f: Tree)(bind: Tree): Tree = {
-        c.macroApplication match {
-          case q"$method[$m, $a]($ma)($tc).flatMap[$b]($f)($bind)" =>
-            q"_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.flatMap[$m, $a, $b]($ma, $tc, $bind, $f)"
-          case q"$method[$maType]($ma)($unapply).flatMap[$b]($f)" =>
-            val unapplyName = TermName(c.freshName("unapply"))
-            q"""{
-              val $unapplyName = $unapply
-              _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.flatMap[$unapplyName.M, $unapplyName.A, $b]($ma, $unapplyName.TC, $bind, $f)
-            }"""
-        }
+        val q"$ops.flatMap[$b]($f)($bind)" = c.macroApplication
+        val opsName = TermName(c.freshName("ops"))
+        q"""{
+          val $opsName = $ops
+          _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.flatMap[$opsName.M, $opsName.A, $b]($opsName.ma, $opsName.TC, $bind, $f)
+        }"""
       }
 
       def foreach(f: Tree): Tree = {
-        c.macroApplication match {
-          case q"$method[$m, $a]($ma)($tc).foreach[$u]($f)" =>
-            q"_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.foreach[$m, $a, $u]($ma, $tc, $f)"
-          case q"$method[$maType]($ma)($unapply).foreach[$u]($f)" =>
-            val unapplyName = TermName(c.freshName("unapply"))
-            q"""{
-              val $unapplyName = $unapply
-              _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.foreach[$unapplyName.M, $unapplyName.A, $u]($ma, $unapplyName.TC, $f)
-            }"""
-        }
+        val q"$ops.foreach[$u]($f)" = c.macroApplication 
+        val opsName = TermName(c.freshName("ops"))
+        q"""{
+          val $opsName = $ops
+          _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.foreach[$opsName.M, $opsName.A, $u]($opsName.ma, $opsName.TC, $f)
+        }"""
       }
-    }
-
-    sealed trait FakeTraverseOps[F[_], A] {
-
-      def filter(f: A => Boolean)(implicit monadPlus: MonadPlus[F]): F[A] = macro MacroBundle.filter
-
-      def map[B](f: A => B): F[B] = macro MacroBundle.map
-
-      def flatMap[B](f: A => F[B])(implicit bind: Bind[F]): F[B] = macro MacroBundle.flatMap
 
     }
 
-    sealed trait FakeFoldableOps[F[_], A] {
+    final case class MacroTraverseOps[M0[_], A0](ma: M0[A0], TC: Traverse[M0]) {
+
+      type M[A] = M0[A]
+
+      type A = A0
+
+      def filter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
+
+      def map[B](f: A => B): M0[B] = macro MacroBundle.map
+
+      def flatMap[B](f: A => M0[B])(implicit bind: Bind[M0]): M0[B] = macro MacroBundle.flatMap
+
+    }
+
+    final case class MacroFoldableOps[M0[_], A0](ma: M0[A0], TC: Foldable[M0]) {
+
+      type M[A] = M0[A]
+
+      type A = A0
 
       def foreach[U](f: A => U): Unit = macro MacroBundle.foreach
 
     }
 
-    @compileTimeOnly("comprehension must be inside a SDE block.")
-    def traverseOps[FA](fa: FA)(implicit unapply: Unapply[Traverse, FA]): FakeTraverseOps[unapply.M, unapply.A] = ???
+    sealed trait OpsFactory[MA, M[_[_]], Ops] extends (MA => Ops)
 
-    @compileTimeOnly("comprehension must be inside a SDE block.")
-    def traverseOps[F[_], A](fa: F[A])(implicit traverse: Traverse[F]): FakeTraverseOps[F, A] = ???
+    trait FallbackOpsFactory0 {
+      @inline
+      implicit final def notFound[MA, M[_[_]]]: OpsFactory[MA, M, MA] = new OpsFactory[MA, M, MA] {
+        @inline
+        override def apply(from: MA): MA = from
+      }
+    }
 
-    @compileTimeOnly("comprehension must be inside a SDE block.")
-    def foldableOps[FA](fa: FA)(implicit unapply: Unapply[Foldable, FA]): FakeFoldableOps[unapply.M, unapply.A] = ???
+    trait FallbackOpsFactory1 extends FallbackOpsFactory0 {
 
-    @compileTimeOnly("comprehension must be inside a SDE block.")
-    def foldableOps[F[_], A](fa: F[A])(implicit foldable: Foldable[F]): FakeFoldableOps[F, A] = ???
+      @inline
+      implicit final def macroFoldableOps[F[_], A](implicit foldable: Foldable[F]): OpsFactory[F[A], Foldable, MacroFoldableOps[F, A]] = {
+        new OpsFactory[F[A], Foldable, MacroFoldableOps[F, A]] {
+          override def apply(fa: F[A]): MacroFoldableOps[F, A] = {
+            new MacroFoldableOps[F, A](fa, foldable)
+          }
+        }
+      }
+
+      @inline
+      implicit final def macroTraverseOps[F[_], A](implicit traverse: Traverse[F]): OpsFactory[F[A], Traverse, MacroTraverseOps[F, A]] = {
+        new OpsFactory[F[A], Traverse, MacroTraverseOps[F, A]] {
+          override def apply(fa: F[A]): MacroTraverseOps[F, A] = {
+            new MacroTraverseOps[F, A](fa, traverse)
+          }
+        }
+      }
+
+    }
+
+    object OpsFactory extends FallbackOpsFactory1 {
+
+      @inline
+      implicit final def macroFoldableOpsUnapply[MA](implicit unapply: Unapply[Foldable, MA]): OpsFactory[MA, Foldable, MacroFoldableOps[unapply.M, unapply.A]] = {
+        new OpsFactory[MA, Foldable, MacroFoldableOps[unapply.M, unapply.A]] {
+          override def apply(fa: MA): MacroFoldableOps[unapply.M, unapply.A] = {
+            new MacroFoldableOps[unapply.M, unapply.A](unapply(fa), unapply.TC)
+          }
+        }
+      }
+
+      @inline
+      implicit final def macroTraverseOpsUnapply[MA](implicit unapply: Unapply[Traverse, MA]): OpsFactory[MA, Traverse, MacroTraverseOps[unapply.M, unapply.A]] = {
+        new OpsFactory[MA, Traverse, MacroTraverseOps[unapply.M, unapply.A]] {
+          override def apply(fa: MA): MacroTraverseOps[unapply.M, unapply.A] = {
+            new MacroTraverseOps[unapply.M, unapply.A](unapply(fa), unapply.TC)
+          }
+        }
+      }
+
+
+    }
+
+    @inline
+    def traverseOps[MA, To](fa: MA)(implicit opsFactory: OpsFactory[MA, Traverse, To]): To = {
+      opsFactory(fa)
+    }
+
+    @inline
+    def foldableOps[MA, To](fa: MA)(implicit opsFactory: OpsFactory[MA, Foldable, To]): To = {
+      opsFactory(fa)
+    }
 
   }
 

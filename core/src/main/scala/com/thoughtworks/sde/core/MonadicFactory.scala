@@ -47,15 +47,6 @@ object MonadicFactory {
     private val monadErrorClassSymbol = symbolOf[_root_.scalaz.MonadError[_root_.scala.List, _]]
     private val monadCatchIoClassSymbol = symbolOf[_root_.scalaz.effect.MonadCatchIO[_root_.scala.List]]
 
-    // See https://groups.google.com/forum/#!topic/scala-language/g0-hbN5qerQ
-    private implicit final class PartialFunctionAsExtractor[A, B](pf: PartialFunction[A, B]) {
-
-      object Extractor {
-        def unapply(a: A) = PartialFunction.condOpt(a)(pf)
-      }
-
-    }
-
     /**
       * @param fTree See https://issues.scala-lang.org/browse/SI-5712
       */

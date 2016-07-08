@@ -12,6 +12,15 @@ class MonadicFactory[M0[_[_]], F0[_]] {
   type F[A] = F0[A]
 
   def apply[A](body: => A)(implicit typeClass: M[F]): F[A] = macro MonadicFactory.MacroBundle.apply
+
+  class WithTypeClass(implicit val typeClass: M[F]) {
+    type M[F[_]] = M0[F]
+    type F[A] = F0[A]
+    def apply[A](body: => A): F[A] = macro MonadicFactory.MacroBundle.withTypeClassApply
+  }
+
+  def withTypeClass(implicit typeClass: M[F]) = new WithTypeClass
+
 }
 
 /**
@@ -592,6 +601,35 @@ object MonadicFactory {
         q"""{
           val $partialAppliedMonadicName = $partialAppliedMonadic
           val $monadName = $typeClass
+          ${cpsTreeBuilder.buildCpsTree(body)(Set.empty).toUntypedTree}
+        }"""
+      // c.info(c.enclosingPosition, showCode(result), true)
+      result
+    }
+
+    def withTypeClassApply(body: Tree): Tree = {
+      val q"$withTypeClass.apply[$a]($body)" = c.macroApplication
+
+      val typeClassType = internal.singleType(withTypeClass.tpe, withTypeClass.tpe.member(TermName("typeClass")))
+
+      val mode = if (typeClassType.baseType(monadErrorClassSymbol) != NoType) {
+        MonadThrowableMode
+      } else if (typeClassType.baseType(monadCatchIoClassSymbol) != NoType) {
+        MonadCatchIoMode
+      } else {
+        UnsupportedExceptionHandlingMode
+      }
+
+
+      val withTypeClassName = TermName(c.freshName("partialAppliedMonadic"))
+      val monadTree = q"$withTypeClassName.typeClass"
+
+      val cpsTreeBuilder = new MonadicContext(mode, tq"$withTypeClassName.F", monadTree)
+
+      // c.info(c.enclosingPosition, showCode(body), true)
+      val result =
+        q"""{
+          val $withTypeClassName = $withTypeClass
           ${cpsTreeBuilder.buildCpsTree(body)(Set.empty).toUntypedTree}
         }"""
       // c.info(c.enclosingPosition, showCode(result), true)

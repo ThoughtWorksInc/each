@@ -217,7 +217,7 @@ object source {
     SourceSeq.sourceToSeq(freeSource)
   }
 
-  def apply[Element] = new MonadicFactory[Monad, Source[Element, ?]]
+  def apply[Element] = new MonadicFactory[Monad, Source[Element, ?]].withTypeClass
 
   object SourceSeq extends SeqFactory[SourceSeq] {
 

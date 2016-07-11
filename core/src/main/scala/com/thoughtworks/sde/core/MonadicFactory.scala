@@ -631,19 +631,19 @@ object MonadicFactory {
 
   object Instructions {
 
-    @compileTimeOnly("Instructions must be inside a SDE block")
+    @compileTimeOnly("`each` instructions must be inside a SDE block")
     def each[F[_], A](fa: F[A]): A = ???
 
-    @compileTimeOnly("Instructions must be inside a SDE block")
+    @compileTimeOnly("`foreach` instructions must be inside a SDE block")
     def foreach[F[_], A, U](fa: F[A], foldable: Foldable[F], body: A => U): Unit = ???
 
-    @compileTimeOnly("Instructions must be inside a SDE block")
+    @compileTimeOnly("`map` instructions must be inside a SDE block")
     def map[F[_], A, B](fa: F[A], traverse: Traverse[F], body: A => B): F[B] = ???
 
-    @compileTimeOnly("Instructions must be inside a SDE block")
+    @compileTimeOnly("`flatMap` instructions must be inside a SDE block")
     def flatMap[F[_], A, B](fa: F[A], traverse: Traverse[F], bind: Bind[F], body: A => F[B]): F[B] = ???
 
-    @compileTimeOnly("Instructions must be inside a SDE block")
+    @compileTimeOnly("`filter` instructions must be inside a SDE block")
     def filter[F[_], A](fa: F[A], traverse: Traverse[F], monadPlus: MonadPlus[F], body: A => Boolean): F[A] = ???
 
   }

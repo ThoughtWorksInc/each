@@ -56,36 +56,4 @@ class TraverseComprehensionTest {
     Assert.assertEquals(Some(List(54300, 604300, 54020, 604020)), result)
   }
 
-  @Test
-  def testFilter(): Unit = {
-    val n = Some(4000)
-
-    val result = monadic[Option] {
-      (for {
-        i <- List(300, 20).monadicLoop
-        if i > 100
-      } yield {
-          i + n.each
-        }).underlying
-    }
-    Assert.assertEquals(Some(List(4300)), result)
-  }
-
-  @Test
-  def testComplex(): Unit = {
-    val n = Some(4000)
-    val result = monadic[Option] {
-      (for {
-        i <- List(300, 20).monadicLoop
-        (j, k) <- List(50000 -> "1111", 600000 -> "yyy").monadicLoop
-        if i > n.each - 3900
-        a = i + j
-      } yield {
-          a + n.each * k.length
-        }).underlying
-    }
-
-    Assert.assertEquals(Some(List(66300, 612300)), result)
-  }
-
 }

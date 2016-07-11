@@ -14,6 +14,12 @@ releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
-libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "1.0.5" % Test
+libraryDependencies ++= {
+  if (scalaVersion.value.startsWith("2.10.")) {
+    Seq()
+  } else {
+    Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.5" % Test)
+  }
+}
 
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)

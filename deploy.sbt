@@ -2,12 +2,12 @@ enablePlugins(Travis)
 
 releaseProcess := {
   import ReleaseTransformations._
-  import xerial.sbt.Sonatype.SonatypeCommand.sonatypeRelease
+  import xerial.sbt.Sonatype.SonatypeCommand.sonatypeReleaseAll
   releaseProcess.value.patch(
     releaseProcess.value.indexOf(pushChanges),
     Seq[ReleaseStep](
-      releaseStepCommand(sonatypeRelease, " com.thoughtworks.sde"),
-      releaseStepCommand(sonatypeRelease, " com.thoughtworks.each")
+      releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.sde"),
+      releaseStepCommand(sonatypeReleaseAll, " com.thoughtworks.each")
     ),
     0
   )

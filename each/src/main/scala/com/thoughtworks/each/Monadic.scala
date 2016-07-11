@@ -16,20 +16,22 @@ limitations under the License.
 
 package com.thoughtworks.each
 
-import com.thoughtworks.sde.core.MonadicTransformer
-import com.thoughtworks.sde.core.MonadicTransformer.ExceptionHandlingMode._
-import com.thoughtworks.sde.core.MonadicTransformer._
+import com.thoughtworks.sde.core.{MonadicFactory, Preprocessor}
 import macrocompat.bundle
 
-import scala.language.existentials
-import scala.annotation.compileTimeOnly
+import scala.annotation.{StaticAnnotation, compileTimeOnly}
 import scala.language.experimental.macros
 import scala.language.{higherKinds, implicitConversions}
-import scalaz.effect.MonadCatchIO
+import scala.reflect.macros._
 import scalaz._
-import scalaz.syntax.{FoldableOps, TraverseOps}
+import scalaz.effect.MonadCatchIO
+import scalaz.syntax.{FoldableOps, MonadPlusOps, TraverseOps}
 
+/**
+  * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
+  */
 object Monadic {
+
 
   @inline
   implicit final class ToMonadicLoopOps[F[_], A](underlying: F[A]) {
@@ -39,27 +41,97 @@ object Monadic {
   }
 
   @inline
-  implicit def getUnderlying[F[_], A](monadicLoop: MonadicLoop[F, A]) = monadicLoop.underlying
+  implicit def getUnderlying[F[_], A](monadicLoop: MonadicLoop[F, A]): F[A] = monadicLoop.underlying
 
   object MonadicLoop {
 
+    @bundle
+    private[MonadicLoop] final class MacroBundle(val c: blackbox.Context) {
+
+      import c.universe._
+
+      def foreach(f: Tree)(foldable: Tree): Tree = {
+        val q"$monadicLoop.foreach[$u]($f)($foldable)" = c.macroApplication
+        val monadicLoopName = TermName(c.freshName("monadicLoop"))
+        q"""
+          val $monadicLoopName = $monadicLoop
+          _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.foreach[
+            $monadicLoopName.F,
+            $monadicLoopName.Element,
+            $u
+          ]($monadicLoopName.underlying, $foldable, $f)
+        """
+      }
+
+      def map(f: Tree)(traverse: Tree): Tree = {
+        val q"$monadicLoop.map[$b]($f)($traverse)" = c.macroApplication
+        val monadicLoopName = TermName(c.freshName("monadicLoop"))
+        q"""
+          val $monadicLoopName = $monadicLoop
+          new _root_.com.thoughtworks.each.Monadic.MonadicLoop[$monadicLoopName.F, $b](
+            _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.map[
+              $monadicLoopName.F,
+              $monadicLoopName.Element,
+              $b
+            ]($monadicLoopName.underlying, $traverse, $f)
+          )
+        """
+      }
+
+      def flatMap(f: Tree)(traverse: Tree, bind: Tree): Tree = {
+        val q"$monadicLoop.flatMap[$b]($f)($traverse, $bind)" = c.macroApplication
+        val monadicLoopName = TermName(c.freshName("monadicLoop"))
+        q"""
+          val $monadicLoopName = $monadicLoop
+          new _root_.com.thoughtworks.each.Monadic.MonadicLoop[$monadicLoopName.F, $b](
+            _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.flatMap[
+              $monadicLoopName.F,
+              $monadicLoopName.Element,
+              $b
+            ]($monadicLoopName.underlying, $traverse, $bind, $f)
+          )
+        """
+      }
+
+      def filter(f: Tree)(traverse: Tree, monadPlus: Tree): Tree = {
+        val q"$monadicLoop.${TermName("filter" | "withFilter")}($f)($traverse, $monadPlus)" = c.macroApplication
+        val monadicLoopName = TermName(c.freshName("monadicLoop"))
+        q"""
+          val $monadicLoopName = $monadicLoop
+          new _root_.com.thoughtworks.each.Monadic.MonadicLoop[$monadicLoopName.F, $monadicLoopName.Element](
+            _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.filter[
+              $monadicLoopName.F,
+              $monadicLoopName.Element
+            ]($monadicLoopName.underlying, $traverse, $monadPlus, $f)
+          )
+        """
+      }
+
+    }
+
     @inline
-    implicit def toFoldableOps[F[_] : Foldable, A](monadicLoop: MonadicLoop[F, A]) = {
+    implicit def toFoldableOps[F[_] : Foldable, A](monadicLoop: MonadicLoop[F, A]): FoldableOps[F, A] = {
       scalaz.syntax.foldable.ToFoldableOps(monadicLoop.underlying)
     }
 
     @inline
-    implicit def toTraverseOps[F[_] : Traverse, A](monadicLoop: MonadicLoop[F, A]) = {
+    implicit def toTraverseOps[F[_] : Traverse, A](monadicLoop: MonadicLoop[F, A]): TraverseOps[F, A] = {
       scalaz.syntax.traverse.ToTraverseOps(monadicLoop.underlying)
     }
 
     @inline
-    implicit def toMonadPlusOps[F[_] : MonadPlus, A](monadicLoop: MonadicLoop[F, A]) = {
+    implicit def toMonadPlusOps[F[_] : MonadPlus, A](monadicLoop: MonadicLoop[F, A]): MonadPlusOps[F, A] = {
       scalaz.syntax.monadPlus.ToMonadPlusOps(monadicLoop.underlying)
     }
 
   }
 
+  @deprecated(
+    message = """
+      Use `@monadic[X] def f = { ... }` instead of `monadic[X] { ... }`.
+      Note that you can remove `.monadicLoop` in `@monadic` methods.
+    """,
+    since = "1.0.1")
   final class MonadicLoop[F0[_], A](val underlying: F0[A]) {
 
     type F[X] = F0[X]
@@ -72,24 +144,22 @@ object Monadic {
     @inline
     def toTraverseOps(implicit traverse: Traverse[F]) = scalaz.syntax.traverse.ToTraverseOps(underlying)
 
-    @compileTimeOnly("`foreach` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
-    def foreach[U](f: A => U)(implicit F: Foldable[F]): Unit = ???
+    def foreach[U](f: A => U)(implicit foldable: Foldable[F]): Unit = macro MonadicLoop.MacroBundle.foreach
 
-    @compileTimeOnly("`map` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
-    def map[B](f: A => B)(implicit traverse: Traverse[F]): MonadicLoop[F, B] = ???
+    def map[B](f: A => B)(implicit traverse: Traverse[F]): MonadicLoop[F, B] = macro MonadicLoop.MacroBundle.map
 
-    @compileTimeOnly("`flatMap` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
-    def flatMap[B](f: A => F[B])(implicit traverse: Traverse[F], bind: Bind[F]): MonadicLoop[F, B] = ???
+    def flatMap[B](f: A => F[B])(implicit traverse: Traverse[F], bind: Bind[F]): MonadicLoop[F, B] = macro MonadicLoop.MacroBundle.flatMap
 
-    @compileTimeOnly("`withFilter` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
-    def withFilter(p: A => Boolean)(implicit traverse: Traverse[F], monadPlus: MonadPlus[F]): MonadicLoop[F, A] = ???
+    def filter(f: A => Boolean)(implicit traverse: Traverse[F], monadPlus: MonadPlus[F]): MonadicLoop[F, A] = macro MonadicLoop.MacroBundle.filter
+
+    def withFilter(f: A => Boolean)(implicit traverse: Traverse[F], monadPlus: MonadPlus[F]): MonadicLoop[F, A] = macro MonadicLoop.MacroBundle.filter
 
   }
 
   /**
     * An implicit view to enable `for` `yield` comprehension for a monadic value.
     *
-    * @param v the monadic value.
+    * @param v  the monadic value.
     * @param F0 a helper to infer types.
     * @tparam FA type of the monadic value.
     * @return the temporary wrapper that contains the `each` method.
@@ -99,14 +169,40 @@ object Monadic {
     new ToMonadicLoopOps[F0.M, F0.A](F0(v))
   }
 
+  object EachOps {
+
+    @bundle
+    private[EachOps] final class MacroBundle(val c: whitebox.Context) {
+
+      import c.universe._
+
+      def each: Tree = {
+        val q"$ops.each" = c.macroApplication
+        val opsName = TermName(c.freshName("ops"))
+        q"""
+          val $opsName = $ops
+          _root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.each[
+            $opsName.M,
+            $opsName.A
+          ]($opsName.underlying)
+        """
+      }
+    }
+
+  }
+
   /**
     * The temporary wrapper that contains the `each` method.
     *
     * @param underlying the underlying monadic value.
-    * @tparam F the higher kinded type of the monadic value.
-    * @tparam A the element type of of the monadic value.
+    * @tparam M0 the higher kinded type of the monadic value.
+    * @tparam A0 the element type of of the monadic value.
     */
-  final case class EachOps[F[_], A](private val underlying: F[A]) {
+  final case class EachOps[M0[_], A0](val underlying: M0[A0]) {
+
+    type M[A] = M0[A]
+
+    type A = A0
 
     /**
       * Semantically, returns the result in the monadic value.
@@ -121,21 +217,20 @@ object Monadic {
       *
       * @return the result in the monadic value.
       */
-    @compileTimeOnly("`each` must be inside `monadic`, `throwableMonadic`, or `catchIoMonadic`.")
-    def each: A = ???
+    def each: A = macro EachOps.MacroBundle.each
 
   }
 
   /**
     * An implicit view to enable `.each` for a monadic value.
     *
-    * @param v the monadic value.
+    * @param v  the monadic value.
     * @param F0 a helper to infer types.
     * @tparam FA type of the monadic value.
     * @return the temporary wrapper that contains the `each` method.
     */
   @inline
-  implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]) = new EachOps[F0.M, F0.A](F0(v))
+  implicit def toEachOpsUnapply[FA](v: FA)(implicit F0: Unapply[Bind, FA]): EachOps[F0.M, F0.A] = new EachOps[F0.M, F0.A](F0(v))
 
   /**
     * An implicit view to enable `.each` for a monadic value.
@@ -144,8 +239,60 @@ object Monadic {
     * @return the temporary wrapper that contains the `each` method.
     */
   @inline
-  implicit def toEachOps[F[_], A](v: F[A]) = new EachOps(v)
+  implicit def toEachOps[F[_], A](v: F[A]): EachOps[F, A] = new EachOps(v)
 
+  @bundle
+  final class AnnotationBundle(context: whitebox.Context) extends Preprocessor(context) {
+
+    import c.universe._
+
+
+    private def macroTransform(m: Tree, annottees: Seq[Tree]): Tree = {
+
+      val (f, tc) = c.macroApplication match {
+        case q"new $annotationClass[$f]()($tc).macroTransform(..$annottees)" =>
+          (f, tc)
+        case q"new $annotationClass[$f]($tc).macroTransform(..$annottees)" =>
+          (f, tc)
+        case q"new $annotationClass[$f]().macroTransform(..$annottees)" =>
+          (f, q"_root_.scala.Predef.implicitly[$m[$f]]")
+      }
+
+      val eachOpsName = TermName(c.freshName("eachOps"))
+      val toEachOpsName = TermName(c.freshName("ToEachOps"))
+
+      replaceDefBody(annottees, { body =>
+        q"""
+          new _root_.com.thoughtworks.sde.core.MonadicFactory[
+            $m,
+            $f
+          ].apply {
+            object $toEachOpsName {
+              import scala.language.implicitConversions
+              implicit def $eachOpsName[A](fa: $f[A]): _root_.com.thoughtworks.each.Monadic.EachOps[$f, A] = {
+                new _root_.com.thoughtworks.each.Monadic.EachOps[$f, A](fa)
+              }
+            }
+            import $toEachOpsName.$eachOpsName
+            ${(new ComprehensionTransformer).transform(body)}
+          }($tc)
+        """
+      })
+    }
+
+    def throwableMonadic(annottees: Tree*): Tree = {
+      macroTransform(tq"_root_.com.thoughtworks.each.Monadic.MonadTrowable", annottees)
+    }
+
+    def monadic(annottees: Tree*): Tree = {
+      macroTransform(tq"_root_.scalaz.Monad", annottees)
+    }
+
+    def catchIoMonadic(annottees: Tree*): Tree = {
+      macroTransform(tq"_root_.scalaz.MonadCatchIO", annottees)
+    }
+
+  }
 
   /**
     * @usecase def monadic[F[_]](body: AnyRef)(implicit monad: Monad[F]): F[body.type] = ???
@@ -153,14 +300,18 @@ object Monadic {
     *          Captures all the result in the `body` and converts them into a `F`.
     *
     *          Note that `body` must not contain any `try` / `catch` / `throw` expressions.
-    *
     * @tparam F the higher kinded type of the monadic expression.
-    * @param body the imperative style expressions that will be transform to monadic style.
+    * @param body  the imperative style expressions that will be transform to monadic style.
     * @param monad the monad that executes expressions in `body`.
     * @return
     */
   @inline
-  def monadic[F[_]] = new PartialAppliedMonadic[Monad, F, UnsupportedExceptionHandlingMode.type]
+  def monadic[F[_]] = new MonadicFactory[Monad, F]
+
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  final class monadic[F[_]] extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro AnnotationBundle.monadic
+  }
 
   /**
     * @usecase def catchIoMonadic[F[_]](body: AnyRef)(implicit monad: MonadCatchIO[F]): F[body.type] = ???
@@ -168,15 +319,20 @@ object Monadic {
     *          Captures all the result in the `body` and converts them into a `F`.
     *
     *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
-    *
     * @tparam F the higher kinded type of the monadic expression.
-    * @param body the imperative style expressions that will be transform to monadic style.
+    * @param body  the imperative style expressions that will be transform to monadic style.
     * @param monad the monad that executes expressions in `body`.
     * @return
     */
   @inline
-  def catchIoMonadic[F[_]] = new PartialAppliedMonadic[MonadCatchIO, F, MonadCatchIoMode.type]
+  def catchIoMonadic[F[_]] = new MonadicFactory[MonadCatchIO, F]
 
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  final class catchIoMonadic[F[_]] extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro AnnotationBundle.catchIoMonadic
+  }
+
+  // TODO: create Unapply instead
   @inline
   implicit def eitherTMonadThrowable[F[_], G[_[_], _]](implicit F0: Monad[({type g[y] = G[F, y]})#g]): MonadThrowable[
     ({type f[x] = EitherT[({type g[y] = G[F, y]})#g, Throwable, x]})#f
@@ -207,140 +363,17 @@ object Monadic {
     *          Captures all the result in the `body` and converts them into a `F`.
     *
     *          Note that `body` may contain any `try` / `catch` / `throw` expressions.
-    *
     * @tparam F the higher kinded type of the monadic expression.
-    * @param body the imperative style expressions that will be transform to monadic style.
+    * @param body  the imperative style expressions that will be transform to monadic style.
     * @param monad the monad that executes expressions in `body`.
     * @return
     */
   @inline
-  def throwableMonadic[F[_]] = new PartialAppliedMonadic[MonadThrowable, F, MonadThrowableMode.type]
+  def throwableMonadic[F[_]] = new MonadicFactory[MonadThrowable, F]
 
-  /**
-    * Partial applied function instance to convert a monadic expression.
-    *
-    * For type inferring only.
-    *
-    * @tparam M
-    * @tparam F
-    */
-  final class PartialAppliedMonadic[M[_[_]], F0[_], Mode <: ExceptionHandlingMode] private[Monadic]() {
-
-    type F[A] = F0[A]
-
-    def apply[X](body: X)(implicit monad: M[F]): F[X] = macro PartialAppliedMonadic.MacroBundle.apply
-
-  }
-
-  private object PartialAppliedMonadic {
-
-    @bundle
-    private[PartialAppliedMonadic] final class MacroBundle(c: scala.reflect.macros.whitebox.Context) {
-
-      def apply(body: c.Tree)(monad: c.Tree): c.Tree = {
-        import c.universe._
-        //        c.info(c.enclosingPosition, showRaw(c.macroApplication), true)
-        val Apply(Apply(TypeApply(Select(partialAppliedMonadicTree, _), List(asyncValueTypeTree)), _), _) = c.macroApplication
-
-
-        val modeType: Type = partialAppliedMonadicTree.tpe.widen.typeArgs(2)
-
-        val mode: ExceptionHandlingMode = if (modeType =:= typeOf[MonadCatchIoMode.type]) {
-          MonadCatchIoMode
-        } else if (modeType =:= typeOf[MonadThrowableMode.type]) {
-          MonadThrowableMode
-        } else if (modeType =:= typeOf[UnsupportedExceptionHandlingMode.type]) {
-          UnsupportedExceptionHandlingMode
-        } else {
-          throw new IllegalStateException("Unsupported ExceptionHandlingMode")
-        }
-        val partialAppliedMonadicType = partialAppliedMonadicTree.tpe.widen
-        val fType = partialAppliedMonadicType.typeArgs(1)
-
-        val eachMethodSymbol = {
-          val eachOpsType = typeOf[_root_.com.thoughtworks.each.Monadic.EachOps[({type T[F[_]] = {}})#T, _]]
-          eachOpsType.member(TermName("each"))
-        }
-
-        val monadicType = typeOf[_root_.com.thoughtworks.each.Monadic.MonadicLoop[({type T[F[_]] = {}})#T, _]]
-
-        val transformer = new MonadicTransformer[c.universe.type](c.universe, mode) {
-
-          override def freshName(name: String) = c.freshName(name)
-
-          override def fTree = SelectFromTypeTree(TypeTree(partialAppliedMonadicType), TypeName("F"))
-
-          private val foreachMethodSymbol = monadicType.member(TermName("foreach"))
-
-          private val mapMethodSymbol = monadicType.member(TermName("map"))
-
-          private val flatMapMethodSymbol = monadicType.member(TermName("flatMap"))
-
-          private val filterMethodSymbol = monadicType.member(TermName("withFilter"))
-
-          private def hook(expectedType: Type, resultTree: Tree): Tree = {
-            Apply(
-              Select(
-                New(TypeTree(expectedType)),
-                termNames.CONSTRUCTOR
-              ),
-              List(resultTree)
-            )
-          }
-
-          override val instructionExtractor: PartialFunction[Tree, Instruction] = {
-            case origin@Apply(Apply(methodTree@Select(opsTree, _), List(bodyFunctionTree: Function)), List(traverseTree, monadPlusTree)) if methodTree.symbol == filterMethodSymbol => {
-              Filter(
-                Apply(Select(opsTree, TermName("toTraverseOps")), List(traverseTree)),
-                bodyFunctionTree,
-                monadPlusTree,
-                origin.tpe.member(TermName("underlying")).typeSignatureIn(origin.tpe),
-                hook(origin.tpe, _))
-            }
-            case origin@Apply(Apply(TypeApply(methodTree@Select(opsTree, _), List(resultTypeTree)), List(bodyFunctionTree: Function)), List(traverseTree, bindTree)) if methodTree.symbol == flatMapMethodSymbol => {
-              FlatMap(
-                Apply(Select(opsTree, TermName("toTraverseOps")), List(traverseTree)),
-                resultTypeTree,
-                bodyFunctionTree,
-                bindTree,
-                origin.tpe.member(TermName("underlying")).typeSignatureIn(origin.tpe),
-                hook(origin.tpe, _))
-            }
-            case origin@Apply(Apply(TypeApply(methodTree@Select(opsTree, _), _), List(bodyFunctionTree: Function)), List(traverseTree)) if methodTree.symbol == mapMethodSymbol => {
-              Map(
-                Apply(Select(opsTree, TermName("toTraverseOps")), List(traverseTree)),
-                bodyFunctionTree,
-                origin.tpe.member(TermName("underlying")).typeSignatureIn(origin.tpe),
-                hook(origin.tpe, _))
-            }
-            case Apply(Apply(TypeApply(methodTree@Select(opsTree, _), _), List(bodyFunctionTree: Function)), List(foldableTree)) if methodTree.symbol == foreachMethodSymbol => {
-              Foreach(
-                Apply(Select(opsTree, TermName("toFoldableOps")), List(foldableTree)),
-                bodyFunctionTree)
-            }
-            case eachMethodTree@Select(eachOpsTree, _) if eachMethodTree.symbol == eachMethodSymbol => {
-              val actualFType = eachOpsTree.tpe.typeArgs(0)
-              val resultType = eachMethodTree.tpe
-              val expectedType = appliedType(fType, List(resultType))
-              val actualType = appliedType(actualFType, List(resultType))
-              if (!(actualType <:< expectedType)) {
-                c.error(
-                  eachOpsTree.pos,
-                  raw"""type mismatch;
- found   : ${show(actualType)}
- required: ${show(expectedType)}""")
-              }
-              Each(Select(Apply(Select(reify(_root_.com.thoughtworks.each.Monadic.EachOps).tree, TermName("unapply")), List(eachOpsTree)), TermName("get")))
-            }
-          }
-
-        }
-        val result = transformer.transform(body, monad)
-        //        c.info(c.enclosingPosition, show(result), true)
-        c.untypecheck(result)
-      }
-    }
-
+  @compileTimeOnly("enable macro paradise to expand macro annotations")
+  final class throwableMonadic[F[_]] extends StaticAnnotation {
+    def macroTransform(annottees: Any*): Any = macro AnnotationBundle.throwableMonadic
   }
 
 }

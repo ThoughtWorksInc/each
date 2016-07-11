@@ -14,6 +14,12 @@ lazy val coreJVM = core.jvm.addSbtFiles(file("../build.sbt.shared"))
 
 lazy val coreJS = core.js.addSbtFiles(file("../build.sbt.shared"))
 
+lazy val each = crossProject.crossType(CrossType.Pure).dependsOn(core, `comprehension-monad`)
+
+lazy val eachJVM = each.jvm.addSbtFiles(file("../build.sbt.shared"))
+
+lazy val eachJS = each.js.addSbtFiles(file("../build.sbt.shared"))
+
 lazy val `comprehension-monad` = crossProject.crossType(CrossType.Pure)
 
 lazy val `comprehension-monadJVM` = `comprehension-monad`.jvm.addSbtFiles(file("../build.sbt.shared"))

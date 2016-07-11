@@ -437,7 +437,7 @@ class MonadicTest {
   def testThis(): Unit = {
     import scala.language.existentials
     val thisClass = monadic[Option] {
-      this.getClass
+      this.getClass.asInstanceOf[Class[MonadicTest]]
     }
 
     Assert.assertEquals(Some(classOf[MonadicTest]), thisClass)

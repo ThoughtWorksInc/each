@@ -46,10 +46,7 @@ object future extends MonadicFactory[MonadError[?[_], Throwable], Future]{
     def macroTransform(annottees: Tree*): Tree = {
       replaceDefBody(annottees, { body =>
         q"""
-          new _root_.com.thoughtworks.sde.core.MonadicFactory[
-            _root_.com.thoughtworks.sde.future.MonadThrowable,
-            _root_.scala.concurrent.Future
-          ].apply {
+          _root_.com.thoughtworks.sde.future {
             import _root_.com.thoughtworks.sde.future.AutoImports._
             ${(new ComprehensionTransformer).transform(body)}
           }(${

@@ -38,4 +38,10 @@ lazy val sourceJS = source.js.addSbtFiles(file("../build.sbt.shared"))
 
 lazy val sourceJVM = source.jvm.addSbtFiles(file("../build.sbt.shared"))
 
+lazy val gen = crossProject.crossType(CrossType.Pure).dependsOn(core)
+
+lazy val genJS = gen.js.addSbtFiles(file("../build.sbt.shared"))
+
+lazy val genJVM = gen.jvm.addSbtFiles(file("../build.sbt.shared"))
+
 startYear in ThisBuild := Some(2015)

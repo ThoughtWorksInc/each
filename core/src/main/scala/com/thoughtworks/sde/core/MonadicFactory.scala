@@ -13,11 +13,7 @@ class MonadicFactory[M0[_[_]], F0[_]] {
 
   def apply[A](body: => A)(implicit typeClass: M[F]): F[A] = macro MonadicFactory.MacroBundle.apply
 
-  class WithTypeClass(implicit val typeClass: M[F]) {
-    type M[F[_]] = M0[F]
-    type F[A] = F0[A]
-    def apply[A](body: => A): F[A] = macro MonadicFactory.MacroBundle.withTypeClassApply
-  }
+  type WithTypeClass = MonadicFactory.WithTypeClass[M, F]
 
   def withTypeClass(implicit typeClass: M[F]) = new WithTypeClass
 
@@ -27,6 +23,12 @@ class MonadicFactory[M0[_[_]], F0[_]] {
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 object MonadicFactory {
+
+  class WithTypeClass[M0[_[_]], F0[_]](implicit val typeClass: M0[F0]) {
+    type M[F[_]] = M0[F]
+    type F[A] = F0[A]
+    def apply[A](body: => A): F[A] = macro MacroBundle.withTypeClassApply
+  }
 
   private[MonadicFactory] sealed trait ExceptionHandlingMode
 

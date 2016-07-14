@@ -1,11 +1,11 @@
-package com.thoughtworks
+package com.thoughtworks.sde
 
-import com.thoughtworks.source.SourceSeq
+import com.thoughtworks.sde.source.SourceSeq
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.language.higherKinds
-import scalaz.Free._
-import scalaz.{-\/, Applicative, Free, Leibniz, MonadPlus, Monoid, Traverse, Unapply, \/-}
+
+import scalaz.Free
 import scalaz.std.list._
 import scalaz.std.tuple._
 

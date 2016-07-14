@@ -1,20 +1,16 @@
-package com.thoughtworks
+package com.thoughtworks.sde
 
-import scala.language.experimental.macros
-import scala.language.implicitConversions
-import scala.language.higherKinds
 import com.thoughtworks.sde.core.{MonadicFactory, Preprocessor}
 import macrocompat.bundle
 
 import scala.annotation.{StaticAnnotation, compileTimeOnly}
-import scala.collection.LinearSeq
-import scala.collection.IndexedSeq
-import scala.collection.LinearSeqOptimized
 import scala.collection.generic.{GenericTraversableTemplate, SeqFactory}
-import scala.reflect.macros.{blackbox, whitebox}
-import scalaz._
+import scala.collection.{IndexedSeq, LinearSeq, LinearSeqOptimized}
+import scala.language.experimental.macros
+import scala.language.{higherKinds, implicitConversions}
+import scala.reflect.macros.whitebox
 import scalaz.Free.Source
-import scalaz.{-\/, Applicative, Apply, Free, Traverse, Traverse1, \/-}
+import scalaz._
 import scalaz.std.list._
 import scalaz.std.tuple._
 
@@ -43,7 +39,7 @@ object source {
             _root_.scalaz.Monad,
             ({type T[A] = _root_.scalaz.Free.Source[$elementType, A]})#T
           ].apply {
-            import _root_.com.thoughtworks.source.AutoImports._
+            import _root_.com.thoughtworks.sde.source.AutoImports._
             ${(new ComprehensionTransformer).transform(body)}
           }(_root_.scalaz.Free.sourceMonad[$elementType])
         """

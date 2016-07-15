@@ -45,3 +45,5 @@ lazy val genJS = gen.js.addSbtFiles(file("../build.sbt.shared"))
 lazy val genJVM = gen.jvm.addSbtFiles(file("../build.sbt.shared"))
 
 startYear in ThisBuild := Some(2015)
+
+fork in test in ThisBuild := true

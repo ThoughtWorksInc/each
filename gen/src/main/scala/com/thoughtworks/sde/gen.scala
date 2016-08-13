@@ -33,7 +33,9 @@ final class gen extends StaticAnnotation {
   def macroTransform(annottees: Any*): Any = macro gen.AnnotationBundle.macroTransform
 }
 
-object gen extends MonadicFactory.WithTypeClass[Monad, Gen]()(scalaz.scalacheck.ScalaCheckBinding.GenMonad) {
+object gen extends MonadicFactory.WithTypeClass[Monad, Gen] {
+
+  override val typeClass = scalaz.scalacheck.ScalaCheckBinding.GenMonad
 
   @bundle
   private[gen] final class AnnotationBundle(context: whitebox.Context) extends Preprocessor(context) {

@@ -28,7 +28,7 @@ class MonadicFactoryTest {
       q"""
         import scalaz.{Id, Monad}
         import com.thoughtworks.sde.core.MonadicFactory
-        new MonadicFactory[Monad, Id.Id]()(0)
+        MonadicFactory[Monad, Id.Id].apply(0)
       """
     ))
   }

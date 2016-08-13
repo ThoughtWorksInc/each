@@ -306,7 +306,7 @@ object Monadic {
     * @return
     */
   @inline
-  def monadic[F[_]] = new MonadicFactory[Monad, F]
+  def monadic[F[_]] = MonadicFactory[Monad, F]
 
   @compileTimeOnly("enable macro paradise to expand macro annotations")
   final class monadic[F[_]] extends StaticAnnotation {
@@ -325,7 +325,7 @@ object Monadic {
     * @return
     */
   @inline
-  def catchIoMonadic[F[_]] = new MonadicFactory[MonadCatchIO, F]
+  def catchIoMonadic[F[_]] = MonadicFactory[MonadCatchIO, F]
 
   @compileTimeOnly("enable macro paradise to expand macro annotations")
   final class catchIoMonadic[F[_]] extends StaticAnnotation {
@@ -369,7 +369,7 @@ object Monadic {
     * @return
     */
   @inline
-  def throwableMonadic[F[_]] = new MonadicFactory[MonadThrowable, F]
+  def throwableMonadic[F[_]] = MonadicFactory[MonadThrowable, F]
 
   @compileTimeOnly("enable macro paradise to expand macro annotations")
   final class throwableMonadic[F[_]] extends StaticAnnotation {

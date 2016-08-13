@@ -15,7 +15,7 @@ trait MonadicFactory[M0[_[_]], F0[_]] {
 
   type WithTypeClass = MonadicFactory.WithTypeClass[M, F]
 
-  def withTypeClass(implicit typeClass0: M[F]) = new WithTypeClass {
+  final def withTypeClass(implicit typeClass0: M[F]) = new WithTypeClass {
     override val typeClass = typeClass0
   }
 
@@ -25,6 +25,8 @@ trait MonadicFactory[M0[_[_]], F0[_]] {
   * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 object MonadicFactory {
+
+  def apply[M[_[_]], F[_]] = new MonadicFactory[M, F] {}
 
   trait WithTypeClass[M0[_[_]], F0[_]] {
     type M[F[_]] = M0[F]

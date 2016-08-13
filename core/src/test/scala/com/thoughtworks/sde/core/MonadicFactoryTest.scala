@@ -35,7 +35,7 @@ class MonadicFactoryTest {
 
   @Test
   def testEmptyMonadic(): Unit = {
-    assertEquals(0, new MonadicFactory[Monad, Id.Id]()(0))
+    assertEquals(0, MonadicFactory[Monad, Id.Id].apply(0))
   }
 
 }

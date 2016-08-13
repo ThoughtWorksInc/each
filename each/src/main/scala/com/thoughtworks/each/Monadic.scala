@@ -263,7 +263,7 @@ object Monadic {
 
       replaceDefBody(annottees, { body =>
         q"""
-          new _root_.com.thoughtworks.sde.core.MonadicFactory[
+          _root_.com.thoughtworks.sde.core.MonadicFactory[
             $m,
             $f
           ].apply {

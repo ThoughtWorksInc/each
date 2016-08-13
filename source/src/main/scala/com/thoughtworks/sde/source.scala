@@ -35,7 +35,7 @@ object source {
       replaceDefBody(annottees, { body =>
         val q"new $annotationClass[$elementType]().macroTransform(..$arguments)" = c.macroApplication
         q"""
-          new _root_.com.thoughtworks.sde.core.MonadicFactory[
+          _root_.com.thoughtworks.sde.core.MonadicFactory[
             _root_.scalaz.Monad,
             ({type T[A] = _root_.scalaz.Free.Source[$elementType, A]})#T
           ].apply {

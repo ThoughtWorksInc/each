@@ -1,5 +1,10 @@
 sudo: false
 
+addons:
+ apt:
+   packages:
+     - graphviz
+
 language: scala
 
 jdk:

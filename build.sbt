@@ -2,6 +2,9 @@ organization in ThisBuild := "com.thoughtworks.sde"
 
 publishArtifact := false
 
+// Workaround for randomly Travis CI fail
+parallelExecution in Global := false
+
 // Disable 2.12.0-M3 compilation because the ScalaTest version I use requires 2.12.0-M4
 // Disable 2.12.0-M4 compilation because enableIf does not support that version
 crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.8"/*, "2.12.0-M3", "2.12.0-M4"*/)

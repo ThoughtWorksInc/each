@@ -59,13 +59,17 @@ assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
 ### Step 1: Add the following line in your build.sbt
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %% "each" % "0.5.1"
+libraryDependencies += "com.thoughtworks.each" %% "each" % "latest.release"
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 ```
 
 or `%%%` for Scala.js projects:
 
 ``` sbt
-libraryDependencies += "com.thoughtworks.each" %%% "each" % "0.5.1"
+libraryDependencies += "com.thoughtworks.each" %%% "each" % "latest.release"
+
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 ```
 
 Note that Each version 0.5.x requires Scalaz 7.2.x . If you have to use Scalaz 7.1.x, please specify version of Each 0.4.x .

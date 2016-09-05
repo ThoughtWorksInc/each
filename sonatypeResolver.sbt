@@ -1,1 +1,1 @@
-resolvers in ThisBuild += sonatypeDefaultResolver.value
+resolvers in ThisBuild ++= Seq(Opts.resolver.sonatypeSnapshots, Opts.resolver.sonatypeStaging)

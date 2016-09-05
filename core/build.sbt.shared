@@ -14,4 +14,4 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.fu
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.0.1" % Test
+libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.1" % Test

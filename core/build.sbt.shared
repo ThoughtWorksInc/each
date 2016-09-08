@@ -8,6 +8,8 @@ libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 
 libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.6"
 
+libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.6"
+
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test

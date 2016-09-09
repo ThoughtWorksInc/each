@@ -17,7 +17,7 @@ class MonadicFactoryTest {
    */
   @enableIf({ c =>
     !scala.util.Properties.versionNumberString.startsWith("2.10.") &&
-    !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_[0-9\.\-]*\.jar$"""))
+    !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_[0-9A-Z\.\-]*\.jar$"""))
   })
   @Test
   def testEval(): Unit = {

@@ -20,7 +20,7 @@ cache:
     - $HOME/.sbt/boot/
 
 script:
-  - sbt +test
+  - sbt +update test # Test for only Scala 2.10, while check library dependencies for all targets
 
 before_deploy:
 

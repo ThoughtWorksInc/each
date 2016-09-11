@@ -5,7 +5,7 @@ publishArtifact := false
 // Workaround for randomly Travis CI fail
 parallelExecution in Global := false
 
-fork in Global := true
+fork in Global in compile := true
 
 crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.8", "2.12.0-RC1")
 

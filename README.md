@@ -5,7 +5,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.thoughtworks.each/each_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.thoughtworks.each/each_2.11)
 [![Codacy Badge](https://www.codacy.com/project/badge/3ed3f896c735432ca8e9f3963b8cd144)](https://www.codacy.com/app/pop-atry/each)
 
-ThoughtWorks **Each** is a macro library that converts native imperative syntax to scalaz's monadic expression.
+**ThoughtWorks Each** is a macro library that converts native imperative syntax to scalaz's monadic expression.
 
 ## Motivation
 

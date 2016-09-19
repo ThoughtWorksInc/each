@@ -1,7 +1,7 @@
 # ThoughtWorks Each <a href="http://thoughtworks.com/"><img align="right" src="https://www.thoughtworks.com/imgs/tw-logo.png" title="ThoughtWorks" height="15"/></a>
 
 [![Join the chat at https://gitter.im/ThoughtWorksInc/each](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ThoughtWorksInc/each?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/ThoughtWorksInc/sde.svg)](https://travis-ci.org/ThoughtWorksInc/sde)
+[![Build Status](https://travis-ci.org/ThoughtWorksInc/each.svg)](https://travis-ci.org/ThoughtWorksInc/each)
 [![Maven Central](https://img.shields.io/maven-central/v/com.thoughtworks.each/each_2.11.svg)](https://maven-badges.herokuapp.com/maven-central/com.thoughtworks.each/each_2.11)
 [![Codacy Badge](https://www.codacy.com/project/badge/3ed3f896c735432ca8e9f3963b8cd144)](https://www.codacy.com/app/pop-atry/each)
 

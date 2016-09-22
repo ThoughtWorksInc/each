@@ -206,7 +206,7 @@ val result = innerFailureFuture.map(someValue.getOrElse)
 
 ## Links
 
- * [The API Documentation](https://oss.sonatype.org/service/local/repositories/releases/archive/com/thoughtworks/each/each_2.11/0.4.2/each_2.11-0.4.2-javadoc.jar/!/index.html)
+ * [The API Documentation](https://oss.sonatype.org/service/local/repositories/releases/archive/com/thoughtworks/each/each_2.11/3.0.1/each_2.11-3.0.1-javadoc.jar/!/index.html)
  * Utilities
    * [ComprehensionMonad](https://github.com/ThoughtWorksInc/each/wiki/ComprehensionMonad)
 

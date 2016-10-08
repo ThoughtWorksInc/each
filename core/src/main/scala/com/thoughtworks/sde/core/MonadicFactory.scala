@@ -73,7 +73,7 @@ object MonadicFactory {
 
       final case class OpenTree(prefix: CpsTree, parameter: ValDef, inner: CpsTree) extends CpsTree {
 
-        override final def toReflectTree: Tree = {
+        override def toReflectTree: Tree = {
           inner match {
             case PlainTree(plain, _) => {
               Apply(
@@ -95,9 +95,9 @@ object MonadicFactory {
           }
         }
 
-        override final def tpe = inner.tpe
+        override def tpe = inner.tpe
 
-        override final def flatMap(f: Tree => CpsTree): CpsTree = {
+        override def flatMap(f: Tree => CpsTree): CpsTree = {
           new OpenTree(prefix, parameter, inner.flatMap(f))
         }
 
@@ -105,23 +105,23 @@ object MonadicFactory {
 
       final case class BlockTree(prefix: List[Tree], tail: CpsTree) extends CpsTree {
 
-        override final def tpe = tail.tpe
+        override def tpe = tail.tpe
 
-        override final def toReflectTree: Tree = {
+        override def toReflectTree: Tree = {
           Block(prefix, tail.toReflectTree)
         }
 
-        override final def flatMap(f: Tree => CpsTree): CpsTree = {
+        override def flatMap(f: Tree => CpsTree): CpsTree = {
           BlockTree(prefix, tail.flatMap(f))
         }
 
       }
 
-      final case class MonadTree(reflectTree: Tree, override final val tpe: Type) extends CpsTree {
+      final case class MonadTree(reflectTree: Tree, override val tpe: Type) extends CpsTree {
 
-        override final def toReflectTree = reflectTree
+        override def toReflectTree = reflectTree
 
-        override final def flatMap(f: Tree => CpsTree): CpsTree = {
+        override def flatMap(f: Tree => CpsTree): CpsTree = {
           val newId = TermName(c.freshName("element"))
           OpenTree(MonadTree.this, ValDef(Modifiers(PARAM), newId, TypeTree(tpe), EmptyTree), f(Ident(newId)))
         }
@@ -130,13 +130,13 @@ object MonadicFactory {
 
       final case class PlainTree(tree: Tree, tpe: Type) extends CpsTree {
 
-        override final def toReflectTree: Tree = {
+        override def toReflectTree: Tree = {
           Apply(
             Select(monadTree, TermName("point")),
             List(tree))
         }
 
-        override final def flatMap(f: Tree => CpsTree): CpsTree = {
+        override def flatMap(f: Tree => CpsTree): CpsTree = {
           f(tree)
         }
 
@@ -567,7 +567,7 @@ object MonadicFactory {
               }
             }
           }
-          case EmptyTree | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: New | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
+          case EmptyTree | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
             new PlainTree(origin, origin.tpe)
           }
         }

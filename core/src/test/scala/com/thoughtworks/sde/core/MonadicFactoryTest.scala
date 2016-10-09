@@ -38,4 +38,10 @@ class MonadicFactoryTest {
     assertEquals(0, MonadicFactory[Monad, Id.Id].apply(0))
   }
 
+
+  @Test
+  def testWhiteboxEmptyMonadic(): Unit = {
+    assertEquals(0, MonadicFactory.Whitebox[Monad, Id.Id].apply(0))
+  }
+
 }

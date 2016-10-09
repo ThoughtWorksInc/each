@@ -3,7 +3,7 @@ package com.thoughtworks.sde.core
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.language.higherKinds
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox
+import scala.reflect.macros.{blackbox, whitebox}
 import scalaz.{Bind, Foldable, MonadPlus, Traverse}
 import macrocompat.bundle
 
@@ -13,9 +13,11 @@ trait MonadicFactory[M0[_[_]], F0[_]] {
 
   def apply[A](body: => A)(implicit typeClass: M[F]): F[A] = macro MonadicFactory.MacroBundle.apply
 
+  @deprecated(message = "Use MonadicFactory.WithTypeClass instead", since = "3.1.0")
   type WithTypeClass = MonadicFactory.WithTypeClass[M, F]
 
-  final def withTypeClass(implicit typeClass0: M[F]) = new WithTypeClass {
+  @deprecated(message = "Use MonadicFactory.WithTypeClass.apply instead", since = "3.1.0")
+  final def withTypeClass(implicit typeClass0: M[F]) = new MonadicFactory.WithTypeClass[M, F] {
     override val typeClass = typeClass0
   }
 
@@ -28,11 +30,41 @@ object MonadicFactory {
 
   def apply[M[_[_]], F[_]] = new MonadicFactory[M, F] {}
 
+  object WithTypeClass {
+    def apply[M[_[_]], F[_]](implicit typeClass0: M[F]) = new WithTypeClass[M, F] {
+      override val typeClass = typeClass0
+    }
+  }
+
   trait WithTypeClass[M0[_[_]], F0[_]] {
     type M[F[_]] = M0[F]
     type F[A] = F0[A]
     val typeClass: M0[F0]
     def apply[A](body: => A): F[A] = macro MacroBundle.withTypeClassApply
+  }
+
+  object Whitebox {
+    def apply[M[_[_]], F[_]] = new Whitebox[M, F] {}
+
+    object WithTypeClass {
+      def apply[M[_[_]], F[_]](implicit typeClass0: M[F]) = new Whitebox.WithTypeClass[M, F] {
+        override val typeClass = typeClass0
+      }
+    }
+
+    trait WithTypeClass[M0[_[_]], F0[_]] {
+      type M[F[_]] = M0[F]
+      type F[A] = F0[A]
+      val typeClass: M0[F0]
+      def apply[A](body: => A): F[A] = macro WhiteboxMacroBundle.withTypeClassApply
+    }
+
+  }
+
+  trait Whitebox[M0[_[_]], F0[_]] {
+    type M[F[_]] = M0[F]
+    type F[A] = F0[A]
+    def apply[A](body: => A)(implicit typeClass: M[F]): F[A] = macro WhiteboxMacroBundle.apply
   }
 
   private[MonadicFactory] sealed trait ExceptionHandlingMode
@@ -44,6 +76,21 @@ object MonadicFactory {
   private[MonadicFactory] case object MonadCatchIoMode extends ExceptionHandlingMode
 
   // TODO: CatchableMode
+
+  @bundle
+  private[thoughtworks] final class WhiteboxMacroBundle(private[MonadicFactory] val c: whitebox.Context) {
+    val blackboxBundle = new MacroBundle(c)
+
+    import c.universe._
+
+    def apply(body: Tree)(typeClass: Tree): Tree = {
+      blackboxBundle.apply(body.asInstanceOf[blackboxBundle.c.Tree])(typeClass.asInstanceOf[blackboxBundle.c.Tree]).asInstanceOf[Tree]
+    }
+
+    def withTypeClassApply(body: Tree): Tree = {
+      blackboxBundle.withTypeClassApply(body.asInstanceOf[blackboxBundle.c.Tree]).asInstanceOf[Tree]
+    }
+  }
 
   @bundle
   private[thoughtworks] final class MacroBundle(private[MonadicFactory] val c: blackbox.Context) {

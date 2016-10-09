@@ -198,7 +198,7 @@ object Monadic {
     * @tparam M0 the higher kinded type of the monadic value.
     * @tparam A0 the element type of of the monadic value.
     */
-  final case class EachOps[M0[_], A0](val underlying: M0[A0]) {
+  final case class EachOps[M0[_], A0](underlying: M0[A0]) {
 
     type M[A] = M0[A]
 

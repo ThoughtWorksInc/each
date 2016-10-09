@@ -243,13 +243,13 @@ object source {
 
     private[SourceSeq] final case object Empty extends SourceSeq[Nothing] {
 
-      override final def isEmpty: Boolean = true
+      override def isEmpty: Boolean = true
 
-      override final def head: Nothing = {
+      override def head: Nothing = {
         throw new NoSuchElementException("head of empty list")
       }
 
-      override final def tail: Nothing = {
+      override def tail: Nothing = {
         throw new UnsupportedOperationException("tail of empty list")
       }
 
@@ -259,9 +259,9 @@ object source {
 
     private[SourceSeq] final case class NonEmpty[+A](override val head: A, tailSource: Source[_ <: A, _]) extends SourceSeq[A] {
 
-      override final def isEmpty: Boolean = false
+      override def isEmpty: Boolean = false
 
-      override final def tail: SourceSeq[A] = {
+      override def tail: SourceSeq[A] = {
         sourceToSeq(tailSource)
       }
 

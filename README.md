@@ -72,7 +72,7 @@ libraryDependencies += "com.thoughtworks.each" %%% "each" % "latest.release"
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
 ```
 
-Note that Each version 0.5.x requires Scalaz 7.2.x . If you have to use Scalaz 7.1.x, please specify version of Each 0.4.x .
+Note that ThoughtWorks Each requires Scalaz 7.2.x and does not compatible with Scala 7.1.x .
 
 See https://repo1.maven.org/maven2/com/thoughtworks/each/ for a list of available versions.
 

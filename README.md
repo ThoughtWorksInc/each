@@ -38,8 +38,8 @@ import scalaz.std.option._
 def plusOne(intOption: Option[Int]) = monadic[Option] {
   intOption.each + 1
 }
-assertEquals(None, plusOne(None))
-assertEquals(Some(16), plusOne(Some(15)))
+assert(plusOne(None) == None)
+assert(plusOne(Some(15)) == Some(16))
 ```
 
 ``` scala
@@ -49,9 +49,9 @@ import scalaz.std.list._
 def plusOne(intSeq: List[Int]) = monadic[List] {
   intSeq.each + 1
 }
-assertEquals(Nil, plusOne(Nil))
-assertEquals(List(16), plusOne(List(15)))
-assertEquals(List(16, -1, 10), plusOne(List(15, -2, 9)))
+assert(plusOne(Nil) == Nil)
+assert(plusOne(List(15)) == List(16))
+assert(plusOne(List(15, -2, 9)) == List(16, -1, 10))
 ```
 
 ## Usage

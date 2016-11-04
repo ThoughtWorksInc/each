@@ -6,7 +6,7 @@ package com.thoughtworks
 package object each {
 
   /**
-    * Contains implicit methods to work with types that support `for` comprehension.
+    * Contains implicit methods to work with types that support `for`/`yield` comprehension.
     */
   val ComprehensionImplicits = sde.comprehensionMonad.ComprehensionMonad
 

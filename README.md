@@ -144,16 +144,16 @@ Note that `catchIoMonadic` requires an implicit parameter `scalaz.effect.MonadCa
 
 ## `for` loop
 
-Each supports `.each` magic in a `for` loop on `MonadicLoop`. You can create a `MonadicLoop` instance via `.monadicLoop` method from any instances that support `Foldable` type class. For example, you could `import scalaz.std.list._` to enable the `Foldable` type class for  `List`.
+Each supports `.each` magic in a `for` loop on any instances that support `Foldable` type class. For example, you could `import scalaz.std.list._` to enable the `Foldable` type class for  `List`.
 
 ``` scala
 import com.thoughtworks.each.Monadic._
 import scalaz.std.list._
 import scalaz.std.option._
 val n = Some(10)
-val result = monadic[Option] {
+@monadic[Option] val result = {
   var count = 1
-  for (i <- List(300, 20).monadicLoop) {
+  for (i <- List(300, 20)) {
     count += i * n.each
   }
   count
@@ -161,9 +161,11 @@ val result = monadic[Option] {
 Assert.assertEquals(Some(3201), result)
 ```
 
+Note that you need to use `@monadic[Option]` annotation instead of `monadic[Option]` block to in order to enable the `for` loop syntax.
+
 ## `for` comprehension
 
-Each also supports `.each` magic in a `for` comprehension for any instances that support `Traverse` and `MonadPlus` type class.
+Each also supports `.each` magic in a `for` comprehension on any instances that support `Traverse` and `MonadPlus` type class.
 
 ``` scala
 import com.thoughtworks.each.Monadic._

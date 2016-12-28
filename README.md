@@ -163,24 +163,26 @@ Assert.assertEquals(Some(3201), result)
 
 ## `for` comprehension
 
-Each also supports `.each` magic in a `for` comprehension on `MonadicLoop`. You can create a `MonadicLoop` instance via `.monadicLoop` method from any instances that support `Traverse` and `MonadPlus` type class.
+Each also supports `.each` magic in a `for` comprehension for any instances that support `Traverse` and `MonadPlus` type class.
 
 ``` scala
 import com.thoughtworks.each.Monadic._
 import scalaz.std.list._
 val n = Some(4000)
-val result = monadic[Option] {
-  (for {
-    i <- List(300, 20).monadicLoop
-    (j, k) <- List(50000 -> "1111", 600000 -> "yyy").monadicLoop
+@monadic[Option] val result = {
+  for {
+    i <- List(300, 20)
+    (j, k) <- List(50000 -> "1111", 600000 -> "yyy")
     if i > n.each - 3900
     a = i + j
   } yield {
     a + n.each * k.length
-  }).underlying
+  }
 }
 Assert.assertEquals(Some(List(66300, 612300)), result)
 ```
+
+Note that you need to use `@monadic[Option]` annotation instead of `monadic[Option]` block to in order to enable the `for` comprehension syntax.
 
 ## Limitation
 

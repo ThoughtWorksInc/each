@@ -12,9 +12,9 @@ import scalaz.{Id, Monad}
 class MonadicFactoryTest {
 
   /**
-    * @note This test is desabled for Scala 2.10 because of https://issues.scala-lang.org/browse/SI-6636
-    * @note This test is desabled for Scala.js
-   */
+    * @note This test is disabled for Scala 2.10 because of https://issues.scala-lang.org/browse/SI-6636
+    * @note This test is disabled for Scala.js
+    */
   @enableIf({ c =>
     !scala.util.Properties.versionNumberString.startsWith("2.10.") &&
     !c.compilerSettings.exists(_.matches("""^-Xplugin:.*scalajs-compiler_[0-9A-Z\.\-]*\.jar$"""))

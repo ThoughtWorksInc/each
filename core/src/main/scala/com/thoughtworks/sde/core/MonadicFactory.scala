@@ -84,7 +84,9 @@ object MonadicFactory {
     import c.universe._
 
     def apply(body: Tree)(typeClass: Tree): Tree = {
-      blackboxBundle.apply(body.asInstanceOf[blackboxBundle.c.Tree])(typeClass.asInstanceOf[blackboxBundle.c.Tree]).asInstanceOf[Tree]
+      blackboxBundle
+        .apply(body.asInstanceOf[blackboxBundle.c.Tree])(typeClass.asInstanceOf[blackboxBundle.c.Tree])
+        .asInstanceOf[Tree]
     }
 
     def withTypeClassApply(body: Tree): Tree = {
@@ -104,7 +106,9 @@ object MonadicFactory {
     /**
       * @param fTree See https://issues.scala-lang.org/browse/SI-5712
       */
-    private[MacroBundle] final class MonadicContext(exceptionHandlingMode: ExceptionHandlingMode, fTree: Tree, monadTree: Tree) {
+    private[MacroBundle] final class MonadicContext(exceptionHandlingMode: ExceptionHandlingMode,
+                                                    fTree: Tree,
+                                                    monadTree: Tree) {
 
       sealed abstract class CpsTree {
 
@@ -123,21 +127,13 @@ object MonadicFactory {
         override def toReflectTree: Tree = {
           inner match {
             case PlainTree(plain, _) => {
-              Apply(
-                Apply(
-                  Select(monadTree, TermName("map")),
-                  List(prefix.toReflectTree)),
-                List(
-                  Function(List(parameter), plain)))
+              Apply(Apply(Select(monadTree, TermName("map")), List(prefix.toReflectTree)),
+                    List(Function(List(parameter), plain)))
             }
             case _ => {
               val innerTree = inner.toReflectTree
-              Apply(
-                Apply(
-                  Select(monadTree, TermName("bind")),
-                  List(prefix.toReflectTree)),
-                List(
-                  Function(List(parameter), innerTree)))
+              Apply(Apply(Select(monadTree, TermName("bind")), List(prefix.toReflectTree)),
+                    List(Function(List(parameter), innerTree)))
             }
           }
         }
@@ -178,9 +174,7 @@ object MonadicFactory {
       final case class PlainTree(tree: Tree, tpe: Type) extends CpsTree {
 
         override def toReflectTree: Tree = {
-          Apply(
-            Select(monadTree, TermName("point")),
-            List(tree))
+          Apply(Select(monadTree, TermName("point")), List(tree))
         }
 
         override def flatMap(f: Tree => CpsTree): CpsTree = {
@@ -189,11 +183,16 @@ object MonadicFactory {
 
       }
 
-      private val eachMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("each"))
-      private val foreachMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("foreach"))
-      private val mapMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("map"))
-      private val flatMapMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("flatMap"))
-      private val filterMethodSymbol = typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("filter"))
+      private val eachMethodSymbol =
+        typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("each"))
+      private val foreachMethodSymbol =
+        typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("foreach"))
+      private val mapMethodSymbol =
+        typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("map"))
+      private val flatMapMethodSymbol =
+        typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("flatMap"))
+      private val filterMethodSymbol =
+        typeOf[_root_.com.thoughtworks.sde.core.MonadicFactory.Instructions.type].member(TermName("filter"))
 
       // Avoid warning: a pure expression does nothing in statement position
       @tailrec
@@ -219,9 +218,8 @@ object MonadicFactory {
                   MonadTree(
                     atPos(origin.pos) {
                       q"""
-                        $foldable.traverse_[$fTree, $a, $u]($faValue)(${
-                          treeCopy.Function(f, List(valDef), buildCpsTree(body).toUntypedTree)
-                        })($monadTree)
+                        $foldable.traverse_[$fTree, $a, $u]($faValue)(${treeCopy
+                        .Function(f, List(valDef), buildCpsTree(body).toUntypedTree)})($monadTree)
                       """
                     },
                     origin.tpe
@@ -233,7 +231,9 @@ object MonadicFactory {
                         q"""
                           $foldable.traverse_[_root_.scalaz.Id.Id, $a, $u]($faValue)($fValue)(_root_.scalaz.Id.id)
                         """
-                      }, origin.tpe)
+                      },
+                      origin.tpe
+                    )
                   }
               }
             }
@@ -244,9 +244,8 @@ object MonadicFactory {
                   MonadTree(
                     atPos(origin.pos) {
                       q"""
-                        _root_.scalaz.syntax.traverse.ToTraverseOps[$fType, $a]($faValue)($traverse).traverse[$fTree, $b](${
-                          treeCopy.Function(f, List(valDef), buildCpsTree(body).toUntypedTree)
-                        })($monadTree)
+                        _root_.scalaz.syntax.traverse.ToTraverseOps[$fType, $a]($faValue)($traverse).traverse[$fTree, $b](${treeCopy
+                        .Function(f, List(valDef), buildCpsTree(body).toUntypedTree)})($monadTree)
                       """
                     },
                     origin.tpe
@@ -264,9 +263,8 @@ object MonadicFactory {
                   MonadTree(
                     atPos(origin.pos) {
                       q"""
-                        $traverse.traverseM[$a, $fTree, $b]($faValue)(${
-                          treeCopy.Function(f, List(valDef), buildCpsTree(body).toUntypedTree)
-                        })($monadTree, $bind)
+                        $traverse.traverseM[$a, $fTree, $b]($faValue)(${treeCopy
+                        .Function(f, List(valDef), buildCpsTree(body).toUntypedTree)})($monadTree, $bind)
                       """
                     },
                     origin.tpe
@@ -285,18 +283,18 @@ object MonadicFactory {
                     atPos(origin.pos) {
                       q"""
                         $traverse.traverseM[$a, $fTree, $a]($faValue)(
-                          ${
-                            treeCopy.Function(f, List(valDef),
-                              (buildCpsTree(body).flatMap { condition =>
-                                PlainTree(
-                                  q"""
+                          ${treeCopy.Function(
+                        f,
+                        List(valDef),
+                        (buildCpsTree(body).flatMap { condition =>
+                          PlainTree(
+                            q"""
                                     if ($condition) $monadPlus.point[$a](${valDef.name}) else $monadPlus.empty
                                   """,
-                                  valDef.tpt.tpe
-                                )
-                              }).toUntypedTree
-                            )
-                          }
+                            valDef.tpt.tpe
+                          )
+                        }).toUntypedTree
+                      )}
                         )($monadTree, $monadPlus)
                       """
                     },
@@ -308,7 +306,7 @@ object MonadicFactory {
                   }
               }
             }
-          case Apply(method@Ident(name), parameters) if forceAwait(name) => {
+          case Apply(method @ Ident(name), parameters) if forceAwait(name) => {
             def transformParameters(untransformed: List[Tree], transformed: List[Tree]): CpsTree = {
               untransformed match {
                 case Nil => {
@@ -341,16 +339,23 @@ object MonadicFactory {
                   ),
                   List(
                     Function(
-                      List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
+                      List(
+                        ValDef(Modifiers(PARAM),
+                               exceptionName,
+                               TypeTree(typeOf[_root_.java.lang.Throwable]),
+                               EmptyTree)),
                       Match(
                         Ident(exceptionName),
-                        (for (caseTree@CaseDef(pat, guard, body) <- catches) yield {
+                        (for (caseTree @ CaseDef(pat, guard, body) <- catches) yield {
                           treeCopy.CaseDef(caseTree, pat, guard, buildCpsTree(body).toReflectTree)
                         }) :+ CaseDef(
                           Ident(termNames.WILDCARD),
                           EmptyTree,
-                          Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName)))
-                        )))
+                          Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))),
+                                List(Ident(exceptionName)))
+                        )
+                      )
+                    )
                   )
                 )
                 if (finalizer.isEmpty) {
@@ -365,18 +370,25 @@ object MonadicFactory {
                       ),
                       List(
                         Function(
-                          List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
+                          List(
+                            ValDef(Modifiers(PARAM),
+                                   exceptionName,
+                                   TypeTree(typeOf[_root_.java.lang.Throwable]),
+                                   EmptyTree)),
                           finalizerCpsTree.flatMap { transformedFinalizer =>
                             if (isDiscardable(finalizerCpsTree)) {
-                              MonadTree(
-                                Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))),
-                                origin.tpe)
+                              MonadTree(Apply(TypeApply(Select(monadTree, TermName("raiseError")),
+                                                        List(TypeTree(origin.tpe))),
+                                              List(Ident(exceptionName))),
+                                        origin.tpe)
                             } else {
                               MonadTree(
-                                Block(
-                                  List(transformedFinalizer),
-                                  Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(Ident(exceptionName))
-                                  )), origin.tpe)
+                                Block(List(transformedFinalizer),
+                                      Apply(TypeApply(Select(monadTree, TermName("raiseError")),
+                                                      List(TypeTree(origin.tpe))),
+                                            List(Ident(exceptionName)))),
+                                origin.tpe
+                              )
                             }
                           }.toReflectTree
                         )
@@ -407,28 +419,39 @@ object MonadicFactory {
                       Apply(
                         TypeApply(
                           Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("catchSome")),
-                          List(
-                            fTree,
-                            TypeTree(origin.tpe),
-                            AppliedTypeTree(fTree, List(TypeTree(origin.tpe))))),
-                        List(tryF)),
+                          List(fTree, TypeTree(origin.tpe), AppliedTypeTree(fTree, List(TypeTree(origin.tpe))))
+                        ),
+                        List(tryF)
+                      ),
                       List(
                         Function(
-                          List(ValDef(Modifiers(PARAM), exceptionName, TypeTree(typeOf[_root_.java.lang.Throwable]), EmptyTree)),
+                          List(
+                            ValDef(Modifiers(PARAM),
+                                   exceptionName,
+                                   TypeTree(typeOf[_root_.java.lang.Throwable]),
+                                   EmptyTree)),
                           Match(
                             Ident(exceptionName),
                             List(
-                              treeCopy.CaseDef(cd, pat, guard, Apply(reify(_root_.scala.Some).tree, List(buildCpsTree(body).toReflectTree))),
-                              CaseDef(Ident(termNames.WILDCARD), EmptyTree, reify(_root_.scala.None).tree)))),
-                        Function(
-                          List(
-                            ValDef(
-                              Modifiers(PARAM),
-                              catcherResultName,
-                              AppliedTypeTree(fTree, List(TypeTree(origin.tpe))),
-                              EmptyTree)),
-                          Ident(catcherResultName)))),
-                    List(monadTree))
+                              treeCopy.CaseDef(cd,
+                                               pat,
+                                               guard,
+                                               Apply(reify(_root_.scala.Some).tree,
+                                                     List(buildCpsTree(body).toReflectTree))),
+                              CaseDef(Ident(termNames.WILDCARD), EmptyTree, reify(_root_.scala.None).tree)
+                            )
+                          )
+                        ),
+                        Function(List(
+                                   ValDef(Modifiers(PARAM),
+                                          catcherResultName,
+                                          AppliedTypeTree(fTree, List(TypeTree(origin.tpe))),
+                                          EmptyTree)),
+                                 Ident(catcherResultName))
+                      )
+                    ),
+                    List(monadTree)
+                  )
 
                 }
                 if (finalizer.isEmpty) {
@@ -436,11 +459,12 @@ object MonadicFactory {
                 } else {
                   MonadTree(
                     Apply(
-                      Apply(
-                        Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")),
-                        List(tryCatch, buildCpsTree(finalizer).toReflectTree)),
-                      List(monadTree)),
-                    origin.tpe)
+                      Apply(Select(reify(_root_.scalaz.effect.MonadCatchIO).tree, TermName("ensuring")),
+                            List(tryCatch, buildCpsTree(finalizer).toReflectTree)),
+                      List(monadTree)
+                    ),
+                    origin.tpe
+                  )
                 }
               }
             }
@@ -488,7 +512,7 @@ object MonadicFactory {
                         case BlockTree(prefix, tail) => {
                           BlockTree(transformedHead :: prefix, tail)
                         }
-                        case transformedTail@(_: MonadTree | _: OpenTree | _: PlainTree) => {
+                        case transformedTail @ (_: MonadTree | _: OpenTree | _: PlainTree) => {
                           BlockTree(transformedHead :: Nil, transformedTail)
                         }
                       }
@@ -513,37 +537,33 @@ object MonadicFactory {
             val selectorName = TermName(c.freshName("selector"))
             new MonadTree(
               Apply(
-                Apply(
-                  TypeApply(
-                    Select(monadTree, TermName("bind")),
-                    List(TypeTree(selector.tpe), TypeTree(origin.tpe))),
-                  List(buildCpsTree(selector).toReflectTree)),
+                Apply(TypeApply(Select(monadTree, TermName("bind")),
+                                List(TypeTree(selector.tpe), TypeTree(origin.tpe))),
+                      List(buildCpsTree(selector).toReflectTree)),
                 List(
                   Function(
                     List(ValDef(Modifiers(PARAM), selectorName, TypeTree(selector.tpe), EmptyTree)),
-                    treeCopy.Match(
-                      origin,
-                      Ident(selectorName),
-                      for {
-                        cd@CaseDef(pat, guard, body) <- cases
-                      } yield
-                        treeCopy.CaseDef(cd, pat, guard, buildCpsTree(body).toReflectTree))))),
-              origin.tpe)
+                    treeCopy.Match(origin, Ident(selectorName), for {
+                      cd @ CaseDef(pat, guard, body) <- cases
+                    } yield treeCopy.CaseDef(cd, pat, guard, buildCpsTree(body).toReflectTree))
+                  ))
+              ),
+              origin.tpe
+            )
           }
           case If(cond, thenp, elsep) => {
             new MonadTree(
               treeCopy.Apply(
                 origin,
-                TypeApply(
-                  Select(monadTree, TermName("ifM")),
-                  List(TypeTree(origin.tpe))),
-                List(
-                  buildCpsTree(cond).toReflectTree,
-                  buildCpsTree(thenp).toReflectTree,
-                  buildCpsTree(elsep).toReflectTree)),
-              origin.tpe)
+                TypeApply(Select(monadTree, TermName("ifM")), List(TypeTree(origin.tpe))),
+                List(buildCpsTree(cond).toReflectTree,
+                     buildCpsTree(thenp).toReflectTree,
+                     buildCpsTree(elsep).toReflectTree)
+              ),
+              origin.tpe
+            )
           }
-          case Typed(expr, tpt@Ident(typeNames.WILDCARD_STAR)) => {
+          case Typed(expr, tpt @ Ident(typeNames.WILDCARD_STAR)) => {
             buildCpsTree(expr).flatMap { x =>
               new PlainTree(atPos(origin.pos)(Typed(x, tpt)), origin.tpe)
             }
@@ -558,32 +578,41 @@ object MonadicFactory {
               new PlainTree(Annotated(annot, x), origin.tpe)
             }
           }
-          case LabelDef(name1, List(), If(condition, block@Block(body, Apply(Ident(name2), List())), Literal(Constant(()))))
-            if name1 == name2 => {
+          case LabelDef(name1,
+                        List(),
+                        If(condition, block @ Block(body, Apply(Ident(name2), List())), Literal(Constant(()))))
+              if name1 == name2 => {
             new MonadTree(
               Apply(
-                TypeApply(
-                  Select(monadTree, TermName("whileM_")),
-                  List(TypeTree(origin.tpe))),
-                List(
-                  buildCpsTree(condition).toReflectTree,
-                  buildCpsTree(treeCopy.Block(block, body, Literal(Constant(())))).toReflectTree)),
-              origin.tpe)
+                TypeApply(Select(monadTree, TermName("whileM_")), List(TypeTree(origin.tpe))),
+                List(buildCpsTree(condition).toReflectTree,
+                     buildCpsTree(treeCopy.Block(block, body, Literal(Constant(())))).toReflectTree)
+              ),
+              origin.tpe
+            )
           }
-          case LabelDef(name1, List(), block@Block(body, If(condition, Apply(Ident(name2), List()), Literal(Constant(())))))
-            if name1 == name2 => {
+          case LabelDef(name1,
+                        List(),
+                        block @ Block(body, If(condition, Apply(Ident(name2), List()), Literal(Constant(())))))
+              if name1 == name2 => {
             new MonadTree(
-              Block(List(
-                ValDef(Modifiers(), name1, TypeTree(), buildCpsTree(treeCopy.Block(block, body, Literal(Constant(())))).toReflectTree)),
+              Block(
+                List(
+                  ValDef(Modifiers(),
+                         name1,
+                         TypeTree(),
+                         buildCpsTree(treeCopy.Block(block, body, Literal(Constant(())))).toReflectTree)),
                 Apply(
-                  Apply(
-                    TypeApply(
-                      Select(monadTree, TermName("bind")),
-                      List(TypeTree(definitions.UnitTpe), TypeTree(origin.tpe))),
-                    List(Ident(name1))),
+                  Apply(TypeApply(Select(monadTree, TermName("bind")),
+                                  List(TypeTree(definitions.UnitTpe), TypeTree(origin.tpe))),
+                        List(Ident(name1))),
                   List(
                     Function(
-                      List(ValDef(Modifiers(PARAM), TermName(c.freshName("ignoredParameter")), TypeTree(definitions.UnitTpe), EmptyTree)),
+                      List(
+                        ValDef(Modifiers(PARAM),
+                               TermName(c.freshName("ignoredParameter")),
+                               TypeTree(definitions.UnitTpe),
+                               EmptyTree)),
                       Apply(
                         TypeApply(
                           Select(monadTree, TermName("whileM_")),
@@ -598,13 +627,16 @@ object MonadicFactory {
                   )
                 )
               ),
-              origin.tpe)
+              origin.tpe
+            )
           }
           case Throw(throwable) => {
             exceptionHandlingMode match {
               case MonadThrowableMode => {
                 buildCpsTree(throwable).flatMap { x =>
-                  new MonadTree(Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(x)), origin.tpe)
+                  new MonadTree(
+                    Apply(TypeApply(Select(monadTree, TermName("raiseError")), List(TypeTree(origin.tpe))), List(x)),
+                    origin.tpe)
                 }
               }
               case UnsupportedExceptionHandlingMode | MonadCatchIoMode => {
@@ -614,12 +646,12 @@ object MonadicFactory {
               }
             }
           }
-          case EmptyTree | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: TypeDef | _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
+          case EmptyTree | _: Return | _: New | _: Ident | _: Literal | _: Super | _: This | _: TypTree | _: TypeDef |
+              _: Function | _: DefDef | _: ClassDef | _: ModuleDef | _: Import | _: ImportSelector => {
             new PlainTree(origin, origin.tpe)
           }
         }
       }
-
 
     }
 
@@ -633,7 +665,6 @@ object MonadicFactory {
       } else {
         UnsupportedExceptionHandlingMode
       }
-
 
       val partialAppliedMonadicName = TermName(c.freshName("partialAppliedMonadic"))
       val monadName = TermName(c.freshName("monad"))
@@ -665,7 +696,6 @@ object MonadicFactory {
         UnsupportedExceptionHandlingMode
       }
 
-
       val withTypeClassName = TermName(c.freshName("partialAppliedMonadic"))
       val monadTree = q"$withTypeClassName.typeClass"
 
@@ -685,19 +715,22 @@ object MonadicFactory {
 
   object Instructions {
 
-    @compileTimeOnly("`each` instructions must be inside a SDE block")
+    @compileTimeOnly(
+      """`each` instructions must not appear outside monadic blocks.
+  Note that the `each` instructions may be renamed for different domains.
+  The renamed instruction name may be `bind`, `!`, `await`, `gen`, etc.)""")
     def each[F[_], A](fa: F[A]): A = ???
 
-    @compileTimeOnly("`foreach` instructions must be inside a SDE block")
+    @compileTimeOnly("`foreach` instructions must not appear outside monadic blocks")
     def foreach[F[_], A, U](fa: F[A], foldable: Foldable[F], body: A => U): Unit = ???
 
-    @compileTimeOnly("`map` instructions must be inside a SDE block")
+    @compileTimeOnly("`map` instructions must not appear outside monadic blocks")
     def map[F[_], A, B](fa: F[A], traverse: Traverse[F], body: A => B): F[B] = ???
 
-    @compileTimeOnly("`flatMap` instructions must be inside a SDE block")
+    @compileTimeOnly("`flatMap` instructions must not appear outside monadic blocks")
     def flatMap[F[_], A, B](fa: F[A], traverse: Traverse[F], bind: Bind[F], body: A => F[B]): F[B] = ???
 
-    @compileTimeOnly("`filter` instructions must be inside a SDE block")
+    @compileTimeOnly("`filter` instructions must not appear outside monadic blocks")
     def filter[F[_], A](fa: F[A], traverse: Traverse[F], monadPlus: MonadPlus[F], body: A => Boolean): F[A] = ???
 
   }

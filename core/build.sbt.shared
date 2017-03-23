@@ -6,10 +6,14 @@ libraryDependencies += "org.typelevel" %% "macro-compat" % "1.1.1"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value
 
-libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.10"
+scalaOrganization in updateSbtClassifiers := "org.scala-lang"
 
-libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.10"
+scalaOrganization := "org.typelevel"
 
-libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
+/*
+scalacOptions += "-Yliteral-types"
 
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.4" % Test
+libraryDependencies += "com.thoughtworks.template" %% "template" % "latest.release" % Provided
+
+addCompilerPlugin("org.scalameta" % "paradise" % "3.0.0-M7" cross CrossVersion.full)
+*/

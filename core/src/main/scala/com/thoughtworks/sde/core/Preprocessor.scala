@@ -18,7 +18,6 @@ package com.thoughtworks.sde.core
 
 import macrocompat.bundle
 
-import scalaz.{Bind, Foldable, MonadPlus, Traverse, Unapply}
 import scala.language.higherKinds
 import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
@@ -133,97 +132,97 @@ object Preprocessor {
       }
 
     }
-
-    final case class MacroTraverseOps[M0[_], A0](ma: M0[A0], TC: Traverse[M0]) {
-
-      type M[A] = M0[A]
-
-      type A = A0
-
-      def filter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
-
-      def withFilter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
-
-      def map[B](f: A => B): M0[B] = macro MacroBundle.map
-
-      def flatMap[B](f: A => M0[B])(implicit bind: Bind[M0]): M0[B] = macro MacroBundle.flatMap
-
-    }
-
-    final case class MacroFoldableOps[M0[_], A0](ma: M0[A0], TC: Foldable[M0]) {
-
-      type M[A] = M0[A]
-
-      type A = A0
-
-      def foreach[U](f: A => U): Unit = macro MacroBundle.foreach
-
-    }
-
-    sealed trait OpsFactory[MA, M[_[_]], Ops] extends (MA => Ops)
-
-    trait FallbackOpsFactory0 {
-      @inline
-      implicit final def notFound[MA, M[_[_]]]: OpsFactory[MA, M, MA] = new OpsFactory[MA, M, MA] {
-        @inline
-        override def apply(from: MA): MA = from
-      }
-    }
-
-    trait FallbackOpsFactory1 extends FallbackOpsFactory0 {
-
-      @inline
-      implicit final def macroFoldableOps[F[_], A](implicit foldable: Foldable[F]): OpsFactory[F[A], Foldable, MacroFoldableOps[F, A]] = {
-        new OpsFactory[F[A], Foldable, MacroFoldableOps[F, A]] {
-          override def apply(fa: F[A]): MacroFoldableOps[F, A] = {
-            new MacroFoldableOps[F, A](fa, foldable)
-          }
-        }
-      }
-
-      @inline
-      implicit final def macroTraverseOps[F[_], A](implicit traverse: Traverse[F]): OpsFactory[F[A], Traverse, MacroTraverseOps[F, A]] = {
-        new OpsFactory[F[A], Traverse, MacroTraverseOps[F, A]] {
-          override def apply(fa: F[A]): MacroTraverseOps[F, A] = {
-            new MacroTraverseOps[F, A](fa, traverse)
-          }
-        }
-      }
-
-    }
-
-    object OpsFactory extends FallbackOpsFactory1 {
-
-      @inline
-      implicit final def macroFoldableOpsUnapply[MA](implicit unapply: Unapply[Foldable, MA]): OpsFactory[MA, Foldable, MacroFoldableOps[unapply.M, unapply.A]] = {
-        new OpsFactory[MA, Foldable, MacroFoldableOps[unapply.M, unapply.A]] {
-          override def apply(fa: MA): MacroFoldableOps[unapply.M, unapply.A] = {
-            new MacroFoldableOps[unapply.M, unapply.A](unapply(fa), unapply.TC)
-          }
-        }
-      }
-
-      @inline
-      implicit final def macroTraverseOpsUnapply[MA](implicit unapply: Unapply[Traverse, MA]): OpsFactory[MA, Traverse, MacroTraverseOps[unapply.M, unapply.A]] = {
-        new OpsFactory[MA, Traverse, MacroTraverseOps[unapply.M, unapply.A]] {
-          override def apply(fa: MA): MacroTraverseOps[unapply.M, unapply.A] = {
-            new MacroTraverseOps[unapply.M, unapply.A](unapply(fa), unapply.TC)
-          }
-        }
-      }
-
-
-    }
-
-    @inline
-    def traverseOps[MA, To](fa: MA)(implicit opsFactory: OpsFactory[MA, Traverse, To]): To = {
-      opsFactory(fa)
-    }
-
-    @inline
-    def foldableOps[MA, To](fa: MA)(implicit opsFactory: OpsFactory[MA, Foldable, To]): To = {
-      opsFactory(fa)
-    }
+//
+//    final case class MacroTraverseOps[M0[_], A0](ma: M0[A0], TC: Traverse[M0]) {
+//
+//      type M[A] = M0[A]
+//
+//      type A = A0
+//
+//      def filter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
+//
+//      def withFilter(f: A => Boolean)(implicit monadPlus: MonadPlus[M0]): M0[A] = macro MacroBundle.filter
+//
+//      def map[B](f: A => B): M0[B] = macro MacroBundle.map
+//
+//      def flatMap[B](f: A => M0[B])(implicit bind: Bind[M0]): M0[B] = macro MacroBundle.flatMap
+//
+//    }
+//
+//    final case class MacroFoldableOps[M0[_], A0](ma: M0[A0], TC: Foldable[M0]) {
+//
+//      type M[A] = M0[A]
+//
+//      type A = A0
+//
+//      def foreach[U](f: A => U): Unit = macro MacroBundle.foreach
+//
+//    }
+//
+//    sealed trait OpsFactory[MA, M[_[_]], Ops] extends (MA => Ops)
+//
+//    trait FallbackOpsFactory0 {
+//      @inline
+//      implicit final def notFound[MA, M[_[_]]]: OpsFactory[MA, M, MA] = new OpsFactory[MA, M, MA] {
+//        @inline
+//        override def apply(from: MA): MA = from
+//      }
+//    }
+//
+//    trait FallbackOpsFactory1 extends FallbackOpsFactory0 {
+//
+//      @inline
+//      implicit final def macroFoldableOps[F[_], A](implicit foldable: Foldable[F]): OpsFactory[F[A], Foldable, MacroFoldableOps[F, A]] = {
+//        new OpsFactory[F[A], Foldable, MacroFoldableOps[F, A]] {
+//          override def apply(fa: F[A]): MacroFoldableOps[F, A] = {
+//            new MacroFoldableOps[F, A](fa, foldable)
+//          }
+//        }
+//      }
+//
+//      @inline
+//      implicit final def macroTraverseOps[F[_], A](implicit traverse: Traverse[F]): OpsFactory[F[A], Traverse, MacroTraverseOps[F, A]] = {
+//        new OpsFactory[F[A], Traverse, MacroTraverseOps[F, A]] {
+//          override def apply(fa: F[A]): MacroTraverseOps[F, A] = {
+//            new MacroTraverseOps[F, A](fa, traverse)
+//          }
+//        }
+//      }
+//
+//    }
+//
+//    object OpsFactory extends FallbackOpsFactory1 {
+//
+//      @inline
+//      implicit final def macroFoldableOpsUnapply[MA](implicit unapply: Unapply[Foldable, MA]): OpsFactory[MA, Foldable, MacroFoldableOps[unapply.M, unapply.A]] = {
+//        new OpsFactory[MA, Foldable, MacroFoldableOps[unapply.M, unapply.A]] {
+//          override def apply(fa: MA): MacroFoldableOps[unapply.M, unapply.A] = {
+//            new MacroFoldableOps[unapply.M, unapply.A](unapply(fa), unapply.TC)
+//          }
+//        }
+//      }
+//
+//      @inline
+//      implicit final def macroTraverseOpsUnapply[MA](implicit unapply: Unapply[Traverse, MA]): OpsFactory[MA, Traverse, MacroTraverseOps[unapply.M, unapply.A]] = {
+//        new OpsFactory[MA, Traverse, MacroTraverseOps[unapply.M, unapply.A]] {
+//          override def apply(fa: MA): MacroTraverseOps[unapply.M, unapply.A] = {
+//            new MacroTraverseOps[unapply.M, unapply.A](unapply(fa), unapply.TC)
+//          }
+//        }
+//      }
+//
+//
+//    }
+//
+//    @inline
+//    def traverseOps[MA, To](fa: MA)(implicit opsFactory: OpsFactory[MA, Traverse, To]): To = {
+//      opsFactory(fa)
+//    }
+//
+//    @inline
+//    def foldableOps[MA, To](fa: MA)(implicit opsFactory: OpsFactory[MA, Foldable, To]): To = {
+//      opsFactory(fa)
+//    }
 
   }
 

@@ -2,12 +2,13 @@ package com.thoughtworks.sde.core
 
 import scala.annotation.{compileTimeOnly, tailrec}
 import scala.language.higherKinds
+import scala.language.implicitConversions
 import scala.language.experimental.macros
 import scala.reflect.macros.{blackbox, whitebox}
 import scalaz.{Bind, Foldable, MonadPlus, Traverse}
 import macrocompat.bundle
 
-trait MonadicFactory[M0[_[_]], F0[_]] {
+trait MonadicFactory[M0[_[_]], F0[_]] extends MonadicFactory.MonadicFactoryLike {
   type M[F[_]] = M0[F]
   type F[A] = F0[A]
 
@@ -28,7 +29,19 @@ trait MonadicFactory[M0[_[_]], F0[_]] {
   */
 object MonadicFactory {
 
+  trait MonadicFactoryLike {
+    type M[F[_]]
+    type F[A]
+  }
+
   def apply[M[_[_]], F[_]] = new MonadicFactory[M, F] {}
+
+  implicit final class ReduceOps(val underlying: MonadicFactoryLike) extends AnyVal {
+
+    @inline
+    def reduce[FA](fa: FA): FA = fa
+
+  }
 
   object WithTypeClass {
     def apply[M[_[_]], F[_]](implicit typeClass0: M[F]) = new WithTypeClass[M, F] {
@@ -36,7 +49,7 @@ object MonadicFactory {
     }
   }
 
-  trait WithTypeClass[M0[_[_]], F0[_]] {
+  trait WithTypeClass[M0[_[_]], F0[_]] extends MonadicFactoryLike {
     type M[F[_]] = M0[F]
     type F[A] = F0[A]
     val typeClass: M0[F0]
@@ -52,7 +65,7 @@ object MonadicFactory {
       }
     }
 
-    trait WithTypeClass[M0[_[_]], F0[_]] {
+    trait WithTypeClass[M0[_[_]], F0[_]] extends MonadicFactoryLike {
       type M[F[_]] = M0[F]
       type F[A] = F0[A]
       val typeClass: M0[F0]
@@ -61,7 +74,7 @@ object MonadicFactory {
 
   }
 
-  trait Whitebox[M0[_[_]], F0[_]] {
+  trait Whitebox[M0[_[_]], F0[_]] extends MonadicFactoryLike {
     type M[F[_]] = M0[F]
     type F[A] = F0[A]
     def apply[A](body: => A)(implicit typeClass: M[F]): F[A] = macro WhiteboxMacroBundle.apply
@@ -656,7 +669,7 @@ object MonadicFactory {
     }
 
     def apply(body: Tree)(typeClass: Tree): Tree = {
-      val q"$partialAppliedMonadic.apply[$a]($body)($typeClass)" = c.macroApplication
+      val q"$monadicFactory.apply[$a]($body)($typeClass)" = c.macroApplication
 
       val mode = if (typeClass.tpe.baseType(monadErrorClassSymbol) != NoType) {
         MonadThrowableMode
@@ -666,18 +679,18 @@ object MonadicFactory {
         UnsupportedExceptionHandlingMode
       }
 
-      val partialAppliedMonadicName = TermName(c.freshName("partialAppliedMonadic"))
+      val monadicFactoryName = TermName(c.freshName("monadicFactory"))
       val monadName = TermName(c.freshName("monad"))
       val monadTree = q"$monadName"
 
-      val cpsTreeBuilder = new MonadicContext(mode, tq"$partialAppliedMonadicName.F", monadTree)
+      val cpsTreeBuilder = new MonadicContext(mode, tq"$monadicFactoryName.F", monadTree)
 
       // c.info(c.enclosingPosition, showCode(body), true)
       val result =
         q"""{
-          val $partialAppliedMonadicName = $partialAppliedMonadic
+          val $monadicFactoryName = $monadicFactory
           val $monadName = $typeClass
-          ${cpsTreeBuilder.buildCpsTree(body)(Set.empty).toUntypedTree}
+          $monadicFactoryName.reduce(${cpsTreeBuilder.buildCpsTree(body)(Set.empty).toUntypedTree})
         }"""
       // c.info(c.enclosingPosition, showCode(result), true)
       result
@@ -705,7 +718,7 @@ object MonadicFactory {
       val result =
         q"""{
           val $withTypeClassName = $withTypeClass
-          ${cpsTreeBuilder.buildCpsTree(body)(Set.empty).toUntypedTree}
+          $withTypeClassName.reduce(${cpsTreeBuilder.buildCpsTree(body)(Set.empty).toUntypedTree})
         }"""
       // c.info(c.enclosingPosition, showCode(result), true)
       result
@@ -715,8 +728,7 @@ object MonadicFactory {
 
   object Instructions {
 
-    @compileTimeOnly(
-      """`each` instructions must not appear outside monadic blocks.
+    @compileTimeOnly("""`each` instructions must not appear outside monadic blocks.
   Note that the `each` instructions may be renamed for different domains.
   The renamed instruction name may be `bind`, `!`, `await`, `gen`, etc.)""")
     def each[F[_], A](fa: F[A]): A = ???

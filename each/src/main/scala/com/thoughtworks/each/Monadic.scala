@@ -281,7 +281,7 @@ object Monadic {
     }
 
     def throwableMonadic(annottees: Tree*): Tree = {
-      macroTransform(tq"_root_.com.thoughtworks.each.Monadic.MonadTrowable", annottees)
+      macroTransform(tq"_root_.com.thoughtworks.each.Monadic.MonadThrowable", annottees)
     }
 
     def monadic(annottees: Tree*): Tree = {

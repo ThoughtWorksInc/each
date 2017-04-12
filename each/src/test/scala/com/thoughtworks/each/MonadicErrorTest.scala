@@ -12,14 +12,15 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
+ */
 
 package com.thoughtworks.each
 
 import java.io.IOException
 
 import org.junit.{Assert, Test}
-import Monadic._
+import Monadic.{throwableMonadic, _}
+
 import scalaz._
 import scala.language.higherKinds
 import scala.language.existentials
@@ -28,6 +29,43 @@ import scalaz.std.option._
 
 class MonadicErrorTest {
 
+  @Test
+  def testAnnotation(): Unit = {
+
+    case object MyException extends Exception
+
+    type OptionScript[A] = EitherT[Option, Throwable, A]
+
+    val either = {
+      var count = 0
+
+      import scala.language.implicitConversions
+      implicit def cast[From, To](from: OptionScript[From])(implicit view: From => To): OptionScript[To] = {
+        Monad[OptionScript].map[From, To](from)(view)
+      }
+
+      @throwableMonadic[OptionScript]
+      val either = {
+        try {
+          count += 1
+          throw MyException
+          count += 10
+          throw new Exception("Unreachable code")
+        } catch {
+          case MyException => {
+            count += 100
+            count
+          }
+        } finally {
+          count += 1000
+        }
+      }
+      Assert.assertEquals(1101, count)
+      either
+    }
+
+    Assert.assertEquals(Some(\/-(101)), either.run)
+  }
 
   @Test
   def testTryCatchOption(): Unit = {
@@ -66,7 +104,6 @@ class MonadicErrorTest {
     Assert.assertEquals(Some(\/-(101)), either.run)
   }
 
-
   private trait Command[A]
 
   private case object RandomInt extends Command[Throwable \/ Int]
@@ -82,7 +119,6 @@ class MonadicErrorTest {
   private def count(delta: Int): Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftF(Count(delta)))
 
   private case object MyException extends Exception
-
 
   def noScript(randomInt: () => Int) = {
     var count = 0
@@ -127,21 +163,21 @@ class MonadicErrorTest {
               }
             }
           }, {
-            Monad[Script].ifM(
-              randomInt map {
-                _ > 100
-              }, {
-                count(1).map { _ =>
-                  123
+            Monad[Script].ifM(randomInt map {
+              _ > 100
+            }, {
+              count(1).map { _ =>
+                123
+              }
+            }, {
+              count(20).flatMap { _ =>
+                implicitly[MonadThrowable[Script]].raiseError(new IOException) map { x: Nothing =>
+                  x: Int
                 }
-              }, {
-                count(20).flatMap { _ =>
-                  implicitly[MonadThrowable[Script]].raiseError(new IOException) map { x: Nothing =>
-                    x: Int
-                  }
-                }
-              })
-          })
+              }
+            })
+          }
+        )
       } {
         case e: IOException => {
           count(300).map { _ =>

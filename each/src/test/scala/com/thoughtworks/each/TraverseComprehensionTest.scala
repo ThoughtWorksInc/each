@@ -8,6 +8,21 @@ import scalaz.std.list._
 class TraverseComprehensionTest {
 
   @Test
+  def testAnnotationForeach(): Unit = {
+    import scalaz.std.iterable._
+    val n = Some(10)
+    @monadic[Option]
+    val result = {
+      var count = 1
+      for (i <- 1 to 10) {
+        count += i * n.each
+      }
+      count
+    }
+    Assert.assertEquals(Some(551), result)
+  }
+
+  @Test
   def testForeach(): Unit = {
     val n = Some(10)
     val result = monadic[Option] {

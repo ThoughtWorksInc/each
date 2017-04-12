@@ -160,7 +160,7 @@ object Preprocessor {
 
     }
 
-    sealed trait OpsFactory[MA, M[_[_]], Ops] extends (MA => Ops)
+    sealed trait OpsFactory[-MA, M[_[_]], Ops] extends (MA => Ops)
 
     trait FallbackOpsFactory0 {
       @inline

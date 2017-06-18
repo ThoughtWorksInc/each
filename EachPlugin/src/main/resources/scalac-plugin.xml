@@ -1,0 +1,4 @@
+<plugin>
+    <name>each</name>
+    <classname>com.thoughtworks.EachPlugin</classname>
+</plugin>

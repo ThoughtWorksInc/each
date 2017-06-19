@@ -109,7 +109,7 @@ object each {
                             innerLoop(
                               restParameters,
                               monadicTrees.enqueue(monadicTree),
-                              argumentVals.enqueue(q"val $name: ${parameter.tpe} = $EmptyTree"),
+                              argumentVals.enqueue(q"val $name: ${TypeTree(parameter.tpe)} = $EmptyTree"),
                               transformedParameters.enqueue(q"$name")
                             )
                         }

@@ -6,6 +6,10 @@ crossScalaVersions in ThisBuild := Seq("2.11.11", "2.12.2")
 
 lazy val each = project
 
+lazy val scalaz = project
+
+lazy val EachOps = project
+
 lazy val unidoc = project
   .enablePlugins(StandaloneUnidoc, TravisUnidocTitle)
   .settings(

@@ -5,7 +5,7 @@
 [![Latest version](https://index.scala-lang.org/thoughtworksinc/each/each/latest.svg)](https://index.scala-lang.org/thoughtworksinc/each/each)
 [![Codacy Badge](https://www.codacy.com/project/badge/3ed3f896c735432ca8e9f3963b8cd144)](https://www.codacy.com/app/pop-atry/each)
 
-**ThoughtWorks Each** is a macro library that converts native imperative syntax to scalaz's monadic expression.
+**ThoughtWorks Each** is a macro library that converts native imperative syntax to [Scalaz](http://scalaz.org/)'s monadic expression. See [Dsl.scala](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/domains/cats$.html) for similar feature for [Cats](https://typelevel.org/cats/).
 
 ## Motivation
 

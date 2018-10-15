@@ -18,10 +18,26 @@ libraryDependencies ++= {
   if (scalaVersion.value.startsWith("2.10.")) {
     Seq()
   } else {
-    Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.5" % Test)
+    Seq("org.scala-lang.modules" %% "scala-xml" % "1.1.0" % Test)
   }
 }
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+scalacOptions ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Seq("-Ymacro-annotations")
+  } else {
+    Nil
+  }
+}
+
+libraryDependencies ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Nil
+  } else {
+    Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+  }
+}
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided

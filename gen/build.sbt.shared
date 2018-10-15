@@ -1,7 +1,30 @@
-libraryDependencies += "org.scalaz" %%% "scalaz-scalacheck-binding" % "7.2.21"
+libraryDependencies += {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    "org.scalaz" %%% "scalaz-scalacheck-binding" % "7.2.26-scalacheck-1.14"
+  } else {
+    "org.scalaz" %%% "scalaz-scalacheck-binding" % "7.2.21"
+  }
+}
 
-libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % Test
+libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.6-SNAP3" % Test
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+scalacOptions ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Seq("-Ymacro-annotations")
+  } else {
+    Nil
+  }
+}
+
+libraryDependencies ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Nil
+  } else {
+    Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+  }
+}

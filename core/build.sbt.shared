@@ -1,4 +1,20 @@
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+scalacOptions ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Seq("-Ymacro-annotations")
+  } else {
+    Nil
+  }
+}
+
+libraryDependencies ++= {
+  import Ordering.Implicits._
+  if (VersionNumber(scalaVersion.value).numbers >= Seq(2L, 13L)) {
+    Nil
+  } else {
+    Seq(compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full))
+  }
+}
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
 
@@ -11,5 +27,3 @@ libraryDependencies += "org.scalaz" %%% "scalaz-core" % "7.2.26"
 libraryDependencies += "org.scalaz" %%% "scalaz-effect" % "7.2.26"
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
-
-libraryDependencies += "com.thoughtworks.enableIf" %% "enableif" % "1.1.4" % Test

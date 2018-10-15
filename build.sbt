@@ -7,7 +7,7 @@ parallelExecution in Global := false
 
 fork in Global in compile := true
 
-crossScalaVersions in ThisBuild := Seq("2.10.6", "2.11.11", "2.12.3")
+crossScalaVersions in ThisBuild := Seq("2.10.7", "2.11.12", "2.12.7")
 
 description in ThisBuild := "A collection of Scala language extension for specific domains."
 

@@ -1,4 +1,4 @@
-libraryDependencies += "org.scalaz" %%% "scalaz-scalacheck-binding" % "7.2.7"
+libraryDependencies += "org.scalaz" %%% "scalaz-scalacheck-binding" % "7.2.21"
 
 libraryDependencies += "org.scalatest" %%% "scalatest" % "3.0.0" % Test
 

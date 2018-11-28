@@ -61,7 +61,7 @@ assert(plusOne(List(15, -2, 9)) == List(16, -1, 10))
 ``` sbt
 libraryDependencies += "com.thoughtworks.each" %% "each" % "latest.release"
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 ```
 
 or `%%%` for Scala.js projects:
@@ -69,7 +69,7 @@ or `%%%` for Scala.js projects:
 ``` sbt
 libraryDependencies += "com.thoughtworks.each" %%% "each" % "latest.release"
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 ```
 
 Note that ThoughtWorks Each requires Scalaz 7.2.x and does not compatible with Scala 7.1.x .

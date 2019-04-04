@@ -18,16 +18,19 @@ cache:
   directories:
     - $HOME/.ivy2/cache
     - $HOME/.sbt/boot/
+    - $HOME/.coursier/
 
 script:
   - sbt test +update # Test for only Scala 2.10, while check library dependencies for all targets
 
+before_script:
+
 before_deploy:
 
 deploy:
-  skip_cleanup: true
-  provider: script
-  script: sbt "release with-defaults"
-  on:
-    condition: -e ./deploy.sbt
-    all_branches: true
+  - provider: script
+    script: sbt ++$TRAVIS_SCALA_VERSION "sonatypeOpen \"Travis Job $TRAVIS_JOB_NAME $TRAVIS_JOB_NUMBER ($TRAVIS_JOB_WEB_URL)\"" publishSigned sonatypeRelease
+    skip_cleanup: true
+    on:
+      all_branches: true
+      condition: $GITHUB_PERSONAL_ACCESS_TOKEN

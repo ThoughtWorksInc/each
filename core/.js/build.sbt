@@ -1,1 +1,1 @@
-enablePlugins(ScalaJSJUnitPlugin)
+../build.sbt.shared

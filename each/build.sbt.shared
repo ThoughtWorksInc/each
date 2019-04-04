@@ -10,8 +10,6 @@ scalacOptions += "-unchecked"
 
 description := "A macro library that converts native imperative syntax to scalaz's monadic expressions."
 
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
-
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
 libraryDependencies ++= {

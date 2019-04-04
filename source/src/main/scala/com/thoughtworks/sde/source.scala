@@ -224,7 +224,7 @@ object source {
 
         def buildingSource: BuildingSource[_] = {
           import scalaz.syntax.traverse._
-          upstream.traverseU { element =>
+          upstream.traverse { element =>
             Free.produce(element)
           }
         }

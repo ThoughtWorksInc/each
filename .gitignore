@@ -1,4 +1,4 @@
-.*
 target/
 local.sbt
+secret/
 *.class

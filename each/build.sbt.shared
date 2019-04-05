@@ -1,7 +1,3 @@
-organization := "com.thoughtworks.each"
-
-name := "each"
-
 scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
@@ -9,8 +5,6 @@ scalacOptions += "-feature"
 scalacOptions += "-unchecked"
 
 description := "A macro library that converts native imperative syntax to scalaz's monadic expressions."
-
-releasePublishArtifactsAction := PgpKeys.publishSigned.value
 
 libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
 
@@ -22,6 +16,11 @@ libraryDependencies ++= {
   }
 }
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
+
+libraryDependencies += "com.thoughtworks.sde" %%% "core" % "3.3.1"
+
+libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.1"
+

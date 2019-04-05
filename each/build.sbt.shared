@@ -1,7 +1,3 @@
-organization := "com.thoughtworks.each"
-
-name := "each"
-
 scalacOptions += "-deprecation"
 
 scalacOptions += "-feature"
@@ -23,3 +19,8 @@ libraryDependencies ++= {
 addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
+
+libraryDependencies += "com.thoughtworks.sde" %%% "core" % "3.3.1"
+
+libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.1"
+

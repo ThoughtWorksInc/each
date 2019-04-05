@@ -24,3 +24,7 @@ libraryDependencies += "com.thoughtworks.sde" %%% "core" % "3.3.1"
 
 libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.1"
 
+Compile / packageDoc / publishArtifact := {
+  import Ordering.Implicits._
+  VersionNumber(scalaVersion.value).numbers >= Seq(2L, 11L)
+}

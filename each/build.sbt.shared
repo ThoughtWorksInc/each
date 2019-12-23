@@ -20,9 +20,9 @@ addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.fu
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
 
-libraryDependencies += "com.thoughtworks.sde" %%% "core" % "3.3.1"
+libraryDependencies += "com.thoughtworks.sde" %%% "core" % "3.3.2"
 
-libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.1"
+libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.2"
 
 // Disable partial-unification due to compiler crash in Scala 2.10
 disablePlugins(PartialUnification)

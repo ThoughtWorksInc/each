@@ -12,7 +12,7 @@ libraryDependencies ++= {
   if (scalaVersion.value.startsWith("2.10.")) {
     Seq()
   } else {
-    Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.5" % Test)
+    Seq("org.scala-lang.modules" %% "scala-xml" % "1.0.6" % Test)
   }
 }
 

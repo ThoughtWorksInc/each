@@ -6,7 +6,7 @@ scalacOptions += "-unchecked"
 
 description := "A macro library that converts native imperative syntax to scalaz's monadic expressions."
 
-libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test
+libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.2" % Test
 
 libraryDependencies ++= {
   if (scalaVersion.value.startsWith("2.10.")) {

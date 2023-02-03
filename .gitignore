@@ -1,4 +1,9 @@
 target/
 local.sbt
 secret/
-*.class
+.metals/
+.bloop/
+metals.sbt
+.bsp/
+.vscode/launch.json
+*.scala.semanticdb

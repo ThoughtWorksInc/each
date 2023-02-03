@@ -3,7 +3,6 @@
 [![Join the chat at https://gitter.im/ThoughtWorksInc/each](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ThoughtWorksInc/each?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/ThoughtWorksInc/each.svg?branch=3.3.x)](https://travis-ci.org/ThoughtWorksInc/each)
 [![Latest version](https://index.scala-lang.org/thoughtworksinc/each/each/latest.svg)](https://index.scala-lang.org/thoughtworksinc/each/each)
-[![Codacy Badge](https://www.codacy.com/project/badge/3ed3f896c735432ca8e9f3963b8cd144)](https://www.codacy.com/app/pop-atry/each)
 
 **ThoughtWorks Each** is a macro library that converts native imperative syntax to [Scalaz](http://scalaz.org/)'s monadic expression. See the [object cats](https://javadoc.io/page/com.thoughtworks.dsl/dsl_2.12/latest/com/thoughtworks/dsl/domains/cats$.html) in [Dsl.scala](https://github.com/ThoughtWorksInc/Dsl.scala/) for the similar feature for [Cats](https://typelevel.org/cats/).
 
@@ -210,7 +209,7 @@ val result = innerFailureFuture.map(someValue.getOrElse)
 
 ## Links
 
- * [The API Documentation](https://oss.sonatype.org/service/local/repositories/releases/archive/com/thoughtworks/each/each_2.12/3.1.1/each_2.12-3.1.1-javadoc.jar/!/com/thoughtworks/each/Monadic$.html)
+ * [The API Documentation](https://www.javadoc.io/doc/com.thoughtworks.each/each_2.13/latest/com/thoughtworks/each/Monadic$.html)
  * Utilities
    * [ComprehensionMonad](https://github.com/ThoughtWorksInc/each/wiki/ComprehensionMonad)
 

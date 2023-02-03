@@ -9,7 +9,8 @@ fork in Global in compile := true
 
 description in ThisBuild := "A collection of Scala language extension for specific domains."
 
-lazy val each = crossProject.crossType(CrossType.Pure)
+lazy val each = sbtcrossproject.CrossPlugin.autoImport.crossProject
+  .crossType(sbtcrossproject.CrossPlugin.autoImport.CrossType.Pure)
 
 lazy val eachJVM = each.jvm
 

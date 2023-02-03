@@ -16,11 +16,25 @@ libraryDependencies ++= {
   }
 }
 
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+libraryDependencies ++= PartialFunction.condOpt(VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector("<2.13"))) {
+  case true =>
+    compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+}
+
+scalacOptions ++= PartialFunction.condOpt(scalaBinaryVersion.value) {
+  case "2.13" =>
+    "-Ymacro-annotations"
+}
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
 
-libraryDependencies += "com.thoughtworks.sde" %%% "core" % "3.3.2"
+libraryDependencies += {
+  if (scalaBinaryVersion.value == "2.10") {
+    "com.thoughtworks.sde" %%% "core" % "3.3.2"
+  } else {
+    "com.thoughtworks.sde" %%% "core" % "3.3.4"
+  }
+}
 
 libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.2"
 

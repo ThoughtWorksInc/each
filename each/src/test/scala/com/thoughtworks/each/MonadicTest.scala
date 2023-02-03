@@ -318,7 +318,8 @@ class MonadicTest {
       } catch {
         case e: Exception => {
           count += 1
-          100
+          // FIXME: compile time error on Scala 2.13 if removing `: Int`
+          100: Int
         }
       } finally {
         count += 1

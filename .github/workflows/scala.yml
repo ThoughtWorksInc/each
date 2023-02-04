@@ -20,12 +20,12 @@ jobs:
             sbt-args: --addPluginSbtFile=project/plugins.sbt.scala-js.1.x
           - scala: 2.12.11
             sbt-args: --addPluginSbtFile=project/plugins.sbt.scala-js.1.x
-          - scala: 2.13.4
+          - scala: 2.13.10
             sbt-args: --addPluginSbtFile=project/plugins.sbt.scala-js.1.x
           - scala: 2.10.7
           - scala: 2.11.12
           - scala: 2.12.11
-          - scala: 2.13.4
+          - scala: 2.13.10
 
     steps:
       - uses: actions/checkout@v3

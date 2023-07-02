@@ -1,5 +1,5 @@
 addSbtPlugin(
-  "com.thoughtworks.sbt-best-practice" % "sbt-best-practice" % "8.2.5"
+  "com.thoughtworks.sbt-best-practice" % "sbt-best-practice" % "8.3.1"
 )
 
 addSbtPlugin("com.thoughtworks.sbt-scala-js-map" % "sbt-scala-js-map" % "4.0.0")

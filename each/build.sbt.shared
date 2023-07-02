@@ -1,0 +1,42 @@
+scalacOptions += "-deprecation"
+
+scalacOptions += "-feature"
+
+scalacOptions += "-unchecked"
+
+description := "A macro library that converts native imperative syntax to scalaz's monadic expressions."
+
+libraryDependencies += "com.github.sbt" % "junit-interface" % "0.13.3" % Test
+
+libraryDependencies ++= {
+  if (scalaVersion.value.startsWith("2.10.")) {
+    Seq()
+  } else {
+    Seq("org.scala-lang.modules" %% "scala-xml" % "1.3.0" % Test)
+  }
+}
+
+libraryDependencies ++= PartialFunction.condOpt(VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector("<2.13"))) {
+  case true =>
+    compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full)
+}
+
+scalacOptions ++= PartialFunction.condOpt(scalaBinaryVersion.value) {
+  case "2.13" =>
+    "-Ymacro-annotations"
+}
+
+libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value % Provided
+
+libraryDependencies += {
+  if (scalaBinaryVersion.value == "2.10") {
+    "com.thoughtworks.sde" %%% "core" % "3.3.2"
+  } else {
+    "com.thoughtworks.sde" %%% "core" % "3.3.4"
+  }
+}
+
+libraryDependencies += "com.thoughtworks.sde" %%% "comprehension-monad" % "3.3.2"
+
+// Disable partial-unification due to compiler crash in Scala 2.10
+disablePlugins(PartialUnification)

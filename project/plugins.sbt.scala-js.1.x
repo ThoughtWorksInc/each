@@ -1,6 +1,6 @@
 // An optional sbt file to replace Scala.js 1.0 with 0.6
 dependencyOverrides += Defaults.sbtPluginExtra(
-  "org.scala-js" % "sbt-scalajs" % "1.0.1",
+  "org.scala-js" % "sbt-scalajs" % "1.13.2",
   sbtBinaryVersion.value,
   scalaBinaryVersion.value,
 )

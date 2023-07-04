@@ -9,14 +9,14 @@ import scalaz._
 import scalaz.std.list._
 import scalaz.syntax.traverse._
 
-
 class ReportingTest {
 
   private trait AppAction[A]
 
   private case object GetEmailList extends AppAction[Throwable \/ List[String]]
 
-  private case class GetContactNameByEmail(email: String) extends AppAction[Throwable \/ String]
+  private case class GetContactNameByEmail(email: String)
+      extends AppAction[Throwable \/ String]
 
   private type FreeCommand[A] = Free[AppAction, A]
 
@@ -28,7 +28,9 @@ class ReportingTest {
 
   import scala.language.{higherKinds, implicitConversions}
 
-  private implicit def cast[From, To](from: Script[From])(implicit view: From => To): Script[To] = {
+  private implicit def cast[From, To](
+      from: Script[From]
+  )(implicit view: From => To): Script[To] = {
     Monad[Script].map[From, To](from)(view)
   }
 
@@ -37,11 +39,11 @@ class ReportingTest {
     <html>
       <body>
         <table>{
-          (for {
-            email: String <- emailList.monadicLoop
-            if email.matches( """[a-z.\-_]+@[a-z.\-_]+""")
-          } yield {
-            <tr>
+      (for {
+        email: String <- emailList.monadicLoop
+        if email.matches("""[a-z.\-_]+@[a-z.\-_]+""")
+      } yield {
+        <tr>
               <td>
                 {toScript(GetContactNameByEmail(email)).each}
               </td>
@@ -49,18 +51,19 @@ class ReportingTest {
                 {email}
               </td>
             </tr>
-          }).toList
-        }</table>
+      }).toList
+    }</table>
       </body>
     </html>
   }
 
   private def rawScript: Script[xml.Elem] = {
     toScript(GetEmailList).flatMap { emailList =>
-      emailList.traverseM[Script, xml.Elem] { email =>
-        toScript(GetContactNameByEmail(email)).map { name =>
-          if (email.matches( """[^@]+@[^@]+""")) {
-            List(<tr>
+      emailList
+        .traverseM[Script, xml.Elem] { email =>
+          toScript(GetContactNameByEmail(email)).map { name =>
+            if (email.matches("""[^@]+@[^@]+""")) {
+              List(<tr>
               <td>
                 {name}
               </td>
@@ -68,19 +71,20 @@ class ReportingTest {
                 {email}
               </td>
             </tr>)
-          } else {
-            Nil
+            } else {
+              Nil
+            }
           }
         }
-      }.map { trs =>
-        <html>
+        .map { trs =>
+          <html>
           <body>
             <table>
               {trs}
             </table>
           </body>
         </html>
-      }
+        }
     }
   }
 
@@ -97,23 +101,32 @@ class ReportingTest {
           case GetEmailList => {
             \/-(Data.keys.toList)
           }
-          case GetContactNameByEmail(email) =>Data.get(email) match {
-            case None => {
-              -\/(new NoSuchElementException)
+          case GetContactNameByEmail(email) =>
+            Data.get(email) match {
+              case None => {
+                -\/(new NoSuchElementException)
+              }
+              case Some(name) => {
+                \/-(name)
+              }
             }
-            case Some(name) => {
-              \/-(name)
-            }
-          }
         }
       }
     }
 
     val rawHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(rawScript.run.foldMap(interpreter).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(
+        xml.Utility.trim(
+          rawScript.run.foldMap(interpreter).fold(throw _, identity)
+        )
+      )
 
     val eachHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(eachScript.run.foldMap(interpreter).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(
+        xml.Utility.trim(
+          eachScript.run.foldMap(interpreter).fold(throw _, identity)
+        )
+      )
 
     Assert.assertEquals(rawHtml, eachHtml)
 
@@ -132,14 +145,15 @@ class ReportingTest {
           case GetEmailList => {
             Future.successful(\/-(Data.keys.toList))
           }
-          case GetContactNameByEmail(email) => Future.successful(Data.get(email) match {
-            case None => {
-              -\/(new NoSuchElementException)
-            }
-            case Some(name) => {
-              \/-(name)
-            }
-          })
+          case GetContactNameByEmail(email) =>
+            Future.successful(Data.get(email) match {
+              case None => {
+                -\/(new NoSuchElementException)
+              }
+              case Some(name) => {
+                \/-(name)
+              }
+            })
         }
       }
     }
@@ -148,10 +162,22 @@ class ReportingTest {
     import scalaz.std.scalaFuture._
 
     val rawHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(rawScript.run.foldMap(interpreter), Duration.Inf).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(
+        xml.Utility.trim(
+          Await
+            .result(rawScript.run.foldMap(interpreter), Duration.Inf)
+            .fold(throw _, identity)
+        )
+      )
 
     val eachHtml =
-      xml.Xhtml.toXhtml(xml.Utility.trim(Await.result(eachScript.run.foldMap(interpreter), Duration.Inf).fold(throw _, identity)))
+      xml.Xhtml.toXhtml(
+        xml.Utility.trim(
+          Await
+            .result(eachScript.run.foldMap(interpreter), Duration.Inf)
+            .fold(throw _, identity)
+        )
+      )
 
     Assert.assertEquals(rawHtml, eachHtml)
 

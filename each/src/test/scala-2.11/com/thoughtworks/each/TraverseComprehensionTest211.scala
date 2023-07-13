@@ -17,8 +17,8 @@ class TraverseComprehensionTest211 {
         i <- List(300, 20).monadicLoop
         if i > 100
       } yield {
-          i + n.each
-        }).underlying
+        i + n.each
+      }).underlying
     }
     Assert.assertEquals(Some(List(4300)), result)
   }
@@ -33,8 +33,8 @@ class TraverseComprehensionTest211 {
         if i > n.each - 3900
         a = i + j
       } yield {
-          a + n.each * k.length
-        }).underlying
+        a + n.each * k.length
+      }).underlying
     }
 
     Assert.assertEquals(Some(List(66300, 612300)), result)

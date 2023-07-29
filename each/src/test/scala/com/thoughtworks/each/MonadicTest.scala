@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
+ */
 
 package com.thoughtworks.each
 
@@ -59,13 +59,19 @@ class MonadicTest {
   @Test
   def testPow(): Unit = {
     val pow = monadic[Seq](math.pow(2.0, (0 to 10).each))
-    Assert.assertEquals(Seq(1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0), pow)
+    Assert.assertEquals(
+      Seq(1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0, 256.0, 512.0, 1024.0),
+      pow
+    )
   }
 
   @Test
   def testMultiply(): Unit = {
     val result = monadic[Seq]((0 to 3).each * (10 to 13).each)
-    Assert.assertEquals(Seq(0, 0, 0, 0, 10, 11, 12, 13, 20, 22, 24, 26, 30, 33, 36, 39), result)
+    Assert.assertEquals(
+      Seq(0, 0, 0, 0, 10, 11, 12, 13, 20, 22, 24, 26, 30, 33, 36, 39),
+      result
+    )
   }
 
   @Test
@@ -100,7 +106,6 @@ class MonadicTest {
     Assert.assertEquals(0, count)
   }
 
-
   @Test
   def testIf(): Unit = {
     val ifOption = monadic[Option] {
@@ -111,7 +116,6 @@ class MonadicTest {
 
     Assert.assertEquals(Some(11), ifOption)
   }
-
 
   @Test
   def testReturn(): Unit = {
@@ -186,10 +190,13 @@ class MonadicTest {
       s.each.length
     }
 
-    Assert.assertEquals(Monad[Option].map {
-      def s = Option(Nil)
-      s
-    }(_.length), lengthOption)
+    Assert.assertEquals(
+      Monad[Option].map {
+        def s = Option(Nil)
+        s
+      }(_.length),
+      lengthOption
+    )
   }
 
   @Test
@@ -242,15 +249,21 @@ class MonadicTest {
     val list1 = Seq("foo", "bar", "baz")
     val list2 = Seq("Hello", "World!")
 
-    val concatSeq = monadic[Seq](list1.each.substring(0, 2) + " " + list2.each.substring(1, 4))
+    val concatSeq = monadic[Seq](
+      list1.each.substring(0, 2) + " " + list2.each.substring(1, 4)
+    )
 
     Assert.assertEquals(
       for {
         string1 <- list1
         string2 <- list2
       } yield (string1.substring(0, 2) + " " + string2.substring(1, 4)),
-      concatSeq)
-    Assert.assertEquals(Seq("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatSeq)
+      concatSeq
+    )
+    Assert.assertEquals(
+      Seq("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"),
+      concatSeq
+    )
   }
 
   @Test
@@ -259,15 +272,21 @@ class MonadicTest {
     val list1 = Set("foo", "bar", "baz")
     val list2 = Set("Hello", "World!")
 
-    val concatSet = monadic[Set](list1.each.substring(0, 2) + " " + list2.each.substring(1, 4))
+    val concatSet = monadic[Set](
+      list1.each.substring(0, 2) + " " + list2.each.substring(1, 4)
+    )
 
     Assert.assertEquals(
       for {
         string1 <- list1
         string2 <- list2
       } yield (string1.substring(0, 2) + " " + string2.substring(1, 4)),
-      concatSet)
-    Assert.assertEquals(Set("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"), concatSet)
+      concatSet
+    )
+    Assert.assertEquals(
+      Set("fo ell", "fo orl", "ba ell", "ba orl", "ba ell", "ba orl"),
+      concatSet
+    )
   }
 
   @Test
@@ -363,21 +382,32 @@ class MonadicTest {
     Assert.assertEquals(12, io(-1).unsafePerformIO())
 
     val state = {
-      IndexedStateT.stateTMonadState[Int, IO].ifM(
-        IndexedStateT.stateTMonadState[Int, IO].get.map(_ == 0),
-        IndexedStateT.stateTMonadState[Int, IO].put(1),
-        IndexedStateT.stateTMonadState[Int, IO].put(2)
-      ).flatMap { _ =>
-        IndexedStateT.stateTMonadState[Int, IO].get
-      }.flatMap { v =>
-        IndexedStateT.stateTMonadState[Int, IO].put(v + 10)
-      }.flatMap { _ =>
-        IndexedStateT.stateTMonadState[Int, IO].get
-      }
+      IndexedStateT
+        .stateTMonadState[Int, IO]
+        .ifM(
+          IndexedStateT.stateTMonadState[Int, IO].get.map(_ == 0),
+          IndexedStateT.stateTMonadState[Int, IO].put(1),
+          IndexedStateT.stateTMonadState[Int, IO].put(2)
+        )
+        .flatMap { _ =>
+          IndexedStateT.stateTMonadState[Int, IO].get
+        }
+        .flatMap { v =>
+          IndexedStateT.stateTMonadState[Int, IO].put(v + 10)
+        }
+        .flatMap { _ =>
+          IndexedStateT.stateTMonadState[Int, IO].get
+        }
     }
 
-    Assert.assertEquals(state.eval(0).unsafePerformIO(), io(0).unsafePerformIO())
-    Assert.assertEquals(state.eval(-1).unsafePerformIO(), io(-1).unsafePerformIO())
+    Assert.assertEquals(
+      state.eval(0).unsafePerformIO(),
+      io(0).unsafePerformIO()
+    )
+    Assert.assertEquals(
+      state.eval(-1).unsafePerformIO(),
+      io(-1).unsafePerformIO()
+    )
   }
 
   @Test
@@ -414,7 +444,6 @@ class MonadicTest {
 
     Assert.assertEquals(300, count)
   }
-
 
   @Test
   def testDoWhile(): Unit = {
@@ -474,13 +503,16 @@ class MonadicTest {
   @Test
   def testAnnotation(): Unit = {
     val selector = Seq(1, 2, 3)
-    Assert.assertEquals(Some(Seq(1, 2, 3)), monadic[Option] {
-      (selector: @unchecked) match {
-        case s: Seq[String@unchecked] => {
-          s
+    Assert.assertEquals(
+      Some(Seq(1, 2, 3)),
+      monadic[Option] {
+        (selector: @unchecked) match {
+          case s: Seq[String @unchecked] => {
+            s
+          }
         }
       }
-    })
+    )
   }
 
   @Test
@@ -491,11 +523,11 @@ class MonadicTest {
         {someFoo.each}
       </baz>
     }
-    Assert.assertEquals(Some(
-      <baz>
+    Assert.assertEquals(
+      Some(<baz>
         <foo bar="1"/>
-      </baz>), result)
+      </baz>),
+      result
+    )
   }
 }
-
- 

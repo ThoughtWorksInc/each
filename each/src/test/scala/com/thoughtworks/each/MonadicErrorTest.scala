@@ -40,7 +40,9 @@ class MonadicErrorTest {
       var count = 0
 
       import scala.language.implicitConversions
-      implicit def cast[From, To](from: OptionScript[From])(implicit view: From => To): OptionScript[To] = {
+      implicit def cast[From, To](
+          from: OptionScript[From]
+      )(implicit view: From => To): OptionScript[To] = {
         Monad[OptionScript].map[From, To](from)(view)
       }
 
@@ -78,7 +80,9 @@ class MonadicErrorTest {
       var count = 0
 
       import scala.language.implicitConversions
-      implicit def cast[From, To](from: OptionScript[From])(implicit view: From => To): OptionScript[To] = {
+      implicit def cast[From, To](
+          from: OptionScript[From]
+      )(implicit view: From => To): OptionScript[To] = {
         Monad[OptionScript].map[From, To](from)(view)
       }
 
@@ -114,9 +118,11 @@ class MonadicErrorTest {
 
   private type Script[A] = EitherT[FreeCommand, Throwable, A]
 
-  private val randomInt: Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftF(RandomInt))
+  private val randomInt: Script[Int] =
+    EitherT[FreeCommand, Throwable, Int](Free.liftF(RandomInt))
 
-  private def count(delta: Int): Script[Int] = EitherT[FreeCommand, Throwable, Int](Free.liftF(Count(delta)))
+  private def count(delta: Int): Script[Int] =
+    EitherT[FreeCommand, Throwable, Int](Free.liftF(Count(delta)))
 
   private case object MyException extends Exception
 
@@ -156,26 +162,30 @@ class MonadicErrorTest {
             _ > 100
           }, {
             count(600000).flatMap { _ =>
-              implicitly[MonadThrowable[Script]].raiseError(MyException) flatMap { _: Nothing =>
+              implicitly[MonadThrowable[Script]]
+                .raiseError(MyException) flatMap { _: Nothing =>
                 count(7000000).map { _ =>
                   789
                 }
               }
             }
           }, {
-            Monad[Script].ifM(randomInt map {
-              _ > 100
-            }, {
-              count(1).map { _ =>
-                123
-              }
-            }, {
-              count(20).flatMap { _ =>
-                implicitly[MonadThrowable[Script]].raiseError(new IOException) map { x: Nothing =>
-                  x: Int
+            Monad[Script].ifM(
+              randomInt map {
+                _ > 100
+              }, {
+                count(1).map { _ =>
+                  123
+                }
+              }, {
+                count(20).flatMap { _ =>
+                  implicitly[MonadThrowable[Script]]
+                    .raiseError(new IOException) map { x: Nothing =>
+                    x: Int
+                  }
                 }
               }
-            })
+            )
           }
         )
       } {
@@ -238,7 +248,10 @@ class MonadicErrorTest {
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => throw MyException)), result)
+    Assert.assertEquals(
+      \/.fromTryCatchNonFatal(noScript(() => throw MyException)),
+      result
+    )
     Assert.assertEquals(-\/(MyException), result)
     Assert.assertEquals(54000, count)
   }
@@ -260,7 +273,10 @@ class MonadicErrorTest {
         }
       }
     })
-    Assert.assertEquals(\/.fromTryCatchNonFatal(noScript(() => throw new IOException)), result)
+    Assert.assertEquals(
+      \/.fromTryCatchNonFatal(noScript(() => throw new IOException)),
+      result
+    )
     Assert.assertEquals(\/-(456), result)
     Assert.assertEquals(54300, count)
   }

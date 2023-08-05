@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-*/
+ */
 
 package com.thoughtworks.each
 
@@ -21,15 +21,16 @@ import org.junit.{Assert, Test}
 import scalaz.std.option._
 import scalaz.std.list._
 
-/**
-  * @author 杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
+/** @author
+  *   杨博 (Yang Bo) &lt;pop.atry@gmail.com&gt;
   */
 class AnnotationTest {
 
   @Test
   def testForeach(): Unit = {
     val n = Some(10)
-    @monadic[Option] val result = {
+    @monadic[Option]
+    val result = {
       var count = 1
       for (i <- List(300, 20)) {
         count += i * n.each
@@ -42,7 +43,8 @@ class AnnotationTest {
   @Test
   def testMap(): Unit = {
     val n = Some(4000)
-    @monadic[Option] val result = {
+    @monadic[Option]
+    val result = {
       for (i <- List(300, 20)) yield {
         i + n.each
       }
@@ -53,7 +55,8 @@ class AnnotationTest {
   @Test
   def testFlatMap(): Unit = {
     val n = Some(4000)
-    @monadic[Option] val result = {
+    @monadic[Option]
+    val result = {
       for {
         i <- List(300, 20)
         j <- List(50000, 600000)
@@ -68,7 +71,8 @@ class AnnotationTest {
   def testFilter(): Unit = {
     val n = Some(4000)
 
-    @monadic[Option] val result = {
+    @monadic[Option]
+    val result = {
       for {
         i <- List(300, 20)
         if i > 100

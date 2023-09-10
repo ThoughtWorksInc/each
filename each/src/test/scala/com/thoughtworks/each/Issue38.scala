@@ -6,11 +6,10 @@ import Monadic._
 final class Issue38 {
   def shouldNotWarning = {
     monadic[Option] {
-      Option(
-        {
-          val mm = 1
-          mm
-        }).each;
+      Option({
+        val mm = 1
+        mm
+      }).each;
       1
     }
   }

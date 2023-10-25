@@ -46,7 +46,6 @@ class TraverseComprehensionTest {
     Assert.assertEquals(Some(List(4300, 4020)), result)
   }
 
-
   @Test
   def testMapWithAnotherType(): Unit = {
     val result = monadic[Option] {
@@ -65,8 +64,8 @@ class TraverseComprehensionTest {
         i <- List(300, 20).monadicLoop
         j <- List(50000, 600000).monadicLoop
       } yield {
-          i + j + n.each
-        }).underlying
+        i + j + n.each
+      }).underlying
     }
     Assert.assertEquals(Some(List(54300, 604300, 54020, 604020)), result)
   }
